@@ -1,0 +1,178 @@
+import { useState, useEffect } from "react";
+import AppLayoutNew from "@/components/layout/AppLayoutNew";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Users, Clock, UserCheck, Bell } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useQueue } from "@/hooks/useQueue";
+import { useQueueLeads } from "@/hooks/useQueueLeads";
+import { useQueueRealtime } from "@/hooks/useQueueRealtime";
+import { useComandas } from "@/hooks/useComandas";
+import { useToast } from "@/hooks/use-toast";
+import { QueueCard } from "@/components/queue/QueueCard";
+import { AddWalkInModal } from "@/components/queue/AddWalkInModal";
+import { AssignProfessionalModal } from "@/components/queue/AssignProfessionalModal";
+import { notifyQueueEntry, notifyLead } from "@/lib/queueNotifications";
+import type { QueueEntry } from "@/types/queue";
+
+const SITE_URL = window.location.origin;
+
+export default function Fila() {
+  const { salonId } = useAuth();
+  const { toast } = useToast();
+  const { entries, stats, addToQueue, checkIn, assignProfessional, skip, remove } = useQueue();
+  const { pendingLeads, notifiedLeads, markNotified } = useQueueLeads();
+  const { createComanda } = useComandas();
+  useQueueRealtime();
+
+  const [walkInModalOpen, setWalkInModalOpen] = useState(false);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedEntry, setSelectedEntry] = useState<QueueEntry | null>(null);
+
+  const [prevCount, setPrevCount] = useState(entries.length);
+  useEffect(() => {
+    if (entries.length > prevCount) {
+      try { new Audio("/notification.mp3").play(); } catch {}
+    }
+    setPrevCount(entries.length);
+  }, [entries.length]);
+
+  const handleAddWalkIn = async (data: { customer_name: string; customer_phone: string; service_id: string }) => {
+    try {
+      await addToQueue({ customer_name: data.customer_name, customer_phone: data.customer_phone, service_id: data.service_id, source: "walk_in" });
+      toast({ title: "Cliente adicionada na fila!" });
+    } catch { toast({ title: "Erro ao adicionar", variant: "destructive" }); }
+  };
+
+  const handleAssignProfessional = async (professionalId: string) => {
+    if (!selectedEntry || !salonId) return;
+    try {
+      await assignProfessional({ entryId: selectedEntry.id, professionalId });
+      createComanda({ client_id: selectedEntry.customer_id, professional_id: professionalId });
+      toast({ title: "Profissional atribuido e comanda aberta!" });
+    } catch { toast({ title: "Erro ao atribuir", variant: "destructive" }); }
+  };
+
+  const handleSkip = (entry: QueueEntry) => {
+    skip(entry.id);
+    if (entry.source === "online" && entry.customer_phone && salonId) {
+      notifyQueueEntry(salonId, entry, "skipped");
+    }
+  };
+
+  const handleRemove = (entry: QueueEntry) => {
+    remove(entry.id);
+    if (entry.source === "online" && entry.payment_status === "confirmed" && salonId) {
+      notifyQueueEntry(salonId, entry, "credit", { creditAmount: entry.service?.price });
+    }
+  };
+
+  const handleNotifyLead = async (lead: { id: string; phone: string; name: string }) => {
+    if (!salonId) return;
+    await notifyLead(salonId, lead, stats.totalInQueue, `${SITE_URL}/fila`);
+    markNotified(lead.id);
+  };
+
+  const inServiceEntries = entries.filter((e) => e.status === "in_service");
+  const waitingEntries = entries.filter((e) => ["waiting", "checked_in"].includes(e.status));
+
+  return (
+    <AppLayoutNew>
+      <div className="p-4 md:p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Fila de Atendimento</h1>
+          <Button onClick={() => setWalkInModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />Adicionar presencial
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          <Card><CardContent className="pt-4 text-center">
+            <Users className="h-5 w-5 mx-auto text-blue-500 mb-1" />
+            <p className="text-2xl font-bold">{stats.totalInQueue}</p>
+            <p className="text-xs text-muted-foreground">Na fila</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 text-center">
+            <Clock className="h-5 w-5 mx-auto text-orange-500 mb-1" />
+            <p className="text-2xl font-bold">~{stats.estimatedMinutes} min</p>
+            <p className="text-xs text-muted-foreground">Tempo estimado</p>
+          </CardContent></Card>
+          <Card><CardContent className="pt-4 text-center">
+            <UserCheck className="h-5 w-5 mx-auto text-green-500 mb-1" />
+            <p className="text-2xl font-bold">{inServiceEntries.length}</p>
+            <p className="text-xs text-muted-foreground">Em atendimento</p>
+          </CardContent></Card>
+        </div>
+
+        <Tabs defaultValue="fila">
+          <TabsList>
+            <TabsTrigger value="fila">Fila ({waitingEntries.length})</TabsTrigger>
+            <TabsTrigger value="atendimento">Em atendimento ({inServiceEntries.length})</TabsTrigger>
+            <TabsTrigger value="leads">Leads{pendingLeads.length > 0 && <Badge className="ml-2 bg-red-500">{pendingLeads.length}</Badge>}</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="fila">
+            {waitingEntries.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Fila vazia</p>
+            ) : waitingEntries.map((entry) => (
+              <QueueCard key={entry.id} entry={entry}
+                onCheckIn={() => checkIn(entry.id)}
+                onAssignProfessional={() => { setSelectedEntry(entry); setAssignModalOpen(true); }}
+                onSkip={() => handleSkip(entry)}
+                onRemove={() => handleRemove(entry)}
+              />
+            ))}
+          </TabsContent>
+
+          <TabsContent value="atendimento">
+            {inServiceEntries.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Nenhum atendimento em andamento</p>
+            ) : inServiceEntries.map((entry) => (
+              <QueueCard key={entry.id} entry={entry} onCheckIn={() => {}} onAssignProfessional={() => {}} onSkip={() => {}} onRemove={() => handleRemove(entry)} />
+            ))}
+          </TabsContent>
+
+          <TabsContent value="leads">
+            {pendingLeads.length === 0 && notifiedLeads.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Nenhum lead</p>
+            ) : (
+              <div className="space-y-2">
+                {pendingLeads.map((lead) => (
+                  <Card key={lead.id}><CardContent className="flex items-center justify-between py-3">
+                    <div>
+                      <p className="font-medium">{lead.name}</p>
+                      <p className="text-sm text-muted-foreground">{lead.phone} · Quer fila &lt; {lead.max_queue_size}</p>
+                    </div>
+                    <Button size="sm" onClick={() => handleNotifyLead(lead)}><Bell className="h-4 w-4 mr-1" />Notificar</Button>
+                  </CardContent></Card>
+                ))}
+                {notifiedLeads.map((lead) => (
+                  <Card key={lead.id} className="opacity-60"><CardContent className="flex items-center justify-between py-3">
+                    <div>
+                      <p className="font-medium">{lead.name}</p>
+                      <p className="text-sm text-muted-foreground">{lead.phone}</p>
+                    </div>
+                    <Badge variant="outline">Notificada</Badge>
+                  </CardContent></Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <AddWalkInModal open={walkInModalOpen} onClose={() => setWalkInModalOpen(false)} onSubmit={handleAddWalkIn} />
+      {selectedEntry && (
+        <AssignProfessionalModal
+          open={assignModalOpen}
+          onClose={() => { setAssignModalOpen(false); setSelectedEntry(null); }}
+          customerName={selectedEntry.customer_name}
+          serviceName={selectedEntry.service?.name || ""}
+          onAssign={handleAssignProfessional}
+        />
+      )}
+    </AppLayoutNew>
+  );
+}
