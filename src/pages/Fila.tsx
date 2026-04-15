@@ -15,6 +15,7 @@ import { QueueCard } from "@/components/queue/QueueCard";
 import { AddWalkInModal } from "@/components/queue/AddWalkInModal";
 import { AssignProfessionalModal } from "@/components/queue/AssignProfessionalModal";
 import { notifyQueueEntry, notifyLead } from "@/lib/queueNotifications";
+import { useQueueNotificationCheck } from "@/hooks/useQueueNotificationCheck";
 import type { QueueEntry } from "@/types/queue";
 
 const SITE_URL = window.location.origin;
@@ -26,6 +27,7 @@ export default function Fila() {
   const { pendingLeads, notifiedLeads, markNotified } = useQueueLeads();
   const { createComanda } = useComandas();
   useQueueRealtime();
+  useQueueNotificationCheck();
 
   const [walkInModalOpen, setWalkInModalOpen] = useState(false);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
