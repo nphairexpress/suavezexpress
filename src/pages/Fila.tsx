@@ -29,7 +29,7 @@ export default function Fila() {
   const { toast } = useToast();
   const { entries, stats, addToQueue, checkIn, assignProfessional, skip, remove, reorder } = useQueue();
   const { pendingLeads, notifiedLeads, markNotified } = useQueueLeads();
-  const { getCurrentUserOpenCaixa, openCaixaAsync } = useCaixas();
+  const { getCurrentUserOpenCaixa, openCaixaAsync, updateCaixaTotals } = useCaixas();
   const { createComandaAsync } = useComandas();
   useQueueRealtime();
   useQueueNotificationCheck();
@@ -154,6 +154,13 @@ export default function Fila() {
             .from("comandas")
             .update({ is_paid: true })
             .eq("id", comanda.id);
+
+          // 6. Update caixa totals
+          updateCaixaTotals({
+            caixaId: openCaixa.id,
+            paymentMethod: payMethod,
+            amount: selectedEntry.service.price,
+          });
         }
       }
 
