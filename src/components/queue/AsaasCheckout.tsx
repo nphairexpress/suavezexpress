@@ -17,7 +17,7 @@ interface AsaasCheckoutProps {
   serviceName: string;
   servicePrice: number;
   queueEntryId: string;
-  onPaymentConfirmed: (paymentId: string) => void;
+  onPaymentConfirmed: (paymentId: string, method?: "pix" | "credit_card") => void;
   onError: (error: string) => void;
 }
 
@@ -116,7 +116,7 @@ export function AsaasCheckout({
 
       if (result.status === "CONFIRMED" || result.status === "RECEIVED") {
         setConfirmed(true);
-        onPaymentConfirmed(result.id);
+        onPaymentConfirmed(result.id, "credit_card");
       }
     } catch (err) {
       toast({ title: err instanceof Error ? err.message : "Erro no pagamento com cartão", variant: "destructive" });
@@ -134,7 +134,8 @@ export function AsaasCheckout({
         const status = await getAsaasPaymentStatus(salonId, activePaymentId);
         if (status === "RECEIVED" || status === "CONFIRMED") {
           setConfirmed(true);
-          onPaymentConfirmed(activePaymentId);
+          const paymentMethod = cardPaymentId ? "credit_card" : "pix";
+          onPaymentConfirmed(activePaymentId, paymentMethod);
           clearInterval(interval);
         }
       } catch { /* silently retry */ }

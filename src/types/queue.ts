@@ -15,6 +15,7 @@ export interface QueueEntry {
   position: number;
   payment_id: string | null;
   payment_status: QueuePaymentStatus;
+  payment_method: string | null;
   notify_minutes_before: number;
   notify_sent: boolean;
   notify_next_sent: boolean;

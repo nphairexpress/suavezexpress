@@ -121,6 +121,25 @@ export default function Fila() {
             total: selectedEntry.service.price,
           })
           .eq("id", comanda.id);
+
+        // 5. Register payment in comanda (already paid online)
+        if (selectedEntry.source === "online" && selectedEntry.payment_status === "confirmed") {
+          const payMethod = selectedEntry.payment_method === "credit_card" ? "credit_card" : "pix";
+          await supabase.from("payments").insert({
+            comanda_id: comanda.id,
+            salon_id: salonId,
+            payment_method: payMethod,
+            amount: selectedEntry.service.price,
+            fee_amount: 0,
+            net_amount: selectedEntry.service.price,
+          });
+
+          // Mark comanda as paid
+          await supabase
+            .from("comandas")
+            .update({ is_paid: true })
+            .eq("id", comanda.id);
+        }
       }
 
       toast({ title: "Comanda aberta!" });

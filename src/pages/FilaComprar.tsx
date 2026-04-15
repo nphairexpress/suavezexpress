@@ -66,7 +66,7 @@ export default function FilaComprar() {
     setStep("payment");
   };
 
-  const handlePaymentConfirmed = async (paymentId: string) => {
+  const handlePaymentConfirmed = async (paymentId: string, method?: "pix" | "credit_card") => {
     try {
       // Only NOW create the queue entry, after payment is confirmed
       const entry = await addToQueue({
@@ -81,10 +81,14 @@ export default function FilaComprar() {
       setQueueEntryId(entry.id);
       setQueuePosition(entry.position);
 
-      // Mark as confirmed
+      // Mark as confirmed + save payment method
       await supabase
         .from("queue_entries")
-        .update({ payment_status: "confirmed", updated_at: new Date().toISOString() })
+        .update({
+          payment_status: "confirmed",
+          payment_method: method || "pix",
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", entry.id);
 
       const trackingUrl = `${SITE_URL}/fila/acompanhar/${entry.id}`;
