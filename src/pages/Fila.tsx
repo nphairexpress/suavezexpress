@@ -106,7 +106,16 @@ export default function Fila() {
       }
 
       // 2. Assign professional in queue (moves to in_service)
-      await assignProfessional({ entryId: selectedEntry.id, professionalId });
+      const { error: assignError } = await supabase
+        .from("queue_entries")
+        .update({
+          assigned_professional_id: professionalId,
+          status: "in_service",
+          checked_in_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", selectedEntry.id);
+      if (assignError) console.error("Assign error:", assignError);
 
       // 3. Create comanda linked to client and caixa
       const comanda = await createComandaAsync({
