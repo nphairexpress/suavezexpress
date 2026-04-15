@@ -12,6 +12,7 @@ import { useQueueLeads } from "@/hooks/useQueueLeads";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQueueRealtime } from "@/hooks/useQueueRealtime";
 import { useComandas } from "@/hooks/useComandas";
+import { useCaixas } from "@/hooks/useCaixas";
 import { useToast } from "@/hooks/use-toast";
 import { QueueCard } from "@/components/queue/QueueCard";
 import { AddWalkInModal } from "@/components/queue/AddWalkInModal";
@@ -28,6 +29,7 @@ export default function Fila() {
   const { toast } = useToast();
   const { entries, stats, addToQueue, checkIn, assignProfessional, skip, remove, reorder } = useQueue();
   const { pendingLeads, notifiedLeads, markNotified } = useQueueLeads();
+  const { getCurrentUserOpenCaixa } = useCaixas();
   const { createComandaAsync } = useComandas();
   useQueueRealtime();
   useQueueNotificationCheck();
@@ -54,6 +56,13 @@ export default function Fila() {
   const handleAssignProfessional = async (professionalId: string) => {
     if (!selectedEntry || !salonId) return;
     try {
+      // 0. Check for open caixa
+      const openCaixa = await getCurrentUserOpenCaixa();
+      if (!openCaixa) {
+        toast({ title: "Abra um caixa antes de atender", description: "Vá em Financeiro e abra um caixa primeiro.", variant: "destructive" });
+        return;
+      }
+
       // 1. Find or create client by phone
       let clientId = selectedEntry.customer_id;
       if (!clientId && selectedEntry.customer_phone) {
@@ -94,10 +103,11 @@ export default function Fila() {
       // 2. Assign professional in queue (moves to in_service)
       await assignProfessional({ entryId: selectedEntry.id, professionalId });
 
-      // 3. Create comanda linked to client
+      // 3. Create comanda linked to client and caixa
       const comanda = await createComandaAsync({
         client_id: clientId,
         professional_id: professionalId,
+        caixa_id: openCaixa.id,
       });
 
       // 4. Add the service as comanda item
