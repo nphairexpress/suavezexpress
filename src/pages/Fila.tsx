@@ -23,7 +23,7 @@ const SITE_URL = window.location.origin;
 export default function Fila() {
   const { salonId } = useAuth();
   const { toast } = useToast();
-  const { entries, stats, addToQueue, checkIn, assignProfessional, skip, remove } = useQueue();
+  const { entries, stats, addToQueue, checkIn, assignProfessional, skip, remove, reorder } = useQueue();
   const { pendingLeads, notifiedLeads, markNotified } = useQueueLeads();
   const { createComanda } = useComandas();
   useQueueRealtime();
@@ -80,6 +80,20 @@ export default function Fila() {
   const inServiceEntries = entries.filter((e) => e.status === "in_service");
   const waitingEntries = entries.filter((e) => ["waiting", "checked_in"].includes(e.status));
 
+  const handleMoveUp = (index: number) => {
+    if (index === 0) return;
+    const ids = waitingEntries.map((e) => e.id);
+    [ids[index - 1], ids[index]] = [ids[index], ids[index - 1]];
+    reorder(ids);
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (index >= waitingEntries.length - 1) return;
+    const ids = waitingEntries.map((e) => e.id);
+    [ids[index], ids[index + 1]] = [ids[index + 1], ids[index]];
+    reorder(ids);
+  };
+
   return (
     <AppLayoutNew>
       <div className="p-4 md:p-6 space-y-6">
@@ -118,12 +132,16 @@ export default function Fila() {
           <TabsContent value="fila">
             {waitingEntries.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">Fila vazia</p>
-            ) : waitingEntries.map((entry) => (
+            ) : waitingEntries.map((entry, index) => (
               <QueueCard key={entry.id} entry={entry}
+                isFirst={index === 0}
+                isLast={index === waitingEntries.length - 1}
                 onCheckIn={() => checkIn(entry.id)}
                 onAssignProfessional={() => { setSelectedEntry(entry); setAssignModalOpen(true); }}
                 onSkip={() => handleSkip(entry)}
                 onRemove={() => handleRemove(entry)}
+                onMoveUp={() => handleMoveUp(index)}
+                onMoveDown={() => handleMoveDown(index)}
               />
             ))}
           </TabsContent>
@@ -131,8 +149,12 @@ export default function Fila() {
           <TabsContent value="atendimento">
             {inServiceEntries.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">Nenhum atendimento em andamento</p>
-            ) : inServiceEntries.map((entry) => (
-              <QueueCard key={entry.id} entry={entry} onCheckIn={() => {}} onAssignProfessional={() => {}} onSkip={() => {}} onRemove={() => handleRemove(entry)} />
+            ) : inServiceEntries.map((entry, index) => (
+              <QueueCard key={entry.id} entry={entry}
+                isFirst={true} isLast={true}
+                onCheckIn={() => {}} onAssignProfessional={() => {}} onSkip={() => {}} onRemove={() => handleRemove(entry)}
+                onMoveUp={() => {}} onMoveDown={() => {}}
+              />
             ))}
           </TabsContent>
 
