@@ -130,8 +130,12 @@ export default function FilaComprar() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div><Label>Nome</Label><Input placeholder="Seu nome completo" value={customerName} onChange={(e) => setCustomerName(e.target.value)} /></div>
-              <div><Label>CPF</Label><Input placeholder="000.000.000-00" value={customerCpf} onChange={(e) => setCustomerCpf(e.target.value)} /></div>
-              <div><Label>WhatsApp</Label><Input placeholder="(11) 99999-9999" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} /></div>
+              <div><Label>CPF</Label><Input placeholder="000.000.000-00" inputMode="numeric" autoComplete="cpf" name="cpf" value={customerCpf} onChange={(e) => {
+                const v = e.target.value.replace(/\D/g, "").slice(0, 11);
+                const formatted = v.replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+                setCustomerCpf(formatted);
+              }} /></div>
+              <div><Label>WhatsApp</Label><Input placeholder="(11) 99999-9999" inputMode="numeric" autoComplete="tel" name="phone" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} /></div>
               <div><Label>E-mail (opcional)</Label><Input placeholder="seu@email.com" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} /></div>
               <div>
                 <Label>Me avise com antecedência de</Label>
