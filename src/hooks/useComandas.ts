@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { notifyQueueEntry } from "@/lib/queueNotifications";
 
 export interface ComandaPayment {
   id: string;
@@ -233,6 +234,47 @@ export function useComandas() {
     },
   });
 
+  const triggerNextInQueue = async (professionalId: string | null) => {
+    if (!professionalId || !salonId) return;
+
+    // Mark current queue entry as completed
+    const { data: currentEntry } = await supabase
+      .from("queue_entries")
+      .select("id")
+      .eq("salon_id", salonId)
+      .eq("assigned_professional_id", professionalId)
+      .eq("status", "in_service")
+      .maybeSingle();
+
+    if (currentEntry) {
+      await supabase
+        .from("queue_entries")
+        .update({ status: "completed", updated_at: new Date().toISOString() })
+        .eq("id", currentEntry.id);
+    }
+
+    // Find next in queue
+    const { data: nextEntries } = await supabase
+      .from("queue_entries")
+      .select("*")
+      .eq("salon_id", salonId)
+      .in("status", ["checked_in", "waiting"])
+      .order("position", { ascending: true })
+      .limit(3);
+
+    if (!nextEntries || nextEntries.length === 0) return;
+
+    const next = nextEntries.find((e) => e.status === "checked_in") || nextEntries[0];
+
+    if (next && !next.notify_next_sent) {
+      await notifyQueueEntry(salonId, next, "next");
+      await supabase
+        .from("queue_entries")
+        .update({ notify_next_sent: true, updated_at: new Date().toISOString() })
+        .eq("id", next.id);
+    }
+  };
+
   const closeComandaMutation = useMutation({
     mutationFn: async (id: string) => {
       const { data, error } = await supabase
@@ -244,9 +286,10 @@ export function useComandas() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["comandas", salonId] });
       toast({ title: "Comanda fechada com sucesso!" });
+      triggerNextInQueue(data?.professional_id ?? null);
     },
     onError: (error: Error) => {
       toast({ title: "Erro ao fechar comanda", description: error.message, variant: "destructive" });
