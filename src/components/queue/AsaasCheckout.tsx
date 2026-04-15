@@ -9,6 +9,7 @@ import type { AsaasPaymentResponse } from "@/lib/asaas";
 interface AsaasCheckoutProps {
   salonId: string;
   customerName: string;
+  customerCpf: string;
   customerPhone: string;
   customerEmail?: string;
   serviceName: string;
@@ -21,6 +22,7 @@ interface AsaasCheckoutProps {
 export function AsaasCheckout({
   salonId,
   customerName,
+  customerCpf,
   customerPhone,
   customerEmail,
   serviceName,
@@ -40,7 +42,7 @@ export function AsaasCheckout({
       try {
         const result = await createAsaasPayment(salonId, {
           customerName,
-          customerCpfCnpj: "",
+          customerCpfCnpj: customerCpf.replace(/\D/g, ""),
           customerPhone,
           customerEmail,
           value: servicePrice,

@@ -25,6 +25,7 @@ export default function FilaComprar() {
   const [selectedServiceId, setSelectedServiceId] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerCpf, setCustomerCpf] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [notifyMinutes, setNotifyMinutes] = useState("40");
   const [queueEntryId, setQueueEntryId] = useState("");
@@ -40,8 +41,8 @@ export default function FilaComprar() {
   };
 
   const handleDataSubmit = async () => {
-    if (!customerName.trim() || !customerPhone.trim()) {
-      toast({ title: "Preencha nome e WhatsApp", variant: "destructive" });
+    if (!customerName.trim() || !customerPhone.trim() || !customerCpf.trim()) {
+      toast({ title: "Preencha nome, CPF e WhatsApp", variant: "destructive" });
       return;
     }
     try {
@@ -129,6 +130,7 @@ export default function FilaComprar() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div><Label>Nome</Label><Input placeholder="Seu nome completo" value={customerName} onChange={(e) => setCustomerName(e.target.value)} /></div>
+              <div><Label>CPF</Label><Input placeholder="000.000.000-00" value={customerCpf} onChange={(e) => setCustomerCpf(e.target.value)} /></div>
               <div><Label>WhatsApp</Label><Input placeholder="(11) 99999-9999" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} /></div>
               <div><Label>E-mail (opcional)</Label><Input placeholder="seu@email.com" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} /></div>
               <div>
@@ -151,6 +153,7 @@ export default function FilaComprar() {
           <AsaasCheckout
             salonId={effectiveSalonId}
             customerName={customerName}
+            customerCpf={customerCpf}
             customerPhone={customerPhone}
             customerEmail={customerEmail || undefined}
             serviceName={selectedService.name}
