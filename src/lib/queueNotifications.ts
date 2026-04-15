@@ -10,35 +10,18 @@ interface NotifyParams {
   emailBody?: string;
 }
 
-async function getZapiCredentials(salonId: string) {
-  const { data } = await supabase
-    .from("queue_settings")
-    .select("zapi_instance_id, zapi_token")
-    .eq("salon_id", salonId)
-    .single();
-  return data;
-}
 
 async function sendWhatsApp(phone: string, message: string, salonId: string): Promise<boolean> {
-  const creds = await getZapiCredentials(salonId);
-  if (!creds?.zapi_instance_id || !creds?.zapi_token) {
-    console.warn("Z-API not configured, skipping WhatsApp");
-    return false;
-  }
-
-  const cleanPhone = phone.replace(/\D/g, "");
-  const fullPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
-
   try {
-    const response = await fetch(
-      `https://api.z-api.io/instances/${creds.zapi_instance_id}/token/${creds.zapi_token}/send-text`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: fullPhone, message }),
-      }
-    );
-    return response.ok;
+    const { data, error } = await supabase.functions.invoke("zapi-proxy", {
+      body: { salonId, phone, message },
+    });
+
+    if (error) {
+      console.error("WhatsApp send failed:", error);
+      return false;
+    }
+    return !!data?.messageId;
   } catch (error) {
     console.error("WhatsApp send failed:", error);
     return false;
