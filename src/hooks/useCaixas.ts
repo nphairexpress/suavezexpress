@@ -349,6 +349,7 @@ export function useCaixas() {
     isLoading,
     error,
     openCaixa: openCaixaMutation.mutate,
+    openCaixaAsync: openCaixaMutation.mutateAsync,
     closeCaixa: closeCaixaMutation.mutate,
     reopenCaixa: reopenCaixaMutation.mutate,
     updateCaixa: updateCaixaMutation.mutate,

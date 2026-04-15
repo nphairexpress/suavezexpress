@@ -29,7 +29,7 @@ export default function Fila() {
   const { toast } = useToast();
   const { entries, stats, addToQueue, checkIn, assignProfessional, skip, remove, reorder } = useQueue();
   const { pendingLeads, notifiedLeads, markNotified } = useQueueLeads();
-  const { getCurrentUserOpenCaixa } = useCaixas();
+  const { getCurrentUserOpenCaixa, openCaixaAsync } = useCaixas();
   const { createComandaAsync } = useComandas();
   useQueueRealtime();
   useQueueNotificationCheck();
@@ -56,11 +56,16 @@ export default function Fila() {
   const handleAssignProfessional = async (professionalId: string) => {
     if (!selectedEntry || !salonId) return;
     try {
-      // 0. Check for open caixa
-      const openCaixa = await getCurrentUserOpenCaixa();
+      // 0. Get or auto-open caixa
+      let openCaixa = await getCurrentUserOpenCaixa();
       if (!openCaixa) {
-        toast({ title: "Abra um caixa antes de atender", description: "Vá em Financeiro e abra um caixa primeiro.", variant: "destructive" });
-        return;
+        toast({ title: "Abrindo caixa automaticamente..." });
+        const newCaixa = await openCaixaAsync({ opening_balance: 0 });
+        openCaixa = newCaixa;
+        if (!openCaixa) {
+          toast({ title: "Erro ao abrir caixa", variant: "destructive" });
+          return;
+        }
       }
 
       // 1. Find or create client by phone
