@@ -1,0 +1,20 @@
+-- Add new columns to clients table for complete registration
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS gender text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS cpf text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS rg text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS cep text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS state text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS city text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS neighborhood text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS address text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS address_number text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS address_complement text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS how_met text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS profession text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS phone_landline text;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS allow_email_campaigns boolean DEFAULT true;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS allow_sms_campaigns boolean DEFAULT true;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS allow_online_booking boolean DEFAULT true;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS add_cpf_invoice boolean DEFAULT true;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS allow_ai_service boolean DEFAULT true;
+ALTER TABLE public.clients ADD COLUMN IF NOT EXISTS allow_whatsapp_campaigns boolean DEFAULT true;

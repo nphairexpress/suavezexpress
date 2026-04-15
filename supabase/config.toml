@@ -1,0 +1,28 @@
+project_id = "fzxpyslpykvqifmirezn"
+
+[functions.create-professional-access]
+verify_jwt = false
+
+[functions.create-salon]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.email-cron]
+verify_jwt = false
+
+[functions.resend-webhook]
+verify_jwt = false
+
+[functions.save-setup-config]
+verify_jwt = false
+
+[functions.webhook-agent]
+verify_jwt = false
+
+[functions.api-gateway]
+verify_jwt = false
+
+[functions.setup-schema]
+verify_jwt = false
