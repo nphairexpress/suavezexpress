@@ -35,7 +35,7 @@ import {
 import {
   Shield, Users, Settings, MoreHorizontal, Trash2, Loader2, Building2,
   CreditCard, Plus, Pencil, Landmark, ArrowRightLeft, Lock, Cog, UserCog,
-  Save, Calendar, Clock, ToggleLeft, ChevronRight, Home, DollarSign, Percent, Package, Webhook, Globe, Mail, ShieldAlert
+  Save, Calendar, Clock, ToggleLeft, ChevronRight, Home, DollarSign, Percent, Package, Webhook, Globe, Mail, ShieldAlert, ListOrdered
 } from "lucide-react";
 import { CommissionSettingsPage } from "@/components/settings/CommissionSettingsPage";
 import { useAuth, AppRole } from "@/contexts/AuthContext";
@@ -61,6 +61,7 @@ import { WebhookSettingsSection } from "@/components/settings/WebhookSettingsSec
 import { ApiGatewaySettingsSection } from "@/components/settings/ApiGatewaySettingsSection";
 import { ResendSettingsSection } from "@/components/settings/ResendSettingsSection";
 import { AuditLogSection } from "@/components/settings/AuditLogSection";
+import { QueueSettingsSection } from "@/components/settings/QueueSettingsSection";
 
 const SPECIALTIES = [
   { value: "cabeleireiro", label: "Cabeleireiro(a)" },
@@ -591,6 +592,7 @@ export default function Configuracoes() {
     if (path.startsWith("/configuracoes/api")) return "api";
     if (path.startsWith("/configuracoes/email")) return "email";
     if (path.startsWith("/configuracoes/auditoria")) return "auditoria";
+    if (path.startsWith("/configuracoes/fila")) return "fila";
     if (path.startsWith("/configuracoes/salao")) return "hub";
     return "hub";
   })();
@@ -736,6 +738,12 @@ export default function Configuracoes() {
                 title="E-mails Automáticos"
                 description="Configure o Resend para envio de e-mails automáticos aos clientes"
                 onClick={() => navigate("/configuracoes/email")}
+              />
+              <SettingsCard
+                icon={ListOrdered}
+                title="Fila Digital"
+                description="Configure fila online, pagamentos, notificações e integrações"
+                onClick={() => navigate("/configuracoes/fila")}
               />
               {isMaster && (
                 <SettingsCard
@@ -1223,6 +1231,15 @@ export default function Configuracoes() {
           <>
             <SettingsBreadcrumb label="Auditoria" />
             <AuditLogSection />
+          </>
+        )}
+
+        {/* ===== FILA DIGITAL ===== */}
+        {subPage === "fila" && (
+          <>
+            <SettingsBreadcrumb label="Fila Digital" />
+            <h1 className="text-2xl font-bold tracking-tight">Fila Digital</h1>
+            <QueueSettingsSection />
           </>
         )}
       </div>
