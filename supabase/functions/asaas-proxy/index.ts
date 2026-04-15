@@ -31,7 +31,7 @@ serve(async (req) => {
     if (!settings?.asaas_api_key) {
       return new Response(
         JSON.stringify({ error: "Asaas API key not configured" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -64,7 +64,7 @@ serve(async (req) => {
         } else {
           return new Response(
             JSON.stringify({ error: result.errors[0]?.description || "Erro ao criar cliente" }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
       }
@@ -86,7 +86,7 @@ serve(async (req) => {
       if (result.errors) {
         return new Response(
           JSON.stringify({ error: result.errors[0]?.description || "Erro no pagamento" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     } else if (action === "createCardPayment") {
@@ -122,7 +122,7 @@ serve(async (req) => {
       if (result.errors) {
         return new Response(
           JSON.stringify({ error: result.errors[0]?.description || "Erro no pagamento com cartão" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
     } else if (action === "getPixQrCode") {
@@ -139,7 +139,7 @@ serve(async (req) => {
     } else {
       return new Response(
         JSON.stringify({ error: "Invalid action" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -149,7 +149,7 @@ serve(async (req) => {
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
