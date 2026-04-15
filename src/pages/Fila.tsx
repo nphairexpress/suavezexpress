@@ -29,7 +29,7 @@ export default function Fila() {
   const { toast } = useToast();
   const { entries, stats, addToQueue, checkIn, assignProfessional, skip, remove, reorder } = useQueue();
   const { pendingLeads, notifiedLeads, markNotified } = useQueueLeads();
-  const { getCurrentUserOpenCaixa, openCaixaAsync, updateCaixaTotals } = useCaixas();
+  const { getCurrentUserOpenCaixa, openCaixaAsync, updateCaixaTotalsAsync } = useCaixas();
   const { createComandaAsync } = useComandas();
   useQueueRealtime();
   useQueueNotificationCheck();
@@ -149,14 +149,17 @@ export default function Fila() {
             net_amount: selectedEntry.service.price,
           });
 
-          // Mark comanda as paid
+          // Mark comanda as paid and closed
           await supabase
             .from("comandas")
-            .update({ is_paid: true })
+            .update({
+              is_paid: true,
+              closed_at: new Date().toISOString(),
+            })
             .eq("id", comanda.id);
 
           // 6. Update caixa totals
-          updateCaixaTotals({
+          await updateCaixaTotalsAsync({
             caixaId: openCaixa.id,
             paymentMethod: payMethod,
             amount: selectedEntry.service.price,

@@ -354,6 +354,7 @@ export function useCaixas() {
     reopenCaixa: reopenCaixaMutation.mutate,
     updateCaixa: updateCaixaMutation.mutate,
     updateCaixaTotals: updateCaixaTotalsMutation.mutate,
+    updateCaixaTotalsAsync: updateCaixaTotalsMutation.mutateAsync,
     recalculateCaixaTotals: recalculateCaixaTotalsMutation.mutate,
     getCurrentUserOpenCaixa,
     getCaixasByDate,
