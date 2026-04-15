@@ -9,6 +9,7 @@ import { Plus, Users, Clock, UserCheck, Bell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueue } from "@/hooks/useQueue";
 import { useQueueLeads } from "@/hooks/useQueueLeads";
+import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQueueRealtime } from "@/hooks/useQueueRealtime";
 import { useComandas } from "@/hooks/useComandas";
 import { useToast } from "@/hooks/use-toast";
@@ -53,13 +54,84 @@ export default function Fila() {
   const handleAssignProfessional = async (professionalId: string) => {
     if (!selectedEntry || !salonId) return;
     try {
+      // 1. Find or create client by phone
+      let clientId = selectedEntry.customer_id;
+      if (!clientId && selectedEntry.customer_phone) {
+        const cleanPhone = selectedEntry.customer_phone.replace(/\D/g, "");
+        const { data: existingClient } = await supabase
+          .from("clients")
+          .select("id")
+          .eq("salon_id", salonId)
+          .or(`phone.eq.${cleanPhone},phone.eq.${selectedEntry.customer_phone}`)
+          .limit(1)
+          .maybeSingle();
+
+        if (existingClient) {
+          clientId = existingClient.id;
+        } else {
+          const { data: newClient } = await supabase
+            .from("clients")
+            .insert({
+              salon_id: salonId,
+              name: selectedEntry.customer_name,
+              phone: cleanPhone,
+              email: selectedEntry.customer_email || null,
+            })
+            .select("id")
+            .single();
+          clientId = newClient?.id || null;
+        }
+
+        // Update queue entry with client_id
+        if (clientId) {
+          await supabase
+            .from("queue_entries")
+            .update({ customer_id: clientId })
+            .eq("id", selectedEntry.id);
+        }
+      }
+
+      // 2. Assign professional in queue (moves to in_service)
       await assignProfessional({ entryId: selectedEntry.id, professionalId });
-      const comanda = await createComandaAsync({ client_id: selectedEntry.customer_id, professional_id: professionalId });
+
+      // 3. Create comanda linked to client
+      const comanda = await createComandaAsync({
+        client_id: clientId,
+        professional_id: professionalId,
+      });
+
+      // 4. Add the service as comanda item
+      if (comanda?.id && selectedEntry.service) {
+        await supabase.from("comanda_items").insert({
+          comanda_id: comanda.id,
+          service_id: selectedEntry.service_id,
+          professional_id: professionalId,
+          description: selectedEntry.service.name,
+          item_type: "service",
+          quantity: 1,
+          unit_price: selectedEntry.service.price,
+          total_price: selectedEntry.service.price,
+        });
+
+        // Update comanda totals
+        await supabase
+          .from("comandas")
+          .update({
+            subtotal: selectedEntry.service.price,
+            total: selectedEntry.service.price,
+          })
+          .eq("id", comanda.id);
+      }
+
       toast({ title: "Comanda aberta!" });
+
+      // 5. Navigate to comanda
       if (comanda?.id) {
         navigate(`/comandas?comanda=${comanda.id}&edit=true`);
       }
-    } catch { toast({ title: "Erro ao atribuir", variant: "destructive" }); }
+    } catch (err) {
+      toast({ title: "Erro ao atribuir", variant: "destructive" });
+    }
   };
 
   const handleSkip = (entry: QueueEntry) => {
