@@ -10,6 +10,7 @@ import {
   Settings,
   Scissors,
   Gift,
+  ListOrdered,
 } from "lucide-react";
 
 interface NavItem {
@@ -20,12 +21,17 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { 
-    title: "Agenda", 
-    url: "/agenda", 
+  {
+    title: "Agenda",
+    url: "/agenda",
     icon: Calendar,
   },
-  { 
+  {
+    title: "Fila",
+    url: "/fila-admin",
+    icon: ListOrdered,
+  },
+  {
     title: "Financeiro", 
     url: "/financeiro", 
     icon: DollarSign,
