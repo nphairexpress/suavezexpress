@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import AppLayoutNew from "@/components/layout/AppLayoutNew";
+import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
