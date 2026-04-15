@@ -78,6 +78,60 @@ export async function createAsaasPayment(
   };
 }
 
+export interface CardPaymentInput {
+  customerName: string;
+  customerCpfCnpj: string;
+  customerPhone: string;
+  customerEmail?: string;
+  value: number;
+  description: string;
+  externalReference: string;
+  cardHolderName: string;
+  cardNumber: string;
+  cardExpiryMonth: string;
+  cardExpiryYear: string;
+  cardCcv: string;
+  holderPostalCode: string;
+  holderAddressNumber: string;
+}
+
+export async function createAsaasCardPayment(
+  salonId: string,
+  input: CardPaymentInput
+): Promise<{ id: string; status: string }> {
+  // Step 1: Create customer
+  const customer = await callAsaasProxy(salonId, "createCustomer", {
+    name: input.customerName,
+    cpfCnpj: input.customerCpfCnpj,
+    phone: input.customerPhone,
+    email: input.customerEmail,
+  });
+
+  const customerId = customer.id;
+  if (!customerId) throw new Error("Falha ao criar cliente no Asaas");
+
+  // Step 2: Create card payment
+  const payment = await callAsaasProxy(salonId, "createCardPayment", {
+    customerId,
+    value: input.value,
+    description: input.description,
+    externalReference: input.externalReference,
+    cardHolderName: input.cardHolderName,
+    cardNumber: input.cardNumber.replace(/\D/g, ""),
+    cardExpiryMonth: input.cardExpiryMonth,
+    cardExpiryYear: input.cardExpiryYear,
+    cardCcv: input.cardCcv,
+    holderName: input.customerName,
+    holderCpf: input.customerCpfCnpj,
+    holderPhone: input.customerPhone,
+    holderEmail: input.customerEmail,
+    holderPostalCode: input.holderPostalCode.replace(/\D/g, ""),
+    holderAddressNumber: input.holderAddressNumber,
+  });
+
+  return { id: payment.id, status: payment.status };
+}
+
 export async function getAsaasPaymentStatus(salonId: string, paymentId: string): Promise<string> {
   const result = await callAsaasProxy(salonId, "getPaymentStatus", { paymentId });
   return result.status;

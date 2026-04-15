@@ -89,6 +89,42 @@ serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+    } else if (action === "createCardPayment") {
+      const res = await fetch(`${ASAAS_BASE_URL}/payments`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          customer: data.customerId,
+          billingType: "CREDIT_CARD",
+          value: data.value,
+          description: data.description,
+          externalReference: data.externalReference,
+          dueDate: new Date().toISOString().split("T")[0],
+          creditCard: {
+            holderName: data.cardHolderName,
+            number: data.cardNumber,
+            expiryMonth: data.cardExpiryMonth,
+            expiryYear: data.cardExpiryYear,
+            ccv: data.cardCcv,
+          },
+          creditCardHolderInfo: {
+            name: data.holderName,
+            cpfCnpj: data.holderCpf,
+            phone: data.holderPhone,
+            email: data.holderEmail || undefined,
+            postalCode: data.holderPostalCode,
+            addressNumber: data.holderAddressNumber,
+          },
+        }),
+      });
+      result = await res.json();
+
+      if (result.errors) {
+        return new Response(
+          JSON.stringify({ error: result.errors[0]?.description || "Erro no pagamento com cartão" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     } else if (action === "getPixQrCode") {
       const res = await fetch(`${ASAAS_BASE_URL}/payments/${data.paymentId}/pixQrCode`, {
         headers,
