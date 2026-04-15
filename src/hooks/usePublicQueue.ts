@@ -109,6 +109,38 @@ export function usePublicQueue() {
     activeProfessionals,
   };
 
+  const findOrCreateClient = async (name: string, phone: string, email?: string): Promise<string | null> => {
+    if (!salonId) return null;
+
+    // Clean phone: keep only digits
+    const cleanPhone = phone.replace(/\D/g, "");
+
+    // Try to find existing client by phone
+    const { data: existing } = await supabase
+      .from("clients")
+      .select("id")
+      .eq("salon_id", salonId)
+      .or(`phone.eq.${cleanPhone},phone.eq.${phone}`)
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) return existing.id;
+
+    // Create new client
+    const { data: newClient } = await supabase
+      .from("clients")
+      .insert({
+        salon_id: salonId,
+        name,
+        phone: cleanPhone,
+        email: email || null,
+      })
+      .select("id")
+      .single();
+
+    return newClient?.id || null;
+  };
+
   const addToQueue = async (input: {
     customer_name: string;
     customer_phone: string;
@@ -118,6 +150,13 @@ export function usePublicQueue() {
     payment_id?: string;
   }) => {
     if (!salonId) throw new Error("Salon not found");
+
+    // Find or create client in CRM
+    const customerId = await findOrCreateClient(
+      input.customer_name,
+      input.customer_phone,
+      input.customer_email
+    );
 
     // Get next position
     const { data: lastEntry } = await supabase
@@ -134,6 +173,7 @@ export function usePublicQueue() {
       .from("queue_entries")
       .insert({
         salon_id: salonId,
+        customer_id: customerId,
         customer_name: input.customer_name,
         customer_phone: input.customer_phone,
         customer_email: input.customer_email || null,
