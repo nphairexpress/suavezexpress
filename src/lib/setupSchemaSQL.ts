@@ -1203,7 +1203,9 @@ ALTER TABLE customer_credits ENABLE ROW LEVEL SECURITY;
 ALTER TABLE queue_settings ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY queue_entries_salon ON queue_entries FOR ALL USING (salon_id IN (SELECT salon_id FROM profiles WHERE id = auth.uid()));
-CREATE POLICY queue_leads_salon ON queue_leads FOR ALL USING (salon_id IN (SELECT salon_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY queue_leads_salon ON queue_leads FOR SELECT USING (salon_id IN (SELECT salon_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY queue_leads_update ON queue_leads FOR UPDATE USING (salon_id IN (SELECT salon_id FROM profiles WHERE id = auth.uid()));
+CREATE POLICY queue_leads_delete ON queue_leads FOR DELETE USING (salon_id IN (SELECT salon_id FROM profiles WHERE id = auth.uid()));
 CREATE POLICY customer_credits_salon ON customer_credits FOR ALL USING (salon_id IN (SELECT salon_id FROM profiles WHERE id = auth.uid()));
 CREATE POLICY queue_settings_salon ON queue_settings FOR ALL USING (salon_id IN (SELECT salon_id FROM profiles WHERE id = auth.uid()));
 
