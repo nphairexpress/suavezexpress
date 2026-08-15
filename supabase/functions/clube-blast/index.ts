@@ -25,20 +25,19 @@ function buildEmail(nome: string, source: string) {
   const utm = `utm_source=email&utm_medium=email&utm_campaign=clube_base_ago26&utm_content=${source}`;
   const link = `https://www.nphairexpress.com.br/clube/apresentacao/?${utm}`;
   const oi = nome ? `Oi, ${esc(nome)}.` : "Oi!";
-  const subject = nome ? `${nome}, sobram R$ 111 no seu bolso todo mês` : "Sobram R$ 111 no seu bolso todo mês";
-  const preheader = "A gente fez a conta da sua escova. Ela está aqui dentro.";
+  const subject = nome ? `${nome}, vai sobrar R$ 111 na sua conta todo mês` : "Vai sobrar R$ 111 na sua conta todo mês";
+  const preheader = "A gente fez a conta da sua escova no salão, ela está aqui dentro.";
   const html = `
 <div style="display:none;max-height:0;overflow:hidden;opacity:0">${preheader}</div>
 <div style="background:#faf7f2;padding:32px 16px">
   <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;padding:36px 30px;font-family:Georgia,'Times New Roman',serif;color:#2b2622;line-height:1.65;font-size:16px">
     <p style="margin:0 0 18px">${oi}</p>
-    <p style="margin:0 0 18px">A gente fez uma conta aqui no salão que mudou a semana de muitas clientes. Uma escova avulsa custa R$ 77. Uma por semana, no fim do mês, são <b>R$ 308</b>.</p>
-    <p style="margin:0 0 18px">Por isso criamos o <b>Clube da Escova</b>: as mesmas 4 escovas por <b>R$ 197</b> no mês. Cada uma sai por R$ 49 — e sobram <b style="color:#c47f00">R$ 111 no seu bolso, todo mês</b>. Sem fidelidade, sem hora marcada: você chega, entra na fila pelo celular e sai pronta.</p>
-    <p style="margin:0 0 24px">Preparamos uma página curtinha mostrando a conta inteira e como funciona:</p>
+    <p style="margin:0 0 18px">A gente fez uma conta aqui no salão — daquelas de papel e caneta mesmo — e o resultado surpreendeu até a gente: dá pra sobrar <b>R$ 111 na sua conta, todo mês</b>, sem você abrir mão de estar com o cabelo pronto toda semana.</p>
+    <p style="margin:0 0 24px">Como? Isso a gente preparou pra te mostrar do jeito certo, numa apresentação de 1 minuto — desliza igual story:</p>
     <p style="margin:0 0 26px;text-align:center">
-      <a href="${link}" style="display:inline-block;background:#F7A100;color:#17120f;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-weight:bold;font-size:16px;padding:14px 30px;border-radius:99px">Ver a conta completa</a>
+      <a href="${link}" style="display:inline-block;background:#F7A100;color:#17120f;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-weight:bold;font-size:16px;padding:14px 30px;border-radius:99px">Ver a apresentação</a>
     </p>
-    <p style="margin:0 0 18px;font-size:15px;color:#6b6257">Se fizer sentido pra você, dá pra assinar online em um minuto — e a assinatura já fica <b>ativa no sistema na hora</b>, valendo no seu próximo dia de atendimento. O primeiro lote tem 30 vagas.</p>
+    <p style="margin:0 0 18px;font-size:15px;color:#6b6257">Vale o minuto. Depois me conta o que achou.</p>
     <p style="margin:0">Um beijo,<br/>equipe NP Hair Express</p>
   </div>
   <p style="max-width:520px;margin:18px auto 0;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#a09786;line-height:1.6">
