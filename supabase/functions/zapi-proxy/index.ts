@@ -18,6 +18,9 @@ import { requireStaff } from "../_shared/auth.ts";
 
 const EVO_BASE = (Deno.env.get("QUEUE_EVOLUTION_URL") ?? "http://72.60.6.168:8082").replace(/\/$/, "");
 const EVO_INSTANCE = Deno.env.get("QUEUE_EVOLUTION_INSTANCE") ?? "maia-express";
+// A instância acima pertence ao NP Hair Express — nunca enviar por ela em nome
+// de outro salão (deploy é single-tenant, mas a guarda fica).
+const EVO_SALON_ID = Deno.env.get("QUEUE_EVOLUTION_SALON_ID") ?? "9793948a-e208-4054-a4df-4b8f2b3b3965";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,6 +59,10 @@ Deno.serve(async (req) => {
       if (!salonId) return json({ error: "salonId obrigatório para service_role" }, 400);
     }
 
+    if (salonId !== EVO_SALON_ID) {
+      return json({ sent: false, error: "Canal de envio não configurado para este salão" }, 200);
+    }
+
     const evoKey = Deno.env.get("EVOLUTION_KEY") ?? "";
     if (!evoKey) {
       console.error("zapi-proxy: EVOLUTION_KEY ausente — aviso NÃO enviado");
@@ -73,7 +80,7 @@ Deno.serve(async (req) => {
 
     const result = await res.json().catch(() => ({}));
     const sent = res.ok;
-    if (!sent) console.error("zapi-proxy: Evolution falhou", res.status, JSON.stringify(result).slice(0, 300));
+    if (!sent) console.error("zapi-proxy: Evolution falhou, HTTP", res.status);
     return json({ sent, status: res.status, result }, 200);
   } catch (error) {
     console.error("zapi-proxy error:", error);
