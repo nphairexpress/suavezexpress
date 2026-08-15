@@ -16,6 +16,11 @@ const EVO_BASE = (Deno.env.get("QUEUE_EVOLUTION_URL") ?? "http://72.60.6.168:808
 const EVO_INSTANCE = Deno.env.get("QUEUE_EVOLUTION_INSTANCE") ?? "maia-express";
 const OWNER_EMAIL = Deno.env.get("QUEUE_LEADS_EMAIL") ?? "npimagens@gmail.com";
 
+// lead.name/phone vêm de formulário PÚBLICO anônimo — escapar antes de pôr no HTML do e-mail
+const esc = (s: unknown) => String(s ?? "")
+  .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 }
@@ -137,15 +142,15 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: "Fila NP Hair Express <clube@nphairexpress.com.br>",
             to: [OWNER_EMAIL],
-            subject: `🔔 Lead da fila — ${String(lead.name ?? "").split(" ")[0] || "cliente"} pediu aviso`,
+            subject: `🔔 Lead da fila — ${esc(String(lead.name ?? "").split(" ")[0]) || "cliente"} pediu aviso`,
             html: `
               <div style="font-family:system-ui,Arial;max-width:520px;margin:0 auto;padding:20px;color:#1f2937">
                 <h2 style="color:#F7A100;margin:0 0 6px">Cliente pediu pra ser avisada da fila</h2>
                 <p>Ela olhou a fila, achou grande e deixou o contato. Chama quando a fila estiver com até <b>${lead.max_queue_size}</b> pessoas:</p>
                 <table style="font-size:15px;line-height:1.9">
-                  <tr><td><b>Nome:</b></td><td>${lead.name ?? "—"}</td></tr>
-                  <tr><td><b>WhatsApp:</b></td><td>${lead.phone ?? "—"}</td></tr>
-                  <tr><td><b>Avisar com fila ≤</b></td><td>${lead.max_queue_size} pessoas</td></tr>
+                  <tr><td><b>Nome:</b></td><td>${esc(lead.name) || "—"}</td></tr>
+                  <tr><td><b>WhatsApp:</b></td><td>${esc(lead.phone) || "—"}</td></tr>
+                  <tr><td><b>Avisar com fila ≤</b></td><td>${esc(lead.max_queue_size)} pessoas</td></tr>
                   <tr><td><b>Pedido em:</b></td><td>${quando}</td></tr>
                 </table>
                 ${wa ? `<p style="margin-top:16px"><a href="${wa}" style="background:#25D366;color:#fff;text-decoration:none;padding:12px 24px;border-radius:50px;font-weight:bold">Chamar no WhatsApp</a></p>` : ""}
