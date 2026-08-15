@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
             html: `
               <div style="font-family:system-ui,Arial;max-width:520px;margin:0 auto;padding:20px;color:#1f2937">
                 <h2 style="color:#F7A100;margin:0 0 6px">Cliente pediu pra ser avisada da fila</h2>
-                <p>Ela olhou a fila, achou grande e deixou o contato. Chama quando a fila estiver com até <b>${lead.max_queue_size}</b> pessoas:</p>
+                <p>Ela olhou a fila, achou grande e deixou o contato. Chama quando a fila estiver com até <b>${esc(lead.max_queue_size)}</b> pessoas:</p>
                 <table style="font-size:15px;line-height:1.9">
                   <tr><td><b>Nome:</b></td><td>${esc(lead.name) || "—"}</td></tr>
                   <tr><td><b>WhatsApp:</b></td><td>${esc(lead.phone) || "—"}</td></tr>
