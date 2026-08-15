@@ -1,16 +1,23 @@
-// Envio de WhatsApp via Z-API — SÓ para staff autenticado do salão.
+// Envio de WhatsApp da FILA — hoje via Evolution v2 (instância do salão).
 //
-// SEGURANÇA (falha 4 corrigida):
-// - Antes: qualquer pessoa na internet mandava mensagem arbitrária em nome do
-//   salão. Agora: exige JWT válido de usuário com salão (ou service_role para
-//   chamadas server→server internas).
-// - O salonId NÃO vem do browser: é o salão do usuário autenticado.
-// - Segredos Z-API saem de salon_secrets (backend-only), não de queue_settings.
+// HISTÓRICO: nasceu como proxy da Z-API (salon_secrets.zapi_*). Em 15/08/2026 a
+// assinatura da Z-API expirou ("you must subscribe to this instance again") e
+// TODO aviso da fila morria calado — a função devolvia o erro da Z-API com
+// HTTP 200 e os callers marcavam notify_sent=true sem nada ter chegado.
+// Transporte trocado para a Evolution v2 da VPS, instância `maia-express`
+// (o número 19 99009-1315 do próprio salão, mesmo canal web da Maia).
+// Nome e contrato da função mantidos: todos os callers continuam iguais.
+//
+// SEGURANÇA: exige JWT válido de usuário com salão (ou service_role para
+// chamadas server→server internas). O salonId NÃO vem do browser.
 //
 // Deploy: npx supabase functions deploy zapi-proxy --no-verify-jwt \
 //           --project-ref ewxiaxsmohxuabcmxuyc
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getSalonSecrets, requireStaff } from "../_shared/auth.ts";
+import { requireStaff } from "../_shared/auth.ts";
+
+const EVO_BASE = (Deno.env.get("QUEUE_EVOLUTION_URL") ?? "http://72.60.6.168:8082").replace(/\/$/, "");
+const EVO_INSTANCE = Deno.env.get("QUEUE_EVOLUTION_INSTANCE") ?? "maia-express";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -49,30 +56,25 @@ Deno.serve(async (req) => {
       if (!salonId) return json({ error: "salonId obrigatório para service_role" }, 400);
     }
 
-    const secrets = await getSalonSecrets(supa, salonId);
-    if (!secrets?.zapi_instance_id || !secrets?.zapi_token) {
-      return json({ error: "Z-API not configured" }, 200);
+    const evoKey = Deno.env.get("EVOLUTION_KEY") ?? "";
+    if (!evoKey) {
+      console.error("zapi-proxy: EVOLUTION_KEY ausente — aviso NÃO enviado");
+      return json({ sent: false, error: "EVOLUTION_KEY not configured" }, 200);
     }
 
     const cleanPhone = String(phone).replace(/\D/g, "");
     const fullPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
 
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (secrets.zapi_client_token) {
-      headers["Client-Token"] = secrets.zapi_client_token;
-    }
+    const res = await fetch(`${EVO_BASE}/message/sendText/${EVO_INSTANCE}`, {
+      method: "POST",
+      headers: { "apikey": evoKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ number: fullPhone, delay: 1200, text: String(message) }),
+    });
 
-    const res = await fetch(
-      `https://api.z-api.io/instances/${secrets.zapi_instance_id}/token/${secrets.zapi_token}/send-text`,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ phone: fullPhone, message: String(message) }),
-      },
-    );
-
-    const result = await res.json();
-    return json(result, 200);
+    const result = await res.json().catch(() => ({}));
+    const sent = res.ok;
+    if (!sent) console.error("zapi-proxy: Evolution falhou", res.status, JSON.stringify(result).slice(0, 300));
+    return json({ sent, status: res.status, result }, 200);
   } catch (error) {
     console.error("zapi-proxy error:", error);
     return json({ error: "Erro interno" }, 500);
