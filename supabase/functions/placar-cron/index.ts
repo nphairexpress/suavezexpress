@@ -62,7 +62,7 @@ async function metricas(supa: any, de: string, ate: string) {
 
   // Clube: assinaturas ativas
   const { count: clube } = await supa.from("clube_assinantes")
-    .select("id", { count: "exact", head: true }).eq("status", "active");
+    .select("id", { count: "exact", head: true }).eq("status", "ativo");
 
   return { bruto, n, ticket, clientes: clientes.length, novas, voltaram: clientes.length - novas, clube: clube ?? 0 };
 }
