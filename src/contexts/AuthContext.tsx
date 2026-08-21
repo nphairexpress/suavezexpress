@@ -62,6 +62,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.user) {
           setTimeout(() => {
             fetchUserSalonId(session.user.id);
+            // A RLS de system_config só libera SELECT pra authenticated: o fetch
+            // do mount roda antes da sessão restaurar (sai como anon e volta vazio),
+            // deixando o default hardcoded — refaz aqui, já autenticado.
+            fetchMasterEmail();
           }, 0);
         } else {
           setSalonId(null);
