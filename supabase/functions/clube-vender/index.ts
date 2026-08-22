@@ -78,6 +78,17 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (!Deno.env.get("ASAAS_KEY")) return json({ ok: false, erro: "Pagamento indisponível (chave ausente)." }, 500);
 
+  // verify_jwt aceita também a anon key — aqui exigimos USUÁRIO logado
+  // (role "authenticated" no JWT), senão o endpoint viraria alvo de teste
+  // de cartão roubado por qualquer um com a anon key do bundle.
+  try {
+    const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    if (payload.role !== "authenticated") return json({ ok: false, erro: "Não autorizado." }, 401);
+  } catch (_) {
+    return json({ ok: false, erro: "Não autorizado." }, 401);
+  }
+
   let e: Record<string, unknown>;
   try { e = await req.json(); } catch (_) { return json({ ok: false, erro: "Requisição inválida." }, 400); }
 
