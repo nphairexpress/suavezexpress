@@ -12,7 +12,6 @@
 // Deploy: npx supabase functions deploy clube-otp --no-verify-jwt \
 //           --project-ref ewxiaxsmohxuabcmxuyc
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { getSalonSecrets } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -74,15 +73,15 @@ Deno.serve(async (req) => {
       return json({ ok: false, erro: "muitas_tentativas" }, 429);
     }
 
-    // Z-API do salão (cofre backend-only) — sem ela, falha fechada.
-    const { data: salon } = await supa
-      .from("salons").select("id").order("created_at").limit(1).maybeSingle();
-    if (!salon?.id) return json({ ok: false, erro: "indisponivel" }, 503);
-    const secrets = await getSalonSecrets(supa, salon.id);
-    if (!secrets?.zapi_instance_id || !secrets?.zapi_token) {
-      console.error("clube-otp: Z-API não configurada — OTP indisponível");
+    // Transporte WhatsApp = Evolution `maia-express` (Z-API aposentada em
+    // 21/08/2026). Sem a key, falha fechada.
+    const evoKey = Deno.env.get("EVOLUTION_KEY") ?? "";
+    if (!evoKey) {
+      console.error("clube-otp: EVOLUTION_KEY ausente — OTP indisponível");
       return json({ ok: false, erro: "otp_indisponivel" }, 503);
     }
+    const evoBase = (Deno.env.get("QUEUE_EVOLUTION_URL") ?? "http://72.60.6.168:8082").replace(/\/$/, "");
+    const evoInstance = Deno.env.get("QUEUE_EVOLUTION_INSTANCE") ?? "maia-express";
 
     // Gera código, grava HASH (sha256(codigo || id da linha))
     const code = String(Math.floor(100000 + Math.random() * 900000));
@@ -100,23 +99,19 @@ Deno.serve(async (req) => {
     const hash = await sha256Hex(code + otpRow.id);
     await supa.from("clube_otp").update({ code_hash: hash }).eq("id", otpRow.id);
 
-    // Envia via Z-API
+    // Envia via Evolution
     const fullPhone = digits.startsWith("55") ? digits : `55${digits}`;
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (secrets.zapi_client_token) headers["Client-Token"] = secrets.zapi_client_token;
-    const res = await fetch(
-      `https://api.z-api.io/instances/${secrets.zapi_instance_id}/token/${secrets.zapi_token}/send-text`,
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          phone: fullPhone,
-          message: `Seu código do Clube da Escova: ${code}\nVale por 5 minutos. Se não foi você, ignore.`,
-        }),
-      },
-    );
+    const res = await fetch(`${evoBase}/message/sendText/${evoInstance}`, {
+      method: "POST",
+      headers: { apikey: evoKey, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        number: fullPhone,
+        delay: 1200,
+        text: `Seu código do Clube da Escova: ${code}\nVale por 5 minutos. Se não foi você, ignore.`,
+      }),
+    });
     if (!res.ok) {
-      console.error("clube-otp: envio Z-API falhou", res.status);
+      console.error("clube-otp: envio Evolution falhou", res.status);
       // invalida o OTP que não foi entregue
       await supa.from("clube_otp").update({ used: true }).eq("id", otpRow.id);
       return json({ ok: false, erro: "envio_falhou" }, 502);

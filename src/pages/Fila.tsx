@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Users, Clock, UserCheck, Bell } from "lucide-react";
+import { Plus, Users, Clock, UserCheck, Bell, Crown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueue } from "@/hooks/useQueue";
 import { useQueueLeads } from "@/hooks/useQueueLeads";
@@ -16,6 +16,7 @@ import { useCaixas } from "@/hooks/useCaixas";
 import { useToast } from "@/hooks/use-toast";
 import { QueueCard } from "@/components/queue/QueueCard";
 import { AddWalkInModal } from "@/components/queue/AddWalkInModal";
+import { VenderClubeModal } from "@/components/clube/VenderClubeModal";
 import { AssignProfessionalModal } from "@/components/queue/AssignProfessionalModal";
 import { notifyQueueEntry, notifyLead } from "@/lib/queueNotifications";
 import type { QueueEntry } from "@/types/queue";
@@ -35,6 +36,7 @@ export default function Fila() {
   // — não depende mais desta tela estar aberta.
 
   const [walkInModalOpen, setWalkInModalOpen] = useState(false);
+  const [venderClubeOpen, setVenderClubeOpen] = useState(false);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<QueueEntry | null>(null);
 
@@ -327,9 +329,18 @@ export default function Fila() {
       <div className="p-4 md:p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Fila de Atendimento</h1>
-          <Button onClick={() => setWalkInModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />Adicionar presencial
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="border-amber-400 text-amber-600 hover:bg-amber-50"
+              onClick={() => setVenderClubeOpen(true)}
+            >
+              <Crown className="h-4 w-4 mr-2" />Vender Clube
+            </Button>
+            <Button onClick={() => setWalkInModalOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />Adicionar presencial
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
@@ -434,6 +445,7 @@ export default function Fila() {
         </Tabs>
       </div>
 
+      <VenderClubeModal open={venderClubeOpen} onClose={() => setVenderClubeOpen(false)} />
       <AddWalkInModal open={walkInModalOpen} onClose={() => setWalkInModalOpen(false)} onSubmit={handleAddWalkIn} />
       {selectedEntry && (
         <AssignProfessionalModal

@@ -66,33 +66,37 @@ serve(async (req) => {
       );
     }
 
-    // 3. Get Z-API credentials
+    // 3. Settings (reception_email pro e-mail abaixo). Z-API aposentada em
+    // 21/08/2026 — o WhatsApp sai pela Evolution `maia-express`, o mesmo
+    // transporte do queue-cron/placar.
     const { data: settings } = await supabase
       .from("queue_settings")
-      .select("zapi_instance_id, zapi_token, zapi_client_token, reception_email")
+      .select("reception_email")
       .eq("salon_id", salonId)
       .single();
 
-    // 4. Send WhatsApp
-    if (settings?.zapi_instance_id && settings?.zapi_token) {
+    // 4. Send WhatsApp (Evolution)
+    const evoKey = Deno.env.get("EVOLUTION_KEY") ?? "";
+    if (evoKey) {
+      const evoBase = (Deno.env.get("QUEUE_EVOLUTION_URL") ?? "http://72.60.6.168:8082").replace(/\/$/, "");
+      const evoInstance = Deno.env.get("QUEUE_EVOLUTION_INSTANCE") ?? "maia-express";
       const cleanPhone = next.customer_phone.replace(/\D/g, "");
       const fullPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
 
-      const zapiHeaders: Record<string, string> = { "Content-Type": "application/json" };
-      if (settings.zapi_client_token) {
-        zapiHeaders["Client-Token"] = settings.zapi_client_token;
-      }
-
       const message = `${next.customer_name}, voce e a proxima! Chegue ao NP Hair Express nos proximos 15 minutos.`;
 
-      await fetch(
-        `https://api.z-api.io/instances/${settings.zapi_instance_id}/token/${settings.zapi_token}/send-text`,
-        {
+      try {
+        const r = await fetch(`${evoBase}/message/sendText/${evoInstance}`, {
           method: "POST",
-          headers: zapiHeaders,
-          body: JSON.stringify({ phone: fullPhone, message }),
-        }
-      );
+          headers: { apikey: evoKey, "Content-Type": "application/json" },
+          body: JSON.stringify({ number: fullPhone, delay: 1200, text: message }),
+        });
+        if (!r.ok) console.error("queue-next: Evolution respondeu", r.status);
+      } catch (e) {
+        console.error("queue-next: falha no envio WhatsApp", String(e));
+      }
+    } else {
+      console.error("queue-next: EVOLUTION_KEY ausente — aviso de vez NAO enviado");
     }
 
     // 5. Send email
