@@ -38,6 +38,7 @@ const navItems: NavItem[] = [
     icon: DollarSign,
     subItems: [
       { title: "Caixas Abertos", url: "/financeiro" },
+      { title: "Clube da Escova", url: "/clube-admin" },
       { title: "Histórico de Caixas", url: "/financeiro/historico" },
       { title: "Comandas", url: "/comandas" },
       { title: "Comissões", url: "/financeiro/comissoes" },

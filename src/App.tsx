@@ -18,6 +18,7 @@ import { Profissionais } from "./pages/Profissionais";
 import Comandas from "./pages/Comandas";
 import AtendimentoTerminal from "./pages/AtendimentoTerminal";
 import Financeiro from "./pages/Financeiro";
+import ClubeAdmin from "./pages/ClubeAdmin";
 import Comissoes from "./pages/Comissoes";
 import Estoque from "./pages/Estoque";
 import Configuracoes from "./pages/Configuracoes";
@@ -126,6 +127,7 @@ function AppRoutes() {
         <Route path="/comandas/*" element={<ProtectedRoute><Comandas /></ProtectedRoute>} />
         <Route path="/atendimento" element={<ProtectedRoute><AtendimentoTerminal /></ProtectedRoute>} />
         <Route path="/financeiro" element={<ProtectedRoute><Financeiro /></ProtectedRoute>} />
+        <Route path="/clube-admin" element={<ProtectedRoute><ClubeAdmin /></ProtectedRoute>} />
         <Route path="/financeiro/*" element={<ProtectedRoute><Financeiro /></ProtectedRoute>} />
         <Route path="/comissoes" element={<ProtectedRoute><Comissoes /></ProtectedRoute>} />
         <Route path="/financeiro/comissoes" element={<ProtectedRoute><Comissoes /></ProtectedRoute>} />

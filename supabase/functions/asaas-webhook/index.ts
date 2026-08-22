@@ -210,6 +210,30 @@ async function handleClube(supa: any, event: string, payment: any): Promise<stri
     { onConflict: "assinante_id,competencia", ignoreDuplicates: true },
   );
 
+  // Mensalidade no financeiro do dia (income, categoria Clube da Escova).
+  // Idempotente pelo id do pagamento Asaas na descrição — retry do webhook não duplica.
+  try {
+    const descTx = `Clube da Escova — mensalidade ${reg.nome ?? "assinante"} (${payment.id})`;
+    const { data: jaTem } = await supa
+      .from("financial_transactions").select("id").like("description", `%(${payment.id})%`).limit(1);
+    if (!jaTem || jaTem.length === 0) {
+      const { data: salonTx } = await supa
+        .from("salons").select("id").order("created_at").limit(1).maybeSingle();
+      if (salonTx?.id) {
+        await supa.from("financial_transactions").insert({
+          salon_id: salonTx.id,
+          transaction_type: "income",
+          amount: payment.value,
+          description: descTx,
+          category: "Clube da Escova",
+          transaction_date: String(payment.paymentDate || payment.dueDate || new Date().toISOString()).slice(0, 10),
+        });
+      }
+    }
+  } catch (e) {
+    console.error("clube: lançamento financeiro falhou (não bloqueia):", e);
+  }
+
   // CAPI: Purchase server-side pro Meta (best-effort, não bloqueia o fluxo)
   const capiStatus = await sendMetaCapiPurchase(payment, reg, def);
 
