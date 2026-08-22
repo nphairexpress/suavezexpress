@@ -79,12 +79,28 @@ Deno.serve(async (req) => {
   if (!Deno.env.get("ASAAS_KEY")) return json({ ok: false, erro: "Pagamento indisponível (chave ausente)." }, 500);
 
   // verify_jwt aceita também a anon key — aqui exigimos USUÁRIO logado
-  // (role "authenticated" no JWT), senão o endpoint viraria alvo de teste
-  // de cartão roubado por qualquer um com a anon key do bundle.
+  // (role "authenticated" no JWT) E com papel na equipe (linha em user_roles),
+  // senão o endpoint viraria alvo de teste de cartão roubado por qualquer um
+  // com a anon key do bundle ou uma conta avulsa do projeto.
   try {
     const token = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
     const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
-    if (payload.role !== "authenticated") return json({ ok: false, erro: "Não autorizado." }, 401);
+    if (payload.role !== "authenticated" || !payload.sub) {
+      return json({ ok: false, erro: "Não autorizado." }, 401);
+    }
+    const check = await fetch(
+      `${Deno.env.get("SUPABASE_URL")}/rest/v1/user_roles?user_id=eq.${payload.sub}&select=role&limit=1`,
+      {
+        headers: {
+          apikey: Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""}`,
+        },
+      },
+    );
+    const papeis = check.ok ? await check.json() : [];
+    if (!Array.isArray(papeis) || papeis.length === 0) {
+      return json({ ok: false, erro: "Não autorizado." }, 401);
+    }
   } catch (_) {
     return json({ ok: false, erro: "Não autorizado." }, 401);
   }
