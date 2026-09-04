@@ -67,12 +67,19 @@ export default function Comandas() {
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [newClientName, setNewClientName] = useState("");
   const [viewClientId, setViewClientId] = useState<string | null>(null);
+  // Mês exibido na lista (yyyy-MM). Default = mês corrente; sem isso o hook
+  // só traz o mês atual e as comandas do mês anterior somem no dia 1º.
+  const [mes, setMes] = useState(format(new Date(), "yyyy-MM"));
 
   const { user, salonId, isMaster } = useAuth();
   const queryClient = useQueryClient();
   const comandaTargetDate = comandaDate ? new Date(comandaDate + "T12:00:00") : undefined;
   const { hasPendingCaixa, message: pendingCaixaMessage } = usePendingCaixaCheck(comandaTargetDate);
-  const { comandas, isLoading, createComanda, findOrCreateTodayComanda, isCreating } = useComandas();
+  const [mesAno, mesNum] = mes.split("-").map(Number);
+  const { comandas, isLoading, createComanda, findOrCreateTodayComanda, isCreating } = useComandas({
+    from: new Date(mesAno, mesNum - 1, 1),
+    to: new Date(mesAno, mesNum, 0, 23, 59, 59, 999),
+  });
   const { clients, createClient, updateClient } = useClients();
   const { professionals } = useProfessionals();
   const { services } = useServices();
@@ -579,6 +586,16 @@ export default function Comandas() {
               <FileText className="h-4 w-4" />
               PDF
             </Button>
+            <div className="flex items-center">
+              <span className="text-sm text-muted-foreground mr-2">Mês:</span>
+              <Input
+                type="month"
+                className="w-40 h-8"
+                value={mes}
+                max={format(new Date(), "yyyy-MM")}
+                onChange={(e) => { if (e.target.value) setMes(e.target.value); }}
+              />
+            </div>
             <div className="relative">
               <span className="text-sm text-muted-foreground mr-2">Buscar:</span>
               <Input 
