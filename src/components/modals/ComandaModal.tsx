@@ -482,10 +482,13 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
 
   const loadPayments = async () => {
     if (!comanda?.id) return;
+    // Pagamento anulado na reabertura NÃO conta: sem este filtro a tela mostrava
+    // o pagamento antigo como válido e deixava fechar de novo sem pagar (04/09).
     const { data } = await supabase
       .from("payments")
       .select("*")
-      .eq("comanda_id", comanda.id);
+      .eq("comanda_id", comanda.id)
+      .eq("voided", false);
     if (data) {
       setPayments(data.map(p => ({
         id: p.id,
