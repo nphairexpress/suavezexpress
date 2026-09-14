@@ -24,6 +24,11 @@ export function QueueSettingsSection() {
   const [cashbackPercent, setCashbackPercent] = useState("3");
   const [cashbackValidityDays, setCashbackValidityDays] = useState("15");
   const [cashbackMinPurchase, setCashbackMinPurchase] = useState("100");
+  const [openWeekdays, setOpenWeekdays] = useState<number[]>([2, 3, 4, 5, 6]);
+  const [openTime, setOpenTime] = useState("08:00");
+  const [closeTime, setCloseTime] = useState("18:00");
+  const [closedDates, setClosedDates] = useState("");
+  const [queuePaused, setQueuePaused] = useState(false);
 
   useEffect(() => {
     if (settings) {
@@ -35,6 +40,11 @@ export function QueueSettingsSection() {
       setZapiToken(settings.zapi_token || "");
       setZapiClientToken(settings.zapi_client_token || "");
       setAsaasApiKey(settings.asaas_api_key || "");
+      setOpenWeekdays(settings.open_weekdays ?? [2, 3, 4, 5, 6]);
+      setOpenTime((settings.open_time || "08:00").slice(0, 5));
+      setCloseTime((settings.close_time || "18:00").slice(0, 5));
+      setClosedDates((settings.closed_dates ?? []).join(", "));
+      setQueuePaused(!!settings.queue_paused);
     }
 
     // Load all cashback configs from system_config
@@ -64,6 +74,11 @@ export function QueueSettingsSection() {
       zapi_token: zapiToken || null,
       zapi_client_token: zapiClientToken || null,
       asaas_api_key: asaasApiKey || null,
+      open_weekdays: openWeekdays,
+      open_time: openTime,
+      close_time: closeTime,
+      closed_dates: closedDates.split(",").map((d) => d.trim()).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)),
+      queue_paused: queuePaused,
     });
 
     // Save all cashback configs
@@ -103,6 +118,44 @@ export function QueueSettingsSection() {
           <div>
             <Label>E-mail da recepcao (para alertas de leads)</Label>
             <Input type="email" value={receptionEmail} onChange={(e) => setReceptionEmail(e.target.value)} placeholder="recepcao@nphairexpress.com" />
+          </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader><CardTitle>Horario da fila online</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Fora desse horario a cliente nao consegue pagar a fila. Isso evita venda em dia de porta fechada.
+          </p>
+          <div>
+            <Label>Dias em que a fila abre</Label>
+            <div className="flex gap-1 mt-2">
+              {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((nome, dow) => {
+                const ativo = openWeekdays.includes(dow);
+                return (
+                  <Button key={dow} type="button" size="sm" variant={ativo ? "default" : "outline"}
+                    onClick={() => setOpenWeekdays((prev) => ativo ? prev.filter((d) => d !== dow) : [...prev, dow].sort())}>
+                    {nome}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label>Abre as</Label><Input type="time" value={openTime} onChange={(e) => setOpenTime(e.target.value)} /></div>
+            <div><Label>Fecha as</Label><Input type="time" value={closeTime} onChange={(e) => setCloseTime(e.target.value)} /></div>
+          </div>
+          <div>
+            <Label>Datas fechadas (feriado, emenda)</Label>
+            <Input value={closedDates} onChange={(e) => setClosedDates(e.target.value)} placeholder="2026-12-25, 2026-12-31" />
+            <p className="text-xs text-muted-foreground mt-1">No formato ANO-MES-DIA, separadas por virgula</p>
+          </div>
+          <div className="flex items-center justify-between pt-2 border-t">
+            <div className="space-y-0.5">
+              <Label>Fechar a fila agora</Label>
+              <p className="text-xs text-muted-foreground">Trava imediata, independente do horario. Lembre de desligar depois.</p>
+            </div>
+            <Switch checked={queuePaused} onCheckedChange={setQueuePaused} />
           </div>
         </CardContent>
       </Card>

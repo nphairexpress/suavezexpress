@@ -16,7 +16,7 @@ type Step = "service" | "data" | "payment" | "confirmation";
 
 export default function FilaComprar() {
   const navigate = useNavigate();
-  const { services, settings } = usePublicQueue();
+  const { services, settings, fila } = usePublicQueue();
   const { toast } = useToast();
 
   const [step, setStep] = useState<Step>("service");
@@ -62,6 +62,11 @@ export default function FilaComprar() {
   }, []);
 
   const handleDataSubmit = async () => {
+    if (!fila.aberta) {
+      toast({ title: "Fila fechada", description: filaFechadaTexto(), variant: "destructive" });
+      setStep("service");
+      return;
+    }
     if (!customerName.trim() || !customerPhone.trim() || !customerCpf.trim()) {
       toast({ title: "Preencha nome, CPF e WhatsApp", variant: "destructive" });
       return;
@@ -199,6 +204,27 @@ export default function FilaComprar() {
     if (step === "payment") stopRecoveryRef.current?.();
   }, [step]);
 
+  // Fila fechada: o servidor decide (fuso do salão), o cliente só exibe.
+  const filaFechadaTexto = () => {
+    const dia = (iso: string | null) => {
+      if (!iso) return null;
+      const [a, m, d] = iso.split("-").map(Number);
+      const data = new Date(a, m - 1, d);
+      const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+      const dif = Math.round((data.getTime() - hoje.getTime()) / 86400000);
+      if (dif === 0) return "hoje";
+      if (dif === 1) return "amanhã";
+      return ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"][data.getDay()] +
+             ", dia " + String(d).padStart(2, "0") + "/" + String(m).padStart(2, "0");
+    };
+    const quando = dia(fila.proxima_abertura);
+    const abre = fila.abre ? ` às ${fila.abre}` : "";
+    if (fila.motivo === "ainda_nao_abriu") return `A fila de hoje abre${abre}.`;
+    if (fila.motivo === "ja_fechou") return quando ? `A fila de hoje já fechou. Reabre ${quando}${abre}.` : "A fila de hoje já fechou.";
+    if (fila.motivo === "pausada") return quando ? `A fila está fechada agora. Reabre ${quando}${abre}.` : "A fila está fechada agora.";
+    return quando ? `Hoje o salão não abre. A fila reabre ${quando}${abre}.` : "Hoje o salão não abre.";
+  };
+
   const fmt = (value: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
@@ -220,7 +246,22 @@ export default function FilaComprar() {
           </h1>
         </div>
 
-        {step === "service" && (
+        {step === "service" && !fila.aberta && (
+          <Card>
+            <CardContent className="py-8 text-center space-y-3">
+              <p className="text-lg font-semibold">Fila fechada</p>
+              <p className="text-sm text-muted-foreground">{filaFechadaTexto()}</p>
+              <p className="text-sm text-muted-foreground">
+                Volte no horário de funcionamento para garantir a sua vez. Nada é cobrado com a fila fechada.
+              </p>
+              <Button variant="outline" className="w-full mt-2" onClick={() => navigate("/fila")}>
+                Voltar
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === "service" && fila.aberta && (
           <div className="space-y-3 pb-24">
             <p className="text-sm text-zinc-400">
               Toque para escolher um ou mais serviços. O preço é final — cabelo longo (passa da linha do busto) já tem o próprio preço.

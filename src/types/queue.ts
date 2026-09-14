@@ -79,6 +79,11 @@ export interface QueueSettings {
   zapi_instance_id: string | null;
   zapi_token: string | null;
   asaas_api_key: string | null;
+  open_weekdays: number[];
+  open_time: string;
+  close_time: string;
+  closed_dates: string[];
+  queue_paused: boolean;
 }
 
 export interface QueueStats {

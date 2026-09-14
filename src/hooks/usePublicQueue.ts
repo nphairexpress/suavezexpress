@@ -15,6 +15,14 @@ export interface PublicService {
   description: string | null;
 }
 
+export interface FilaAbertura {
+  aberta: boolean;
+  motivo: "pausada" | "fechado_hoje" | "ainda_nao_abriu" | "ja_fechou" | null;
+  abre: string | null;
+  fecha: string | null;
+  proxima_abertura: string | null;
+}
+
 interface PublicBootstrap {
   salon_id: string | null;
   settings: {
@@ -22,6 +30,7 @@ interface PublicBootstrap {
     credit_validity_days: number;
     notify_options: number[];
   } | null;
+  fila: FilaAbertura | null;
   services: PublicService[];
   stats: {
     total_in_queue: number;
@@ -65,9 +74,16 @@ export function usePublicQueue() {
     if (error) throw error;
   };
 
+  // Sem resposta do servidor a fila NÃO é bloqueada — a trava existe pra impedir
+  // venda com a casa fechada, não pra derrubar a venda quando a RPC falha.
+  const fila: FilaAbertura = boot?.fila ?? {
+    aberta: true, motivo: null, abre: null, fecha: null, proxima_abertura: null,
+  };
+
   return {
     salonId,
     settings,
+    fila,
     stats,
     services: boot?.services ?? [],
     isLoading: bootstrapQuery.isLoading,

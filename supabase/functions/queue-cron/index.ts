@@ -57,7 +57,21 @@ Deno.serve(async (req) => {
     { auth: { persistSession: false } },
   );
 
-  const out = { notified: 0, skipped_no_phone: 0, leads_emailed: 0, errors: 0 };
+  const out = { notified: 0, skipped_no_phone: 0, leads_emailed: 0, errors: 0, skipped_casa_fechada: false };
+
+  // Com a casa FECHADA ninguém deve receber "sua vez está chegando" — foi o que
+  // aconteceu em 08/09, quando a cliente pagou num dia sem expediente e ainda
+  // recebeu o aviso pra comparecer. "ja_fechou" não conta: aí a venda encerrou,
+  // mas quem já está na fila segue sendo atendido.
+  const { data: salaoRow } = await supa.from("salons").select("id").order("created_at").limit(1).maybeSingle();
+  if (salaoRow?.id) {
+    const { data: estado } = await supa.rpc("fila_estado_abertura", { p_salon: salaoRow.id });
+    const motivo = (estado as { motivo?: string } | null)?.motivo;
+    if (motivo === "fechado_hoje" || motivo === "pausada") {
+      out.skipped_casa_fechada = true;
+      return json(out);
+    }
+  }
 
   // ── 1. Aviso de vez chegando ─────────────────────────────────────────────
   const { data: entries } = await supa
