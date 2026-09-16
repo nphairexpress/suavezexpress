@@ -203,12 +203,29 @@ async function handleClube(supa: any, event: string, payment: any): Promise<stri
     return "clube_upsert_erro";
   }
 
-  // Créditos da competência da cobrança (não acumula: 1 linha por mês)
+  // Créditos da competência da cobrança (não acumula: 1 linha por mês).
+  // 16/09/2026: este webhook é o ÚNICO lugar que cria/renova crédito (origem auditável
+  // = pagamento confirmado). Trigger da comanda e RPC da fila só consomem.
+  // Se a competência tinha crédito de cadastro manual bloqueado, o pagamento libera
+  // o plano inteiro por cima do que já foi usado (usados + teto), sem apagar o uso.
   const competencia = String(payment.paymentDate || payment.dueDate || new Date().toISOString()).slice(0, 7);
-  await supa.from("clube_creditos").upsert(
-    { assinante_id: reg.id, competencia, creditos_total: def.teto },
-    { onConflict: "assinante_id,competencia", ignoreDuplicates: true },
-  );
+  const { data: credAtual } = await supa.from("clube_creditos")
+    .select("id, origem, bloqueado, creditos_usados")
+    .eq("assinante_id", reg.id).eq("competencia", competencia).maybeSingle();
+  if (!credAtual) {
+    await supa.from("clube_creditos").insert({
+      assinante_id: reg.id, competencia, creditos_total: def.teto, creditos_usados: 0,
+      origem: "asaas_pagamento", asaas_payment_id: payment.id ?? null,
+    });
+  } else if (credAtual.bloqueado || credAtual.origem === "legado_manual_bloqueado") {
+    await supa.from("clube_creditos").update({
+      creditos_total: Number(credAtual.creditos_usados || 0) + def.teto,
+      bloqueado: false, bloqueado_em: null,
+      motivo_bloqueio: `liberado por pagamento confirmado ${payment.id ?? ""} em ${new Date().toISOString().slice(0, 10)}`,
+      origem: "asaas_pagamento", asaas_payment_id: payment.id ?? null,
+    }).eq("id", credAtual.id);
+  }
+  // já confirmado (retry do webhook): não mexe
 
   // Mensalidade no financeiro do dia (income, categoria Clube da Escova).
   // Idempotente pelo id do pagamento Asaas na descrição — retry do webhook não duplica.

@@ -118,6 +118,14 @@ export default function FilaPublica() {
         });
         return;
       }
+      if (resp.erro === "sem_mensalidade") {
+        toast({
+          title: "Mensalidade do Clube não confirmada",
+          description: resp.mensagem || "Não há mensalidade confirmada do Clube para este período. Faça a assinatura no cartão antes de liberar a escova.",
+          variant: "destructive",
+        });
+        return;
+      }
       if (resp.erro === "nao_encontrado") {
         toast({
           title: "Não achei sua assinatura",
