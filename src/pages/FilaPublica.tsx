@@ -26,6 +26,12 @@ type ClubeResposta = {
   total?: number;
 };
 
+// Data de fim do ciclo do Clube (timestamp do servidor) em DD/MM, fuso de Brasília.
+function fmtValidoAte(iso?: string | null): string {
+  if (!iso) return "—";
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit" }).format(new Date(iso));
+}
+
 export default function FilaPublica() {
   const navigate = useNavigate();
   const { stats, settings, addLead } = usePublicQueue();
@@ -95,7 +101,7 @@ export default function FilaPublica() {
         resetClube();
         toast({
           title: `Bem-vinda, ${(resp.nome || "").split(" ")[0] || "assinante"}!`,
-          description: `Você entrou na fila (${resp.position}ª posição). Escova ${resp.usadas} de ${resp.total} do mês.`,
+          description: `Você entrou na fila (${resp.position}ª posição). Escova ${resp.usadas} de ${resp.total} do ciclo · válido até ${fmtValidoAte(resp.valido_ate)}.`,
         });
         try {
           localStorage.setItem("fila_tracking_token", resp.tracking_token);
@@ -112,8 +118,8 @@ export default function FilaPublica() {
       }
       if (resp.erro === "teto_atingido") {
         toast({
-          title: "Escovas do mês já usadas",
-          description: `Você já usou as ${resp.total} escovas do seu plano neste mês. Elas renovam no próximo ciclo.`,
+          title: "Escovas do ciclo já usadas",
+          description: `Você já usou as ${resp.total} escovas do ciclo válido até ${fmtValidoAte(resp.valido_ate)}. O próximo pagamento confirmado abre um novo ciclo.`,
           variant: "destructive",
         });
         return;
@@ -121,7 +127,7 @@ export default function FilaPublica() {
       if (resp.erro === "sem_mensalidade") {
         toast({
           title: "Mensalidade do Clube não confirmada",
-          description: resp.mensagem || "Não há mensalidade confirmada do Clube para este período. Faça a assinatura no cartão antes de liberar a escova.",
+          description: resp.mensagem || "Não há mensalidade confirmada do Clube válida para hoje. Faça a renovação no cartão antes de liberar a escova.",
           variant: "destructive",
         });
         return;

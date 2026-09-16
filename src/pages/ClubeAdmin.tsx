@@ -1,5 +1,5 @@
 // Gestão do Clube da Escova: assinaturas ativas/inadimplentes, uso dos
-// créditos do mês e faturamento. Leitura pura — quem escreve nas tabelas do
+// ciclo de 30 dias (a partir do pagamento confirmado) e faturamento. Leitura pura — quem escreve nas tabelas do
 // Clube é só o servidor (webhook Asaas / venda presencial).
 import { useQuery } from "@tanstack/react-query";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
@@ -18,7 +18,10 @@ type Assinante = {
   created_at: string | null;
 };
 
-type Credito = { assinante_id: string; competencia: string; creditos_total: number; creditos_usados: number };
+type Credito = { assinante_id: string; creditos_total: number; creditos_usados: number; inicio: string; fim: string };
+
+const fmtDia = (iso: string) =>
+  new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit" }).format(new Date(iso));
 
 const PLANO_ROTULO: Record<string, { rotulo: string; valor: number }> = {
   "4x_curto_medio": { rotulo: "4x · curto/médio", valor: 197 },
@@ -36,13 +39,16 @@ function competenciaAtual(): string {
 
 export default function ClubeAdmin() {
   const comp = competenciaAtual();
+  const agora = new Date().toISOString();
 
   const { data, isLoading } = useQuery({
     queryKey: ["clube-admin", comp],
     queryFn: async () => {
       const [assinantesRes, creditosRes, receitaRes] = await Promise.all([
         supabase.from("clube_assinantes").select("id, nome, celular, plano, teto_mensal, status, created_at").order("created_at", { ascending: false }),
-        supabase.from("clube_creditos").select("assinante_id, competencia, creditos_total, creditos_usados").eq("competencia", comp),
+        // ciclos ATIVOS agora (inicio <= agora < fim); um assinante pode ter mais de um se renovou antes do fim
+        supabase.from("clube_creditos").select("assinante_id, creditos_total, creditos_usados, inicio, fim")
+          .eq("bloqueado", false).lte("inicio", agora).gt("fim", agora).order("fim", { ascending: true }),
         supabase.from("financial_transactions").select("amount, transaction_date")
           .eq("category", "Clube da Escova").eq("transaction_type", "income")
           .gte("transaction_date", `${comp}-01`),
@@ -56,11 +62,13 @@ export default function ClubeAdmin() {
   });
 
   const assinantes = data?.assinantes ?? [];
-  const creditosPorAssinante = new Map((data?.creditos ?? []).map((c) => [c.assinante_id, c]));
+  // ciclo vigente = o ativo que termina primeiro (ordem já vem por fim asc)
+  const creditosPorAssinante = new Map<string, Credito>();
+  for (const c of data?.creditos ?? []) if (!creditosPorAssinante.has(c.assinante_id)) creditosPorAssinante.set(c.assinante_id, c);
   const ativos = assinantes.filter((a) => a.status === "ativo");
   const inadimplentes = assinantes.filter((a) => a.status === "inadimplente");
   const mrr = ativos.reduce((s, a) => s + (PLANO_ROTULO[a.plano]?.valor ?? 0), 0);
-  const usadasMes = (data?.creditos ?? []).reduce((s, c) => s + c.creditos_usados, 0);
+  const usadasCiclos = (data?.creditos ?? []).reduce((s, c) => s + c.creditos_usados, 0);
 
   return (
     <AppLayoutNew>
@@ -88,8 +96,8 @@ export default function ClubeAdmin() {
           </CardContent></Card>
           <Card><CardContent className="pt-4 text-center">
             <Sparkles className="h-5 w-5 mx-auto text-blue-500 mb-1" />
-            <p className="text-2xl font-bold">{usadasMes}</p>
-            <p className="text-xs text-muted-foreground">Escovas usadas no mês</p>
+            <p className="text-2xl font-bold">{usadasCiclos}</p>
+            <p className="text-xs text-muted-foreground">Escovas usadas nos ciclos ativos</p>
           </CardContent></Card>
         </div>
 
@@ -105,19 +113,21 @@ export default function ClubeAdmin() {
                 <th className="p-3 font-medium">WhatsApp</th>
                 <th className="p-3 font-medium">Plano</th>
                 <th className="p-3 font-medium">Status</th>
-                <th className="p-3 font-medium">Usadas no mês</th>
+                <th className="p-3 font-medium">Usadas no ciclo</th>
+                <th className="p-3 font-medium">Ciclo válido até</th>
                 <th className="p-3 font-medium">Faltam</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Carregando…</td></tr>
+                <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Carregando…</td></tr>
               ) : assinantes.length === 0 ? (
-                <tr><td colSpan={6} className="p-6 text-center text-muted-foreground">Nenhuma assinatura ainda.</td></tr>
+                <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Nenhuma assinatura ainda.</td></tr>
               ) : (
                 assinantes.map((a) => {
                   const cred = creditosPorAssinante.get(a.id);
-                  const teto = cred?.creditos_total ?? a.teto_mensal;
+                  // sem ciclo ativo = sem pagamento confirmado válido hoje: nada disponível
+                  const teto = cred?.creditos_total ?? 0;
                   const usadas = cred?.creditos_usados ?? 0;
                   return (
                     <tr key={a.id} className="border-b last:border-b-0 hover:bg-muted/30">
@@ -136,8 +146,9 @@ export default function ClubeAdmin() {
                           <Badge variant="secondary">Cancelada</Badge>
                         )}
                       </td>
-                      <td className="p-3">{usadas} de {teto}</td>
-                      <td className="p-3 font-medium">{Math.max(0, teto - usadas)}</td>
+                      <td className="p-3">{cred ? `${usadas} de ${teto}` : "—"}</td>
+                      <td className="p-3">{cred ? fmtDia(cred.fim) : <span className="text-red-600">sem ciclo ativo</span>}</td>
+                      <td className="p-3 font-medium">{cred ? Math.max(0, teto - usadas) : 0}</td>
                     </tr>
                   );
                 })
