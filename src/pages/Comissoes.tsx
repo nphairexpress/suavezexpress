@@ -381,6 +381,16 @@ export default function Comissoes() {
     });
   };
 
+  // Ajustes (bônus - desconto) por profissional no período (para o resumo geral)
+  const adjustmentsByProf = useMemo(() => {
+    const m = new Map<string, number>();
+    periodAdjustments.forEach(a => {
+      const cur = m.get(a.professional_id) || 0;
+      m.set(a.professional_id, cur + (a.adjustment_type === "bonus" ? Number(a.amount) : -Number(a.amount)));
+    });
+    return m;
+  }, [periodAdjustments]);
+
   // Calculate commissions per professional (for "all" view)
   const professionalCommissions = useMemo(() => {
     const commissionMap = new Map<string, {
@@ -466,18 +476,13 @@ export default function Comissoes() {
       });
     });
 
-    return Array.from(commissionMap.values()).filter(c => c.itemCount > 0);
-  }, [professionals, filteredComandas, serviceMap, profServiceCommMap, commissionSettings]);
-
-  // Ajustes (bônus - desconto) por profissional no período (para o resumo geral)
-  const adjustmentsByProf = useMemo(() => {
-    const m = new Map<string, number>();
-    periodAdjustments.forEach(a => {
-      const cur = m.get(a.professional_id) || 0;
-      m.set(a.professional_id, cur + (a.adjustment_type === "bonus" ? Number(a.amount) : -Number(a.amount)));
-    });
-    return m;
-  }, [periodAdjustments]);
+    // Aparece quem produziu no período OU quem tem ajuste lançado (fixo, bônus,
+    // adiantamento). Sem isso, quem só tem ajuste some da lista e o valor dele
+    // não entra no total a pagar.
+    return Array.from(commissionMap.values()).filter(
+      c => c.itemCount > 0 || adjustmentsByProf.has(c.professional.id)
+    );
+  }, [professionals, filteredComandas, serviceMap, profServiceCommMap, commissionSettings, adjustmentsByProf]);
 
   // Seleção de profissionais (ticar) na lista geral
   const [selectedProfs, setSelectedProfs] = useState<Set<string>>(new Set());
