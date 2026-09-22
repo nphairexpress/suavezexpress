@@ -349,8 +349,13 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
         body: { userId: professional.user_id, salonId },
       });
       if (error) {
-        // Tenta extrair mensagem detalhada
-        const msg = (error as any)?.context?.body || error.message || "Erro desconhecido";
+        // Tenta extrair mensagem detalhada (context é a Response da edge function)
+        let msg = error.message || "Erro desconhecido";
+        const ctx = (error as any)?.context;
+        if (ctx && typeof ctx.json === "function") {
+          const body = await ctx.json().catch(() => null);
+          if (body?.error) msg = body.error;
+        }
         toast({ title: "Erro ao excluir acesso", description: String(msg).slice(0, 200), variant: "destructive" });
         return;
       }
