@@ -8,9 +8,6 @@ import { Plus, Clock, DollarSign, MoreHorizontal, Loader2, Upload, Search, FileT
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
 import { useServices, Service, ServiceInput } from "@/hooks/useServices";
 import { ServiceModal } from "@/components/modals/ServiceModal";
 import { DeleteConfirmModal } from "@/components/modals/DeleteConfirmModal";
@@ -81,7 +78,12 @@ export default function Servicos() {
     return s.name.toLowerCase().includes(q) || (s.category || "").toLowerCase().includes(q);
   });
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
+    // jspdf/autotable só baixam quando o usuário exporta (ficam fora do bundle inicial)
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable"),
+    ]);
     const doc = new jsPDF();
     doc.setFontSize(16);
     doc.text("Lista de Serviços", 14, 15);
@@ -104,7 +106,8 @@ export default function Servicos() {
     doc.save("Servicos.pdf");
   };
 
-  const handleExportXLS = () => {
+  const handleExportXLS = async () => {
+    const XLSX = await import("xlsx");
     const data = filteredServices.map(s => ({
       "Serviço": s.name,
       "Categoria": s.category || "",

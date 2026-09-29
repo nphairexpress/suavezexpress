@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,39 +9,48 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SensitiveDataProvider } from "@/components/common/SensitiveData";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
+// Estáticas (primeiro paint): login, dashboard, terminal da equipe e rotas públicas da fila/clube.
 import Dashboard from "./pages/Dashboard";
-import Agenda from "./pages/Agenda";
-import Clientes from "./pages/Clientes";
-import Servicos from "./pages/Servicos";
-import Pacotes from "./pages/Pacotes";
 import AuthNew from "./pages/AuthNew";
 import AuthNovaSenha from "./pages/AuthNovaSenha";
-import { Profissionais } from "./pages/Profissionais";
-import Comandas from "./pages/Comandas";
 import AtendimentoTerminal from "./pages/AtendimentoTerminal";
-import Financeiro from "./pages/Financeiro";
-import ClubeAdmin from "./pages/ClubeAdmin";
-import Comissoes from "./pages/Comissoes";
-import Estoque from "./pages/Estoque";
-import Configuracoes from "./pages/Configuracoes";
-import Relatorios from "./pages/Relatorios";
-import Marketing from "./pages/Marketing";
-import ClientAlerts from "./pages/ClientAlerts";
-import ClientLoyalty from "./pages/ClientLoyalty";
-import NotFound from "./pages/NotFound";
-import SetupWizard from "./pages/SetupWizard";
 import FilaPublica from "@/pages/FilaPublica";
 import ClubeEscova from "@/pages/ClubeEscova";
 import FilaComprar from "@/pages/FilaComprar";
 import FilaAcompanhar from "@/pages/FilaAcompanhar";
-import Fila from "@/pages/Fila";
-import Pendencias from "@/pages/Pendencias";
-import Fechamentos from "@/pages/Fechamentos";
-import ContasAPagar from "@/pages/ContasAPagar";
+// Demais páginas: chunk próprio, carregado só quando a rota abre.
+const Agenda = lazy(() => import("./pages/Agenda"));
+const Clientes = lazy(() => import("./pages/Clientes"));
+const Servicos = lazy(() => import("./pages/Servicos"));
+const Pacotes = lazy(() => import("./pages/Pacotes"));
+const Profissionais = lazy(() => import("./pages/Profissionais").then((m) => ({ default: m.Profissionais })));
+const Comandas = lazy(() => import("./pages/Comandas"));
+const Financeiro = lazy(() => import("./pages/Financeiro"));
+const Comissoes = lazy(() => import("./pages/Comissoes"));
+const Estoque = lazy(() => import("./pages/Estoque"));
+const Configuracoes = lazy(() => import("./pages/Configuracoes"));
+const Relatorios = lazy(() => import("./pages/Relatorios"));
+const Marketing = lazy(() => import("./pages/Marketing"));
+const ClientAlerts = lazy(() => import("./pages/ClientAlerts"));
+const ClientLoyalty = lazy(() => import("./pages/ClientLoyalty"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const SetupWizard = lazy(() => import("./pages/SetupWizard"));
+const Fila = lazy(() => import("@/pages/Fila"));
+const ClubeAdmin = lazy(() => import("./pages/ClubeAdmin"));
+const Pendencias = lazy(() => import("@/pages/Pendencias"));
+const Fechamentos = lazy(() => import("@/pages/Fechamentos"));
+const ContasAPagar = lazy(() => import("@/pages/ContasAPagar"));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, refetchOnWindowFocus: false } },
 });
+
+// Mesmo spinner usado nas checagens de auth/setup abaixo.
+const PageSpinner = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+  </div>
+);
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -233,7 +243,9 @@ function App() {
         <BrowserRouter>
           <AuthProvider>
             <SensitiveDataProvider>
-              <AppRoutes />
+              <Suspense fallback={<PageSpinner />}>
+                <AppRoutes />
+              </Suspense>
             </SensitiveDataProvider>
           </AuthProvider>
         </BrowserRouter>

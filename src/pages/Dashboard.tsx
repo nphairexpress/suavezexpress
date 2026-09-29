@@ -1,12 +1,17 @@
+import { lazy, Suspense } from "react";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { UpcomingAppointments } from "@/components/dashboard/UpcomingAppointments";
-import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { TopServices } from "@/components/dashboard/TopServices";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { ProfessionalCommissionSummary } from "@/components/dashboard/ProfessionalCommissionSummary";
 import { Sensitive } from "@/components/common/SensitiveData";
 import { useCurrentProfessional } from "@/hooks/useCurrentProfessional";
+
+// recharts (~400 kB) só entra quando o gráfico de faturamento renderiza.
+const RevenueChart = lazy(() =>
+  import("@/components/dashboard/RevenueChart").then((m) => ({ default: m.RevenueChart }))
+);
 
 export default function Dashboard() {
   const { professional, professionalId, isProfessionalUser } = useCurrentProfessional();
@@ -30,7 +35,9 @@ export default function Dashboard() {
           {/* Revenue Chart - Takes 2 columns */}
           <div className="lg:col-span-2">
             <Sensitive block>
-              <RevenueChart />
+              <Suspense fallback={<div className="h-[380px] rounded-lg border bg-card animate-pulse" />}>
+                <RevenueChart />
+              </Suspense>
             </Sensitive>
           </div>
 

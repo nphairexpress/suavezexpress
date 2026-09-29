@@ -65,7 +65,7 @@ export function MonthlyReportButton({
           ? null
           : professionals.find((p: any) => p.id === profId)?.name ?? "";
 
-      generateMonthlyPdf({
+      await generateMonthlyPdf({
         salon: salonName,
         period: { start, end },
         professional: professionalName,

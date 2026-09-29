@@ -39,9 +39,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Plus, Loader2, MoreVertical, CheckCircle2, Pencil, XCircle, Trash2, Search, AlertTriangle, Clock, Receipt, Download, FileText, FileSpreadsheet, X } from "lucide-react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import * as XLSX from "xlsx";
 import { useAccountsPayable, AccountPayable, PayableInput, MarkAsPaidInput } from "@/hooks/useAccountsPayable";
 import { PayableModal } from "@/components/payable/PayableModal";
 import { MarkAsPaidModal } from "@/components/payable/MarkAsPaidModal";
@@ -182,7 +179,12 @@ export default function ContasAPagar() {
     return `Status: ${st}  ·  ${per}`;
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
+    // jspdf/autotable só baixam quando o usuário exporta (ficam fora do bundle inicial)
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable"),
+    ]);
     const doc = new jsPDF();
     doc.setFontSize(16);
     doc.text("Relatório de Contas a Pagar", 14, 15);
@@ -211,7 +213,8 @@ export default function ContasAPagar() {
     doc.save(`Contas_a_Pagar_${iso(new Date())}.pdf`);
   };
 
-  const handleExportXLS = () => {
+  const handleExportXLS = async () => {
+    const XLSX = await import("xlsx");
     const data = filtered.map((p) => ({
       "Descrição": p.description,
       "Fornecedor": p.supplier?.trade_name || p.supplier?.name || "",

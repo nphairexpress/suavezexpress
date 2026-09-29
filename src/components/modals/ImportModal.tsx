@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, FileSpreadsheet, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
-import * as XLSX from "xlsx";
 
 export interface ImportField {
   key: string;
@@ -57,6 +56,8 @@ export function ImportModal({ open, onOpenChange, title, description, fields, on
 
     try {
       const data = await file.arrayBuffer();
+      // xlsx só baixa quando o usuário importa um arquivo (fica fora do bundle inicial)
+      const XLSX = await import("xlsx");
       const workbook = XLSX.read(data, { type: "array" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json<any[]>(sheet, { header: 1 });

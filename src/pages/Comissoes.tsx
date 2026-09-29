@@ -36,8 +36,6 @@ import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, startOfMonth, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 
 interface CommissionItem {
   comandaId: string;
@@ -534,8 +532,13 @@ export default function Comissoes() {
 
   const isLoading = loadingProfessionals || loadingComandas || loadingServices || loadingClients || (isProfessionalUser && loadingCurrentProfessional);
 
-  const generateCommissionPDF = () => {
+  const generateCommissionPDF = async () => {
     if (!selectedProfessionalData) return;
+    // jspdf/autotable só baixam quando o usuário gera o PDF (ficam fora do bundle inicial)
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable"),
+    ]);
     const doc = new jsPDF({ orientation: "landscape" });
     const profName = selectedProfessionalData.name;
     const periodo = `${dateStart.split("-").reverse().join("/")} a ${dateEnd.split("-").reverse().join("/")}`;
@@ -644,22 +647,29 @@ export default function Comissoes() {
     return doc;
   };
 
-  const handlePrint = () => {
-    const doc = generateCommissionPDF();
-    if (!doc) return;
+  const handlePrint = async () => {
+    if (!selectedProfessionalData) return;
+    // Abre a janela ainda dentro do clique: depois do await o navegador poderia
+    // tratar o window.open como popup e bloquear.
+    const win = window.open("", "_blank");
+    const doc = await generateCommissionPDF();
+    if (!doc) {
+      win?.close();
+      return;
+    }
     // Open in new window for printing
     const blob = doc.output("blob");
     const url = URL.createObjectURL(blob);
-    const win = window.open(url, "_blank");
     if (win) {
+      win.location.href = url;
       win.addEventListener("load", () => {
         win.print();
       });
     }
   };
 
-  const handlePDF = () => {
-    const doc = generateCommissionPDF();
+  const handlePDF = async () => {
+    const doc = await generateCommissionPDF();
     if (!doc) return;
     const profName = selectedProfessionalData?.name?.replace(/\s+/g, "_") || "profissional";
     const periodo = `${dateStart}_${dateEnd}`;

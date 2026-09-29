@@ -1,6 +1,3 @@
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
-
 export interface MonthlyPdfInput {
   salon: string;
   period: { start: string; end: string };
@@ -21,7 +18,12 @@ const fmtDate = (iso: string) => iso.split("-").reverse().join("/");
  *
  * Seções: Resumo · Por profissional · Top serviços · Pendências
  */
-export function generateMonthlyPdf(input: MonthlyPdfInput): void {
+export async function generateMonthlyPdf(input: MonthlyPdfInput): Promise<void> {
+  // jspdf/autotable só baixam quando o PDF é gerado (ficam fora do bundle inicial)
+  const [{ jsPDF }, { default: autoTable }] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ]);
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const margin = 40;
   let y = margin;
