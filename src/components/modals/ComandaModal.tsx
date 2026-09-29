@@ -32,7 +32,6 @@ import { useAllServiceProducts } from "@/hooks/useServiceProducts";
 import { useStockMovements } from "@/hooks/useStockMovements";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
 import { useCardBrands, getCardFeePercent } from "@/hooks/useCardBrands";
-import { useCommissionSettings } from "@/hooks/useCommissionSettings";
 import { useCurrentUserPermissions } from "@/hooks/useCurrentUserPermissions";
 import { ComandaServiceProducts } from "@/components/comanda/ComandaServiceProducts";
 import { useClientNetBalance } from "@/hooks/useClientBalance";
@@ -117,7 +116,6 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
   const { deductStockForServices } = useStockMovements();
   const { bankAccounts } = useBankAccounts();
   const { cardBrands } = useCardBrands();
-  const { settings: commissionSettings } = useCommissionSettings();
   const { netBalance: clientNetBalance, isLoading: isLoadingBalance } = useClientNetBalance(comanda?.client_id || null);
 
   const [editableItems, setEditableItems] = useState<EditableItem[]>([]);
@@ -961,11 +959,15 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
   const totalPayments = payments.reduce((acc, p) => acc + p.amount, 0);
   // Pagamentos JÁ recebidos (online/Asaas, travados) — abatem o que ainda falta cobrar no balcão
   const totalJaRecebido = payments.filter(p => p.locked).reduce((acc, p) => acc + p.amount, 0);
-  // Total efetivo a cobrar — abate o discount da comanda (cashback aplicado, etc)
-  const totalACobrar = Math.max(0, subtotal - Number(comanda?.discount || 0));
+  // Total efetivo a cobrar — abate o discount da comanda (cashback aplicado, Clube, pacote etc).
+  // Usa o discount LOCAL (mesmo valor enviado à RPC), não a prop, que não se atualiza dentro do modal.
+  const totalACobrar = Math.max(0, subtotal - localDiscount);
   // O que a recepção ainda precisa cobrar (desconta o que já entrou online)
   const totalACobrarLiquido = Math.max(0, totalACobrar - totalJaRecebido);
+  // Líquido a cobrar − tudo que já foi lançado (online + novas linhas). Nunca o subtotal cheio (F-04).
   const difference = totalACobrar - totalPayments;
+  // Comanda paga por Clube/pacote/crédito (líquido zero) e sem linha nova: fecha sem cobrança, com p_payments vazio.
+  const fecharSemCobranca = totalACobrarLiquido < 0.01 && !payments.some(p => p.id.startsWith("temp_") && p.amount > 0);
 
   const handlePrintReceipt = () => {
     if (!comanda) return;
@@ -1092,6 +1094,8 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
 
   const handleFinalizeComanda = async () => {
     if (!comanda || !salonId) return;
+    // Duplo clique: o estado do botão pode atrasar um render — segunda chamada não sai daqui.
+    if (isClosing) return;
 
     // Determine which caixa to use
     const caixaToUse = selectedCaixaId;
@@ -1169,128 +1173,52 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
     setIsClosing(true);
 
     try {
-      // Calculate payment totals by method for caixa update
-      const paymentTotals = {
-        cash: 0,
-        pix: 0,
-        credit_card: 0,
-        debit_card: 0,
-        other: 0,
-      };
+      // Fechamento 100% no banco (etapa 4, F-01/F-05/F-20): pagamentos (com taxa
+      // por bandeira/PIX), caixa, comanda, fila, agendamentos, cashback, troco,
+      // dívida e saldo anterior entram em UMA transação. Erro no meio = nada
+      // gravado — antes, cada escrita solta podia ficar pela metade (pagamento
+      // duplicado e caixa inflado no duplo clique).
+      const novosPagamentos = payments
+        .filter(p => p.id.startsWith("temp_") && p.amount > 0)
+        .map(p => ({
+          method: p.method,
+          amount: p.amount,
+          installments: p.method === 'credit_card' ? (p.installments || 1) : 1,
+          card_brand_id: (p.method === 'credit_card' || p.method === 'debit_card') ? p.cardBrandId : null,
+          bank_account_id: p.method === 'pix' ? p.bankAccountId : null,
+          notes: p.info || null,
+        }));
 
-      // Save new payments and track totals
-      for (const payment of payments) {
-        if (payment.id.startsWith("temp_")) {
-          // Calculate fee for payments (card, PIX)
-          let feeAmount = 0;
-          let netAmount = payment.amount;
+      // Agendamentos que viram "paid": o da comanda + os de origem dos itens
+      const appointmentIds = [
+        comanda.appointment_id,
+        ...editableItems.map(item => (item as any).source_appointment_id),
+      ].filter(Boolean);
 
-          if ((payment.method === 'credit_card' || payment.method === 'debit_card') && payment.cardBrandId) {
-            const brand = cardBrands.find(b => b.id === payment.cardBrandId);
-            if (brand) {
-              const feePercent = getCardFeePercent(brand, payment.method as 'credit_card' | 'debit_card', payment.installments || 1);
-              feeAmount = payment.amount * (feePercent / 100);
-              netAmount = payment.amount - feeAmount;
-            }
-          } else if (payment.method === 'pix' && commissionSettings.pix_fee_percent > 0) {
-            feeAmount = payment.amount * (commissionSettings.pix_fee_percent / 100);
-            netAmount = payment.amount - feeAmount;
-          }
+      // % digitada pelo profissional (fallback config padrao)
+      const inputPct = parseFloat(cashbackPercentInput);
+      const cashbackPercent = isNaN(inputPct) ? parseFloat(cashbackConfig.percent) : inputPct;
 
-          // Identifica gateway: cartão presencial = PagBank (maquininha do salão)
-          // PIX/dinheiro lançado manualmente = "manual"
-          // Asaas só vem via Fila.tsx (pagamento online), não passa por aqui
-          const provider = (payment.method === 'credit_card' || payment.method === 'debit_card')
-            ? 'pagbank'
-            : 'manual';
-
-          await supabase.from("payments").insert({
-            comanda_id: comanda.id,
-            salon_id: salonId,
-            payment_method: payment.method as any,
-            payment_provider: provider,
-            amount: payment.amount,
-            notes: payment.info,
-            bank_account_id: payment.method === 'pix' ? payment.bankAccountId : null,
-            card_brand_id: (payment.method === 'credit_card' || payment.method === 'debit_card') ? payment.cardBrandId : null,
-            installments: payment.method === 'credit_card' ? (payment.installments || 1) : 1,
-            fee_amount: feeAmount,
-            net_amount: netAmount,
-          });
-
-          // Track totals only for NEW payments to avoid double-counting
-          if (payment.method in paymentTotals) {
-            paymentTotals[payment.method as keyof typeof paymentTotals] += payment.amount;
-          }
-        }
+      const { data, error } = await supabase.rpc("rpc_fechar_comanda_v2", {
+        p_comanda: comanda.id,
+        p_caixa: caixaToUse,
+        p_payments: novosPagamentos,
+        p_discount: localDiscount,
+        p_allow_underpaid: saveUnderpaymentAsDebt,
+        p_overpayment_mode: saveOverpaymentAsCredit ? 'credito' : 'troco',
+        p_underpaid_as_debt: saveUnderpaymentAsDebt,
+        p_cashback: (enableCashback && cashbackConfig.enabled && comanda.client_id)
+          ? { percent: cashbackPercent, min_purchase: cashbackConfig.minPurchase, validity_days: cashbackConfig.validityDays }
+          : null,
+        p_appointment_ids: appointmentIds.length > 0 ? appointmentIds : null,
+      });
+      if (error) throw error;
+      const result = (data || {}) as { ok?: boolean; error?: string; message?: string; cashback_id?: string | null };
+      if (result.ok !== true) {
+        throw new Error(result.error || result.message || "O banco recusou o fechamento da comanda.");
       }
 
-      // Update caixa totals
-      const { data: currentCaixa } = await supabase
-        .from("caixas")
-        .select("*")
-        .eq("id", caixaToUse)
-        .single();
-
-      if (currentCaixa) {
-        await supabase
-          .from("caixas")
-          .update({
-            total_cash: (currentCaixa.total_cash || 0) + paymentTotals.cash,
-            total_pix: (currentCaixa.total_pix || 0) + paymentTotals.pix,
-            total_credit_card: (currentCaixa.total_credit_card || 0) + paymentTotals.credit_card,
-            total_debit_card: (currentCaixa.total_debit_card || 0) + paymentTotals.debit_card,
-            total_other: (currentCaixa.total_other || 0) + paymentTotals.other,
-          })
-          .eq("id", caixaToUse);
-      }
-
-      // Close comanda and link to caixa — total RESPEITA discount (cashback aplicado, etc)
-      const { error: closeError } = await supabase
-        .from("comandas")
-        .update({
-          closed_at: new Date().toISOString(),
-          is_paid: true,
-          subtotal: subtotal,
-          discount: localDiscount,
-          total: Math.max(0, subtotal - localDiscount),
-          caixa_id: caixaToUse,
-        })
-        .eq("id", comanda.id);
-
-      if (closeError) {
-        throw new Error(`Erro ao fechar comanda: ${closeError.message}`);
-      }
-
-      // Dá baixa na FILA ao fechar a comanda (Cleiton 08/07): a pessoa terminou,
-      // então some da fila. Enquanto a comanda fica ABERTA, a entrada permanece
-      // na fila (é isso que faz as comandas abertas aparecerem pra quem consulta).
-      if (comanda.client_id && salonId) {
-        await supabase
-          .from("queue_entries")
-          .update({ status: "completed", updated_at: new Date().toISOString() })
-          .eq("salon_id", salonId)
-          .eq("customer_id", comanda.client_id)
-          .in("status", ["waiting", "checked_in", "in_service"]);
-      }
-
-      // Update linked appointments to "paid" status
-      if (comanda.appointment_id) {
-        await supabase
-          .from("appointments")
-          .update({ status: "paid" })
-          .eq("id", comanda.appointment_id);
-      }
-      // Also update appointments linked via comanda_items.source_appointment_id
-      const appointmentIds = editableItems
-        .map(item => (item as any).source_appointment_id)
-        .filter(Boolean);
-      if (appointmentIds.length > 0) {
-        await supabase
-          .from("appointments")
-          .update({ status: "paid" })
-          .in("id", appointmentIds);
-      }
+      // ---- Daqui pra baixo só efeito NÃO crítico: a comanda já está fechada. ----
 
       // Deduct stock for all services in the comanda
       const serviceItems = editableItems
@@ -1312,122 +1240,36 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
         }
       }
 
-      // Generate loyalty credit — opt-in (profissional marca) + % editavel + configs do system_config
-      if (enableCashback && cashbackConfig.enabled && comanda.client_id) {
+      // E-mail de cashback — o crédito em si já foi gerado pela RPC (só quando ela devolve cashback_id)
+      if (result.cashback_id && comanda.client?.name && comanda.client_id) {
         try {
-          const servicesTotal = editableItems
-            .filter(item => {
-              // Only regular services
-              if (item.item_type !== "service") return false;
-              // Exclude package credits (price = 0 or description has 📦)
-              if ((item.total_price || 0) === 0) return false;
-              if (item.description?.includes("📦")) return false;
-              // Exclude items with discount applied
-              if ((item.editDiscount || 0) > 0) return false;
-              // Exclude items where price was manually reduced
-              const originalService = services.find((s: any) => s.id === item.service_id);
-              if (originalService && item.unit_price < Number(originalService.price)) return false;
-              return true;
-            })
-            .reduce((sum, item) => sum + (item.total_price || 0), 0);
+          const { data: credit } = await supabase
+            .from("client_credits")
+            .select("credit_amount, expires_at")
+            .eq("id", result.cashback_id)
+            .single();
+          const { data: clientData } = await supabase
+            .from("clients")
+            .select("email")
+            .eq("id", comanda.client_id)
+            .single();
 
-          // % digitada pelo profissional (fallback config padrao)
-          const inputPct = parseFloat(cashbackPercentInput);
-          const cashbackPercent = (isNaN(inputPct) ? parseFloat(cashbackConfig.percent) : inputPct) / 100;
-          const creditAmount = Math.round(servicesTotal * cashbackPercent * 100) / 100;
-
-          // So gera credito se houver servico de preco cheio E % > 0
-          if (servicesTotal > 0 && creditAmount > 0) {
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + cashbackConfig.validityDays);
-            await supabase.from("client_credits").insert({
+          if (credit && clientData?.email) {
+            const expiresAt = new Date(credit.expires_at);
+            sendEmail({
+              type: "cashback",
               salon_id: salonId,
+              to_email: clientData.email,
+              to_name: comanda.client.name,
               client_id: comanda.client_id,
-              comanda_id: comanda.id,
-              credit_amount: creditAmount,
-              min_purchase_amount: cashbackConfig.minPurchase,
-              expires_at: expiresAt.toISOString(),
-            });
-
-            // Send cashback email if client has email
-            if (comanda.client?.name && salonId) {
-              const { data: clientData } = await supabase
-                .from("clients")
-                .select("email")
-                .eq("id", comanda.client_id)
-                .single();
-
-              if (clientData?.email) {
-                sendEmail({
-                  type: "cashback",
-                  salon_id: salonId,
-                  to_email: clientData.email,
-                  to_name: comanda.client.name,
-                  client_id: comanda.client_id,
-                  variables: {
-                    credit_amount: creditAmount.toFixed(2),
-                    expires_at: `${expiresAt.getDate().toString().padStart(2, "0")}/${(expiresAt.getMonth() + 1).toString().padStart(2, "0")}/${expiresAt.getFullYear()}`,
-                  },
-                }).catch(() => {});
-              }
-            }
+              variables: {
+                credit_amount: Number(credit.credit_amount).toFixed(2),
+                expires_at: `${expiresAt.getDate().toString().padStart(2, "0")}/${(expiresAt.getMonth() + 1).toString().padStart(2, "0")}/${expiresAt.getFullYear()}`,
+              },
+            }).catch(() => {});
           }
-        } catch (creditError) {
-          console.error("Erro ao gerar crédito de fidelidade:", creditError);
-        }
-      }
-
-      // Save overpayment as client credit
-      if (saveOverpaymentAsCredit && difference < -0.01 && comanda.client_id) {
-        try {
-          const overpayment = Math.abs(difference);
-          const expiresAt = new Date();
-          expiresAt.setDate(expiresAt.getDate() + 90); // 90 days expiry
-          await supabase.from("client_credits").insert({
-            salon_id: salonId,
-            client_id: comanda.client_id,
-            comanda_id: comanda.id,
-            credit_amount: Math.round(overpayment * 100) / 100,
-            min_purchase_amount: 0,
-            expires_at: expiresAt.toISOString(),
-          });
-        } catch (creditError) {
-          console.error("Erro ao salvar crédito de troco:", creditError);
-        }
-      }
-
-      // Save underpayment as client debt
-      if (saveUnderpaymentAsDebt && difference > 0.01 && comanda.client_id) {
-        try {
-          await supabase.from("client_debts" as any).insert({
-            salon_id: salonId,
-            client_id: comanda.client_id,
-            comanda_id: comanda.id,
-            debt_amount: Math.round(difference * 100) / 100,
-            notes: `Dívida da comanda ${comandaRef}`,
-          });
-        } catch (debtError) {
-          console.error("Erro ao salvar dívida:", debtError);
-        }
-      }
-
-      // If client had existing debt and payment covers it, create credit entry to zero out
-      if (comanda.client_id && clientNetBalance < 0) {
-        const debtAmount = Math.abs(clientNetBalance);
-        // If the total payments cover services + debt, record a credit to offset the debt
-        if (totalPayments >= subtotal + debtAmount - 0.01) {
-          try {
-            await supabase.from("client_balance").insert({
-              salon_id: salonId,
-              client_id: comanda.client_id,
-              type: "credit",
-              amount: Math.round(debtAmount * 100) / 100,
-              description: `Pagamento de divida anterior via comanda ${comandaRef}`,
-              comanda_id: comanda.id,
-            });
-          } catch (balanceError) {
-            console.error("Erro ao registrar pagamento de divida:", balanceError);
-          }
+        } catch (emailError) {
+          console.error("Erro ao enviar e-mail de cashback:", emailError);
         }
       }
 
@@ -2345,7 +2187,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                         variant="outline"
                         size="sm"
                         className="shrink-0"
-                        onClick={() => updatePayment(payment.id, 'amount', subtotal - totalPayments + payment.amount)}
+                        onClick={() => updatePayment(payment.id, 'amount', Math.max(0, Math.round((difference + payment.amount) * 100) / 100))}
                       >
                         Dif
                       </Button>
@@ -2423,7 +2265,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                 disabled={isClosing || !canFinalizeComanda}
                 title={!canFinalizeComanda ? "Você só pode finalizar suas próprias comandas" : undefined}
               >
-                {isClosing ? "Finalizando..." : !canFinalizeComanda ? "Sem permissão" : "Finalizar Comanda"}
+                {isClosing ? "Finalizando..." : !canFinalizeComanda ? "Sem permissão" : fecharSemCobranca ? "Fechar sem cobrança" : "Finalizar Comanda"}
               </Button>
             )}
           </div>
