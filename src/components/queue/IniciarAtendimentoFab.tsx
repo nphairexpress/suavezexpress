@@ -9,7 +9,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useClients } from "@/hooks/useClients";
 import { useServices } from "@/hooks/useServices";
 import { useProfessionals } from "@/hooks/useProfessionals";
-import { useComandas } from "@/hooks/useComandas";
 import { useQueue } from "@/hooks/useQueue";
 import { useCaixas } from "@/hooks/useCaixas";
 import { useToast } from "@/hooks/use-toast";
@@ -54,9 +53,8 @@ function AbrirComandaDialog({ onOpenChange }: { onOpenChange: (open: boolean) =>
   const { clients } = useClients();
   const { services } = useServices();
   const { professionals } = useProfessionals();
-  const { createComandaAsync } = useComandas();
   const { addToQueue } = useQueue();
-  const { getCurrentUserOpenCaixa, openCaixaAsync } = useCaixas();
+  const { getSalonOpenCaixa } = useCaixas();
 
   const open = true;
   const setOpen = onOpenChange;
@@ -125,7 +123,11 @@ function AbrirComandaDialog({ onOpenChange }: { onOpenChange: (open: boolean) =>
       toast({ title: "Selecione o serviço", variant: "destructive" });
       return;
     }
-    const svc = activeServices.find((s: any) => s.id === serviceId);
+    // A RPC exige a profissional (é ela quem entra na comanda e nos itens)
+    if (!professionalId) {
+      toast({ title: "Selecione a profissional", variant: "destructive" });
+      return;
+    }
 
     setLoading(true);
     try {
@@ -145,9 +147,15 @@ function AbrirComandaDialog({ onOpenChange }: { onOpenChange: (open: boolean) =>
         }
       }
 
-      // 0. Garante caixa aberto
-      let caixa = await getCurrentUserOpenCaixa();
-      if (!caixa) caixa = await openCaixaAsync({ opening_balance: 0 });
+      // 0. Caixa NÃO abre mais sozinho (etapa 5): a comanda nasce sem caixa e
+      // só precisa dele na hora de fechar. Aqui só avisa.
+      const caixa = await getSalonOpenCaixa();
+      if (!caixa) {
+        toast({
+          title: "Nenhum caixa aberto",
+          description: "A comanda pode ser aberta; abra o caixa antes de fechá-la.",
+        });
+      }
 
       // 1. Coloca na fila como walk-in (já chega como checked_in)
       const res = await addToQueue({
@@ -161,44 +169,33 @@ function AbrirComandaDialog({ onOpenChange }: { onOpenChange: (open: boolean) =>
       // (o campo .entryId nunca existiu; a fila ficava sem vínculo — falha 18)
       const entryId = (res as { id?: string } | null)?.id;
 
-      // 2. Vincula profissional da vez + cliente na entry
-      if (entryId) {
-        await supabase.from("queue_entries").update({
-          customer_id: resolvedClientId,
-          assigned_professional_id: professionalId || null,
-          status: professionalId ? "in_service" : "checked_in",
-          updated_at: new Date().toISOString(),
-        }).eq("id", entryId);
-      }
-
-      // 3. Cria a comanda aberta com o serviço como primeiro item
-      const comanda = await createComandaAsync({
-        client_id: resolvedClientId,
-        professional_id: professionalId || null,
-        caixa_id: caixa?.id,
+      // 2. Comanda + item do serviço + fila em atendimento, tudo numa transação
+      // (rpc_iniciar_atendimento). Reaproveita a comanda aberta da cliente se houver.
+      const { data: res2, error: rpcError } = await supabase.rpc("rpc_iniciar_atendimento", {
+        p_client_id: resolvedClientId,
+        p_professional_id: professionalId,
+        p_service_id: serviceId,
+        p_queue_entry_id: entryId ?? null,
+        p_source: "balcao",
       });
-      if (comanda?.id && svc) {
-        await supabase.from("comanda_items").insert({
-          comanda_id: comanda.id,
-          service_id: serviceId,
-          professional_id: professionalId || null,
-          description: svc.name,
-          item_type: "service",
-          quantity: 1,
-          unit_price: svc.price,
-          total_price: svc.price,
-        });
-        await supabase.from("comandas")
-          .update({ subtotal: svc.price, total: svc.price })
-          .eq("id", comanda.id);
-      }
+      if (rpcError) throw rpcError;
+      const comandaId = res2?.comanda_id as string | undefined;
 
-      toast({ title: "Atendimento iniciado!", description: `${name} está na fila e a comanda foi aberta.` });
+      toast({
+        title: "Atendimento iniciado!",
+        description: res2?.reused
+          ? `${name} já tinha comanda aberta — reaproveitada.`
+          : `${name} está na fila e a comanda foi aberta.`,
+      });
       setOpen(false);
       reset();
-      if (comanda?.id) navigate(`/comandas?comanda=${comanda.id}&edit=true`);
+      if (comandaId) navigate(`/comandas?comanda=${comandaId}&edit=true`);
     } catch (err) {
-      toast({ title: "Erro ao iniciar atendimento", variant: "destructive" });
+      toast({
+        title: "Erro ao iniciar atendimento",
+        description: (err as { message?: string })?.message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

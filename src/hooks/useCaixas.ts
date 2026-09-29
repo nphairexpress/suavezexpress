@@ -80,39 +80,27 @@ export function useCaixas() {
 
   const openCaixaMutation = useMutation({
     mutationFn: async (input: CaixaInput) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !salonId) throw new Error("Usuário não autenticado");
+      if (!salonId) throw new Error("Usuário não autenticado");
 
-      // Check if user has ANY open caixa (regardless of date)
-      const { data: existingOpen } = await supabase
-        .from("caixas")
-        .select("id, opened_at")
-        .eq("salon_id", salonId)
-        .eq("user_id", user.id)
-        .is("closed_at", null)
-        .limit(1);
+      // Abertura via RPC (etapa 5): UM caixa aberto por salão, de qualquer usuário.
+      // A trava (já existe caixa aberto / caixa de dia anterior) e a mensagem
+      // explicando quem abriu e quando vêm prontas do banco.
+      const { data, error } = await supabase.rpc("rpc_abrir_caixa", {
+        p_opening_balance: input.opening_balance,
+        p_notes: input.notes ?? null,
+      });
+      if (error) throw error;
 
-      if (existingOpen && existingOpen.length > 0) {
-        const openDate = new Date(existingOpen[0].opened_at);
-        const dateStr = openDate.toLocaleDateString("pt-BR");
-        throw new Error(`Você já possui um caixa aberto (${dateStr}). Feche-o antes de abrir um novo.`);
+      // Master registrando caixa retroativo: a RPC não recebe opened_at, então
+      // a data é ajustada logo depois (mesmo comportamento de antes).
+      if (input.opened_at && data?.caixa_id) {
+        const { error: dateError } = await supabase
+          .from("caixas")
+          .update({ opened_at: input.opened_at })
+          .eq("id", data.caixa_id);
+        if (dateError) throw dateError;
       }
 
-      const insertPayload: Record<string, any> = {
-        salon_id: salonId,
-        user_id: user.id,
-        opening_balance: input.opening_balance,
-        notes: input.notes,
-      };
-      if (input.opened_at) insertPayload.opened_at = input.opened_at;
-
-      const { data, error } = await supabase
-        .from("caixas")
-        .insert(insertPayload)
-        .select()
-        .single();
-
-      if (error) throw error;
       return data;
     },
     onSuccess: () => {
@@ -351,6 +339,27 @@ export function useCaixas() {
     } as Caixa;
   };
 
+  // Caixa aberto do SALÃO (qualquer usuário) — é o que vale desde a etapa 5:
+  // um caixa por salão. Quem abre comanda só precisa saber se existe algum.
+  const getSalonOpenCaixa = async (): Promise<Caixa | null> => {
+    if (!salonId) return null;
+
+    const { data, error } = await supabase
+      .from("caixas")
+      .select("*")
+      .eq("salon_id", salonId)
+      .is("closed_at", null)
+      .order("opened_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching salon open caixa:", error);
+      return null;
+    }
+    return (data as Caixa) || null;
+  };
+
   // Get open caixas (all users)
   const openCaixas = useMemo(() => caixas.filter(c => !c.closed_at), [caixas]);
 
@@ -371,12 +380,14 @@ export function useCaixas() {
     openCaixa: openCaixaMutation.mutate,
     openCaixaAsync: openCaixaMutation.mutateAsync,
     closeCaixa: closeCaixaMutation.mutate,
+    closeCaixaAsync: closeCaixaMutation.mutateAsync,
     reopenCaixa: reopenCaixaMutation.mutate,
     updateCaixa: updateCaixaMutation.mutate,
     updateCaixaTotals: updateCaixaTotalsMutation.mutate,
     updateCaixaTotalsAsync: updateCaixaTotalsMutation.mutateAsync,
     recalculateCaixaTotals: recalculateCaixaTotalsMutation.mutate,
     getCurrentUserOpenCaixa,
+    getSalonOpenCaixa,
     getCaixasByDate,
     isOpening: openCaixaMutation.isPending,
     isClosing: closeCaixaMutation.isPending,

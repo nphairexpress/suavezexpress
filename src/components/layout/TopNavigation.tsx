@@ -1,9 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  Calendar,
   DollarSign,
-  Package,
   Users,
   Megaphone,
   BarChart3,
@@ -21,12 +19,9 @@ interface NavItem {
   subItems?: { title: string; url: string }[];
 }
 
+// 29/09/2026 (auditoria D11): Agenda, Estoque, Clientes→Avisos, Marketing→Promoções/SMS saíram do menu.
+// Rotas e código continuam; só não aparecem pra equipe.
 const navItems: NavItem[] = [
-  {
-    title: "Agenda",
-    url: "/agenda",
-    icon: Calendar,
-  },
   {
     title: "Fila",
     url: "/fila-admin",
@@ -46,15 +41,6 @@ const navItems: NavItem[] = [
       { title: "Por gateway", url: "/financeiro/por-gateway" },
     ]
   },
-  { 
-    title: "Estoque", 
-    url: "/estoque", 
-    icon: Package,
-    subItems: [
-      { title: "Produtos", url: "/estoque" },
-      { title: "Fornecedores", url: "/estoque/fornecedores" },
-    ]
-  },
   {
     title: "Serviços",
     url: "/servicos",
@@ -69,19 +55,13 @@ const navItems: NavItem[] = [
     title: "Clientes",
     url: "/clientes",
     icon: Users,
-    subItems: [
-      { title: "Lista de Clientes", url: "/clientes" },
-      { title: "Avisos", url: "/clientes/avisos" },
-    ]
   },
   {
     title: "Marketing",
     url: "/marketing",
     icon: Megaphone,
     subItems: [
-      { title: "Promoções", url: "/marketing?tab=promocoes" },
       { title: "Campanhas de E-mail", url: "/marketing?tab=email" },
-      { title: "Campanhas de SMS", url: "/marketing?tab=sms" },
       { title: "Fidelidade", url: "/marketing?tab=fidelidade" },
     ]
   },

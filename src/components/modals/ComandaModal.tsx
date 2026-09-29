@@ -889,14 +889,14 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
         }
       }
 
-      // Update comanda date to today
+      // Update comanda date to today — só em comanda ABERTA: o banco recusa
+      // mudar created_at de comanda fechada fora de RPC (etapa 5, F-11).
       const now = new Date();
+      const dateUpdate: { updated_at: string; created_at?: string } = { updated_at: now.toISOString() };
+      if (!comanda.closed_at) dateUpdate.created_at = now.toISOString();
       await supabase
         .from("comandas")
-        .update({ 
-          created_at: now.toISOString(),
-          updated_at: now.toISOString(),
-        })
+        .update(dateUpdate)
         .eq("id", comanda.id);
 
       // Refresh data
@@ -906,7 +906,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
       const messages = [];
       if (itemsAdded > 0) messages.push(`${itemsAdded} serviço(s) adicionado(s)`);
       if (itemsUpdated > 0) messages.push(`${itemsUpdated} serviço(s) atualizado(s)`);
-      messages.push("Data atualizada para hoje");
+      if (dateUpdate.created_at) messages.push("Data atualizada para hoje");
 
       toast({ 
         title: "Comanda atualizada!", 

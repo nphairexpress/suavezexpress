@@ -38,7 +38,7 @@ export default function Financeiro() {
     closedCaixas: allClosedCaixas,
     isLoading,
     openCaixa,
-    closeCaixa,
+    closeCaixaAsync,
     reopenCaixa,
     updateCaixa,
     getCurrentUserOpenCaixa,
@@ -82,9 +82,10 @@ export default function Financeiro() {
     );
   };
 
+  // Devolve a promise: o modal aguarda e mostra o erro da RPC (comandas abertas etc.)
   const handleCloseCaixa = (closingBalance: number, notes?: string) => {
     if (!selectedCaixa) return;
-    closeCaixa({ caixaId: selectedCaixa.id, closingBalance, notes });
+    return closeCaixaAsync({ caixaId: selectedCaixa.id, closingBalance, notes });
   };
 
   const handleOpenCloseModal = (caixa: Caixa) => {

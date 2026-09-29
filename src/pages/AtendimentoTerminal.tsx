@@ -11,6 +11,10 @@ import { useProfessionals } from "@/hooks/useProfessionals";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ArrowLeft, ChevronRight, Plus, Pencil, Trash2, Check, X, RefreshCw, Search, Loader2, UserRound } from "lucide-react";
 
 const brl = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
@@ -34,27 +38,34 @@ export default function AtendimentoTerminal() {
   const [addOpen, setAddOpen] = useState(false);
   const [addSearch, setAddSearch] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmDel, setConfirmDel] = useState<any | null>(null); // item aguardando confirmação de exclusão
+
+  // 29/09/2026 (auditoria O-01): nenhum erro do banco fica mudo — vira toast com a mensagem.
+  const showError = (title: string, e: any) =>
+    toast({ title, description: e?.message || String(e), variant: "destructive" });
 
   const loadComandas = async () => {
     if (!salonId) return;
     setLoadingList(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("comandas")
       .select("id, comanda_number, created_at, total, client:clients(name)")
       .eq("salon_id", salonId)
       .is("closed_at", null)
       .order("created_at", { ascending: false });
+    if (error) showError("Erro ao carregar comandas", error);
     setComandas(data || []);
     setLoadingList(false);
   };
 
   const loadItems = async (comandaId: string) => {
     setLoadingItems(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("comanda_items")
       .select("*")
       .eq("comanda_id", comandaId)
       .order("created_at", { ascending: true });
+    if (error) showError("Erro ao carregar serviços", error);
     setItems((data || []).filter((i: any) => i.item_type === "service" || !i.item_type));
     setLoadingItems(false);
   };
@@ -65,9 +76,11 @@ export default function AtendimentoTerminal() {
   const backToList = async () => { setSel(null); setItems([]); setEditId(null); await loadComandas(); };
 
   const recalcTotals = async (comandaId: string) => {
-    const { data } = await supabase.from("comanda_items").select("total_price").eq("comanda_id", comandaId);
+    const { data, error } = await supabase.from("comanda_items").select("total_price").eq("comanda_id", comandaId);
+    if (error) throw error;
     const subtotal = (data || []).reduce((a: number, i: any) => a + Number(i.total_price || 0), 0);
-    await supabase.from("comandas").update({ subtotal, total: subtotal }).eq("id", comandaId);
+    const { error: upErr } = await supabase.from("comandas").update({ subtotal, total: subtotal }).eq("id", comandaId);
+    if (upErr) throw upErr;
   };
 
   const startEdit = (it: any) => {
@@ -81,33 +94,36 @@ export default function AtendimentoTerminal() {
     try {
       const price = parseFloat(editPrice) || 0;
       const qty = it.quantity || 1;
-      await supabase.from("comanda_items").update({
+      const { error } = await supabase.from("comanda_items").update({
         unit_price: price,
         total_price: price * qty,
         professional_id: editProf || null,
       }).eq("id", it.id);
+      if (error) throw error;
       await recalcTotals(sel.id);
       setEditId(null);
       await loadItems(sel.id);
       toast({ title: "Serviço atualizado" });
-    } catch { toast({ title: "Erro ao salvar", variant: "destructive" }); }
+    } catch (e) { showError("Erro ao salvar", e); }
     finally { setBusy(false); }
   };
 
   const removeItem = async (it: any) => {
     setBusy(true);
     try {
-      await supabase.from("comanda_items").delete().eq("id", it.id);
+      const { error } = await supabase.from("comanda_items").delete().eq("id", it.id);
+      if (error) throw error;
       await recalcTotals(sel.id);
       await loadItems(sel.id);
-    } catch { toast({ title: "Erro ao remover", variant: "destructive" }); }
+      toast({ title: "Serviço removido" });
+    } catch (e) { showError("Erro ao remover", e); }
     finally { setBusy(false); }
   };
 
   const addService = async (svc: any) => {
     setBusy(true);
     try {
-      await supabase.from("comanda_items").insert({
+      const { error } = await supabase.from("comanda_items").insert({
         comanda_id: sel.id,
         service_id: svc.id,
         professional_id: sel?.professional_id || null,
@@ -117,11 +133,12 @@ export default function AtendimentoTerminal() {
         unit_price: svc.price,
         total_price: svc.price,
       });
+      if (error) throw error;
       await recalcTotals(sel.id);
       setAddOpen(false); setAddSearch("");
       await loadItems(sel.id);
       toast({ title: "Serviço adicionado" });
-    } catch { toast({ title: "Erro ao adicionar", variant: "destructive" }); }
+    } catch (e) { showError("Erro ao adicionar", e); }
     finally { setBusy(false); }
   };
 
@@ -230,7 +247,7 @@ export default function AtendimentoTerminal() {
                       className="flex-1 h-14 rounded-xl border-2 border-orange-500 text-orange-600 text-xl font-bold flex items-center justify-center gap-2 active:bg-orange-50">
                       <Pencil className="h-6 w-6" /> Editar
                     </button>
-                    <button onClick={() => removeItem(it)} disabled={busy}
+                    <button onClick={() => setConfirmDel(it)} disabled={busy}
                       className="h-14 px-5 rounded-xl border-2 border-zinc-300 text-red-600 active:bg-red-50 disabled:opacity-60">
                       <Trash2 className="h-6 w-6" />
                     </button>
@@ -278,6 +295,27 @@ export default function AtendimentoTerminal() {
           </div>
         </div>
       )}
+
+      {/* Confirmação antes de remover serviço (O-01): lixeira não apaga mais no primeiro toque */}
+      <AlertDialog open={!!confirmDel} onOpenChange={(o) => { if (!o) setConfirmDel(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl">Remover serviço?</AlertDialogTitle>
+            <AlertDialogDescription className="text-lg">
+              {confirmDel?.description} ({brl(confirmDel?.total_price)}) sai da comanda.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-14 text-lg">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="h-14 text-lg bg-red-600 text-white hover:bg-red-700"
+              onClick={() => { const it = confirmDel; setConfirmDel(null); if (it) removeItem(it); }}
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

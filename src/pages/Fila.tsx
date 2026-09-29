@@ -11,7 +11,6 @@ import { useQueue } from "@/hooks/useQueue";
 import { useQueueLeads } from "@/hooks/useQueueLeads";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQueueRealtime } from "@/hooks/useQueueRealtime";
-import { useComandas } from "@/hooks/useComandas";
 import { useCaixas } from "@/hooks/useCaixas";
 import { useToast } from "@/hooks/use-toast";
 import { QueueCard } from "@/components/queue/QueueCard";
@@ -29,8 +28,7 @@ export default function Fila() {
   const { toast } = useToast();
   const { entries, stats, addToQueue, checkIn, assignProfessional, skip, remove, markNoShow, reorder, complete, archiveStaleEntries } = useQueue();
   const { pendingLeads, notifiedLeads, markNotified } = useQueueLeads();
-  const { getCurrentUserOpenCaixa, openCaixaAsync, updateCaixaTotalsAsync } = useCaixas();
-  const { createComandaAsync } = useComandas();
+  const { getSalonOpenCaixa } = useCaixas();
   useQueueRealtime();
   // Aviso de "vez chegando" agora é server-side (edge queue-cron, pg_cron 1/min)
   // — não depende mais desta tela estar aberta.
@@ -55,27 +53,19 @@ export default function Fila() {
   }, [entries.length]);
 
   // Regra da casa: comanda aberta NA CHEGADA da cliente; cobrança só na saída.
-  // Abre (ou reaproveita, se já houver aberta) a comanda da cliente com o
-  // serviço da fila como primeiro item. Retorna ids pra quem chamou.
+  // Abre (ou reaproveita, se já houver aberta) a comanda da cliente com os
+  // serviços da fila como itens, via rpc_iniciar_atendimento (etapa 5): comanda
+  // + itens + fila in_service + pagamento Asaas numa transação, SEM caixa.
+  // Retorna ids pra quem chamou.
   const abrirComandaDaChegada = async (
-    entry: QueueEntry
+    entry: QueueEntry,
+    professionalId?: string | null
   ): Promise<{ comandaId: string | null; clientId: string | null }> => {
     if (!salonId) return { comandaId: null, clientId: null };
     // Regra Cleiton 08/07: só abre comanda automática pra quem veio da FILA DIGITAL (online/pago).
     // Walk-in/presencial NÃO abre comanda sozinho — a recepção usa o botão "Abrir Comanda".
     // (Também evita a comanda/atendimento duplicado do fluxo presencial.)
     if (entry.source !== "online") return { comandaId: null, clientId: null };
-
-    // 0. Get or auto-open caixa
-    let openCaixa = await getCurrentUserOpenCaixa();
-    if (!openCaixa) {
-      toast({ title: "Abrindo caixa automaticamente..." });
-      openCaixa = await openCaixaAsync({ opening_balance: 0 });
-      if (!openCaixa) {
-        toast({ title: "Erro ao abrir caixa", variant: "destructive" });
-        return { comandaId: null, clientId: null };
-      }
-    }
 
     // 1. Find or create client by phone
     let clientId = entry.customer_id;
@@ -112,59 +102,33 @@ export default function Fila() {
     }
     if (!clientId) return { comandaId: null, clientId: null };
 
-    // 2. Já existe comanda aberta da cliente? Reaproveita (chegada → atender não duplica)
-    const { data: existente } = await supabase
-      .from("comandas")
-      .select("id")
-      .eq("client_id", clientId)
-      .is("closed_at", null)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (existente?.id) return { comandaId: existente.id, clientId };
+    // 2. A RPC exige a profissional. No check-in a entrada online ainda não tem
+    // profissional → a comanda abre no "Atender" (que reaproveita se já houver).
+    const profId = professionalId || entry.assigned_professional_id || null;
+    if (!profId) return { comandaId: null, clientId };
 
-    // 3. Cria a comanda com o serviço da fila como primeiro item
-    const comanda = await createComandaAsync({
-      client_id: clientId,
-      professional_id: entry.assigned_professional_id || null,
-      caixa_id: openCaixa.id,
-    });
-    if (!comanda?.id) return { comandaId: null, clientId };
-
-    const svcIds = (entry.service_ids && entry.service_ids.length > 0)
-      ? entry.service_ids
-      : (entry.service_id ? [entry.service_id] : []);
-    if (svcIds.length > 0) {
-      // Assinante do Clube: o serviço do plano entra no preço CHEIO (comissão de 30%
-      // é sobre o valor cheio, regra do Cleiton) e o plano abate via DESCONTO da
-      // comanda no mesmo valor → total a cobrar 0; extras lançados depois somam normal.
-      const isClube = entry.payment_method === "clube";
-      const { data: svcs } = await supabase.from("services").select("id, name, price").in("id", svcIds);
-      const items = (svcs || []).map((s: any) => ({
-        comanda_id: comanda.id,
-        service_id: s.id,
-        professional_id: entry.assigned_professional_id || null,
-        description: isClube ? `${s.name} — CLUBE (plano)` : s.name,
-        item_type: "service",
-        quantity: 1,
-        unit_price: s.price,
-        total_price: s.price,
-      }));
-      if (items.length > 0) {
-        await supabase.from("comanda_items").insert(items);
-        const total = items.reduce((sum, it) => sum + Number(it.total_price || 0), 0);
-        await supabase
-          .from("comandas")
-          .update(
-            isClube
-              ? { subtotal: total, discount: total, total: 0 }
-              : { subtotal: total, total }
-          )
-          .eq("id", comanda.id);
-      }
+    // 3. Caixa NÃO abre mais sozinho: a comanda nasce sem caixa e só precisa
+    // dele na hora de fechar. Aqui só avisa.
+    const caixaAberto = await getSalonOpenCaixa();
+    if (!caixaAberto) {
+      toast({
+        title: "Nenhum caixa aberto",
+        description: "A comanda pode ser aberta; abra o caixa antes de fechá-la.",
+      });
     }
 
-    return { comandaId: comanda.id, clientId };
+    // 4. Comanda (ou reaproveita a aberta) + itens dos serviços da fila + fila
+    // in_service + pagamento Asaas (uma vez) — tudo na RPC.
+    const { data, error } = await supabase.rpc("rpc_iniciar_atendimento", {
+      p_client_id: clientId,
+      p_professional_id: profId,
+      p_service_id: entry.service_id || null,
+      p_queue_entry_id: entry.id,
+      p_source: "fila_online",
+    });
+    if (error) throw error;
+
+    return { comandaId: (data?.comanda_id as string) || null, clientId };
   };
 
   const handleAddWalkIn = async (data: { customer_name: string; customer_phone: string; service_id: string }) => {
@@ -194,10 +158,12 @@ export default function Fila() {
   const handleAssignProfessional = async (professionalId: string) => {
     if (!selectedEntry || !salonId) return;
     try {
-      // 1. Garante a comanda (se o check-in já abriu na chegada, reaproveita)
-      const { comandaId, clientId } = await abrirComandaDaChegada(selectedEntry);
+      // 1. Garante a comanda (reaproveita se já houver aberta); a RPC já vincula
+      // a profissional à comanda/itens e registra o pagamento Asaas.
+      const { comandaId, clientId } = await abrirComandaDaChegada(selectedEntry, professionalId);
 
-      // 2. Assign professional in queue (moves to in_service)
+      // 2. Assign professional in queue (moves to in_service) — a RPC já faz
+      // isso pra entrada online; aqui continua valendo pra presencial/walk-in.
       const { error: assignError } = await supabase
         .from("queue_entries")
         .update({
@@ -210,17 +176,9 @@ export default function Fila() {
       if (assignError) console.error("Assign error:", assignError);
 
       if (comandaId) {
-        // 3. Vincula o profissional à comanda e aos itens ainda sem profissional
-        await supabase.from("comandas").update({ professional_id: professionalId }).eq("id", comandaId);
-        await supabase
-          .from("comanda_items")
-          .update({ professional_id: professionalId })
-          .eq("comanda_id", comandaId)
-          .is("professional_id", null);
-
-        // 4. Pagamento online (Asaas) já confirmado → registra o pagamento,
-        // mas a comanda FICA ABERTA até a saída: dá pra lançar serviços extras
-        // e o valor já pago via Asaas aparece abatido no fechamento da comanda.
+        // 3. Pagamento online (Asaas) confirmado: a RPC já registrou UMA vez na
+        // comanda (valor pago, não o do catálogo). A comanda FICA ABERTA até a
+        // saída; o caixa recebe no fechamento dela. Aqui só a agenda visual.
         if (selectedEntry.source === "online" && selectedEntry.payment_status === "confirmed") {
           const svcIds = (selectedEntry.service_ids && selectedEntry.service_ids.length > 0)
             ? selectedEntry.service_ids
@@ -228,27 +186,6 @@ export default function Fila() {
           const { data: svcs } = await supabase.from("services").select("id, name, price, duration_minutes").in("id", svcIds);
           type SvcRow = { id: string; name: string; price: number; duration_minutes: number | null };
           const svcRows = (svcs || []) as SvcRow[];
-          // Valor do pagamento = SNAPSHOT do que foi confirmado no Asaas
-          // (falha 12), não o preço ATUAL do catálogo (que pode ter mudado
-          // entre a compra e o atendimento). Fallback = soma do catálogo só se
-          // a entrada antiga não tiver paid_amount.
-          const catalogTotal = svcRows.reduce((sum, s) => sum + Number(s.price || 0), 0);
-          const paidAmount = (selectedEntry as { paid_amount?: number | null }).paid_amount;
-          const total = (paidAmount !== null && paidAmount !== undefined)
-            ? Number(paidAmount)
-            : catalogTotal;
-          const payMethod = selectedEntry.payment_method === "credit_card" ? "credit_card" : "pix";
-          await supabase.from("payments").insert({
-            comanda_id: comandaId,
-            salon_id: salonId,
-            payment_method: payMethod,
-            payment_provider: "asaas", // pagamento online via fila → sempre Asaas
-            provider_payment_id: selectedEntry.payment_id || null,
-            amount: total,
-            fee_amount: 0,
-            net_amount: total,
-            notes: `Pagamento online via Asaas - fila ${selectedEntry.id}`,
-          });
 
           // Agenda for visual tracking (um por serviço)
           if (svcRows.length > 0) {
@@ -264,16 +201,6 @@ export default function Fila() {
               price: s.price,
             })));
           }
-
-          // Caixa totals
-          const openCaixa = await getCurrentUserOpenCaixa();
-          if (openCaixa) {
-            await updateCaixaTotalsAsync({
-              caixaId: openCaixa.id,
-              paymentMethod: payMethod,
-              amount: total,
-            });
-          }
         }
       }
 
@@ -283,7 +210,11 @@ export default function Fila() {
         navigate(`/comandas?comanda=${comandaId}&edit=true`);
       }
     } catch (err) {
-      toast({ title: "Erro ao atribuir", variant: "destructive" });
+      toast({
+        title: "Erro ao atribuir",
+        description: (err as { message?: string })?.message,
+        variant: "destructive",
+      });
     }
   };
 

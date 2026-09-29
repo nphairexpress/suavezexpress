@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SensitiveDataProvider } from "@/components/common/SensitiveData";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
 // Estáticas (primeiro paint): login, dashboard, terminal da equipe e rotas públicas da fila/clube.
@@ -237,19 +238,21 @@ function AppRoutes() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AuthProvider>
-            <SensitiveDataProvider>
-              <Suspense fallback={<PageSpinner />}>
-                <AppRoutes />
-              </Suspense>
-            </SensitiveDataProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+      <ErrorBoundary>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
+              <SensitiveDataProvider>
+                <Suspense fallback={<PageSpinner />}>
+                  <AppRoutes />
+                </Suspense>
+              </SensitiveDataProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }

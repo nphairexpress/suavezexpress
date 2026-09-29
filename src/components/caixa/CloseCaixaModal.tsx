@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,23 +12,32 @@ import { Caixa } from "@/hooks/useCaixas";
 import { useCaixaMovements } from "@/hooks/useCaixaMovements";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
-import { format } from "date-fns";
+import { format, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface CloseCaixaModalProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: (closingBalance: number, notes?: string) => void;
+  onConfirm: (closingBalance: number, notes?: string) => void | Promise<unknown>;
   caixa: Caixa | null;
   isLoading?: boolean;
 }
 
+// Comanda aberta que trava o fechamento (mesma regra da rpc_fechar_caixa):
+// vinculada a este caixa OU sem caixa e criada até o dia do caixa.
+interface ComandaTravando {
+  id: string;
+  comanda_number: number | null;
+  client_name: string;
+}
+
 export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: CloseCaixaModalProps) {
+  const navigate = useNavigate();
   const [closingBalance, setClosingBalance] = useState("");
   const [notes, setNotes] = useState("");
-  const [openComandasCount, setOpenComandasCount] = useState(0);
-  const [orphanComandasCount, setOrphanComandasCount] = useState(0);
-  const [isLastOpenCaixa, setIsLastOpenCaixa] = useState(false);
+  const [openComandas, setOpenComandas] = useState<ComandaTravando[]>([]);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [rpcError, setRpcError] = useState<string | null>(null);
   const [checkingComandas, setCheckingComandas] = useState(false);
   const [totalCredits, setTotalCredits] = useState(0);
   const [totalDebts, setTotalDebts] = useState(0);
@@ -57,40 +67,25 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
 
     setCheckingComandas(true);
     try {
-      // 1. Check open comandas vinculadas a este caixa
+      // 1. Comandas abertas do SALÃO que travam este caixa (mesma regra da
+      // rpc_fechar_caixa): vinculadas a ele OU sem caixa e criadas até o dia
+      // do caixa. Lista com número e cliente pra equipe resolver uma a uma.
+      const fimDoDia = endOfDay(new Date(caixa.opened_at)).toISOString();
       const { data: openCmdData } = await supabase
         .from("comandas")
-        .select("id", { count: "exact" })
-        .eq("salon_id", salonId)
-        .eq("caixa_id", caixa.id)
-        .is("closed_at", null);
-
-      setOpenComandasCount(openCmdData?.length || 0);
-
-      // 1b. Comandas órfãs do salão (sem caixa vinculado e ainda em aberto).
-      // Só bloqueiam o fechamento quando este é o ÚLTIMO caixa aberto do salão
-      // — se ainda houver outros caixas, deixa que o próximo a fechar lide.
-      const { data: otherOpenCaixas } = await supabase
-        .from("caixas")
-        .select("id")
+        .select("id, comanda_number, created_at, client:clients(name)")
         .eq("salon_id", salonId)
         .is("closed_at", null)
-        .neq("id", caixa.id);
+        .or(`caixa_id.eq.${caixa.id},and(caixa_id.is.null,created_at.lte.${fimDoDia})`)
+        .order("comanda_number", { ascending: true });
 
-      const lastOpen = !otherOpenCaixas || otherOpenCaixas.length === 0;
-      setIsLastOpenCaixa(lastOpen);
-
-      if (lastOpen) {
-        const { data: orphanCmdData } = await supabase
-          .from("comandas")
-          .select("id", { count: "exact" })
-          .eq("salon_id", salonId)
-          .is("caixa_id", null)
-          .is("closed_at", null);
-        setOrphanComandasCount(orphanCmdData?.length || 0);
-      } else {
-        setOrphanComandasCount(0);
-      }
+      setOpenComandas(
+        (openCmdData || []).map((c: any) => ({
+          id: c.id,
+          comanda_number: c.comanda_number ?? null,
+          client_name: c.client?.name || "Cliente avulso",
+        }))
+      );
 
       // 2. Recalculate totals from actual payment records
       const { data: allComandas } = await supabase
@@ -196,23 +191,48 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
   };
 
-  const handleConfirm = () => {
-    if (openComandasCount > 0) return;
-    if (orphanComandasCount > 0) return;
+  const handleConfirm = async () => {
+    if (openComandas.length > 0) return;
 
-    const balance = parseFloat(closingBalance.replace(",", ".")) || 0;
-    setClosedBalanceValue(balance);
-    setClosedNotes(notes || undefined);
-    setClosedAt(new Date());
-    onConfirm(balance, notes || undefined);
-    setShowSuccess(true);
+    // Saldo contado é obrigatório (a RPC também recusa sem ele).
+    const raw = closingBalance.trim();
+    if (!raw) {
+      setFormError("Conte o dinheiro no caixa e informe o valor antes de fechar.");
+      return;
+    }
+    const balance = parseFloat(raw.replace(",", "."));
+    if (Number.isNaN(balance) || balance < 0) {
+      setFormError("Valor em dinheiro inválido. Use só números, ex.: 150,00.");
+      return;
+    }
+    setFormError(null);
+    setRpcError(null);
+
+    try {
+      await onConfirm(balance, notes || undefined);
+      setClosedBalanceValue(balance);
+      setClosedNotes(notes || undefined);
+      setClosedAt(new Date());
+      setShowSuccess(true);
+    } catch (error) {
+      // Erro da RPC (ex.: comandas abertas que travam) exibido como veio.
+      setRpcError((error as { message?: string })?.message || "Não foi possível fechar o caixa.");
+      recalculateAndCheck();
+    }
   };
 
   const handleDismiss = () => {
     setClosingBalance("");
     setNotes("");
+    setFormError(null);
+    setRpcError(null);
     setShowSuccess(false);
     onClose();
+  };
+
+  const abrirComanda = (id: string) => {
+    onClose();
+    navigate(`/comandas?comanda=${id}&edit=true`);
   };
 
   const handlePrintCaixaReport = async () => {
@@ -439,9 +459,8 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
   const totalReceived = displayCash + displayPix + displayCredit + displayDebit + displayOther;
   const expectedCash = (caixa.opening_balance || 0) + displayCash;
 
-  const hasOpenComandas = openComandasCount > 0;
-  const hasOrphanComandas = orphanComandasCount > 0;
-  const blocked = hasOpenComandas || hasOrphanComandas;
+  const hasOpenComandas = openComandas.length > 0;
+  const blocked = hasOpenComandas;
 
   if (showSuccess) {
     return (
@@ -496,21 +515,33 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    Existem <strong>{openComandasCount} comanda{openComandasCount > 1 ? "s" : ""} aberta{openComandasCount > 1 ? "s" : ""}</strong> vinculada{openComandasCount > 1 ? "s" : ""} a este caixa.
-                    Feche todas as comandas antes de fechar o caixa.
-                  </AlertDescription>
-                </Alert>
-              )}
-              {hasOrphanComandas && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    Existem <strong>{orphanComandasCount} comanda{orphanComandasCount > 1 ? "s" : ""} em aberto</strong> no salão sem caixa vinculado.
-                    Como este é o único caixa aberto, resolva essas pendências antes de fechar.
+                    <p>
+                      Existem <strong>{openComandas.length} comanda{openComandas.length > 1 ? "s" : ""} aberta{openComandas.length > 1 ? "s" : ""}</strong> no salão que travam este caixa.
+                      Feche ou exclua cada uma antes de fechar o caixa.
+                    </p>
+                    <ul className="mt-2 space-y-1">
+                      {openComandas.map((c) => (
+                        <li key={c.id} className="flex items-center justify-between gap-2">
+                          <span>
+                            <strong>#{c.comanda_number ? String(c.comanda_number).padStart(4, "0") : c.id.slice(0, 8)}</strong> — {c.client_name}
+                          </span>
+                          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => abrirComanda(c.id)}>
+                            Abrir comanda
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
                   </AlertDescription>
                 </Alert>
               )}
             </>
+          )}
+
+          {rpcError && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{rpcError}</AlertDescription>
+            </Alert>
           )}
 
           {/* Summary */}
@@ -597,18 +628,22 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
           </Card>
 
           <div className="space-y-2">
-            <Label htmlFor="closingBalance">Valor em Dinheiro no Caixa (R$)</Label>
+            <Label htmlFor="closingBalance">Valor em Dinheiro no Caixa (R$) *</Label>
             <Input
               id="closingBalance"
               type="text"
               placeholder="0,00"
               value={closingBalance}
-              onChange={(e) => setClosingBalance(e.target.value)}
+              onChange={(e) => { setClosingBalance(e.target.value); setFormError(null); }}
               disabled={blocked}
             />
-            <p className="text-xs text-muted-foreground">
-              Conte o dinheiro no caixa e informe o valor total
-            </p>
+            {formError ? (
+              <p className="text-xs text-destructive">{formError}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Obrigatório: conte o dinheiro no caixa e informe o valor total
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

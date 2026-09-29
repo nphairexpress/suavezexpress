@@ -405,68 +405,19 @@ export default function Comandas() {
 
     setIsDeleting(true);
     try {
-      // Save deletion record for audit
-      await supabase.from("comanda_deletions").insert({
-        comanda_id: comandaToDelete.id,
-        client_id: comandaToDelete.client_id,
-        client_name: comandaToDelete.client?.name,
-        professional_id: comandaToDelete.professional_id,
-        professional_name: comandaToDelete.professional?.name,
-        comanda_total: comandaToDelete.total,
-        reason: reason,
-        deleted_by: user.id,
-        original_created_at: comandaToDelete.created_at,
-        original_closed_at: comandaToDelete.closed_at,
+      // Exclusão via RPC (etapa 5): só financeiro; snapshot em comanda_deletions,
+      // pagamentos anulados, estorno no caixa por método, créditos do Clube/pacote
+      // devolvidos pelos triggers e a linha apagada — tudo numa transação.
+      // Se recusar (caixa já fechado, sem motivo, sem permissão), a mensagem explica.
+      const { error: deleteError } = await supabase.rpc("rpc_excluir_comanda", {
+        p_comanda: comandaToDelete.id,
+        p_reason: reason,
       });
-
-      // Delete package usage from this comanda
-      await supabase.from("client_package_usage").delete().eq("comanda_id", comandaToDelete.id);
-
-      // Cancel client_packages that were sold in this comanda (check comanda items for package type)
-      const { data: packageItems } = await supabase
-        .from("comanda_items")
-        .select("description")
-        .eq("comanda_id", comandaToDelete.id)
-        .eq("item_type", "package");
-
-      if (packageItems && packageItems.length > 0 && comandaToDelete.client_id) {
-        // Find and cancel active packages for this client that were created around the same time
-        const { data: clientPkgs } = await supabase
-          .from("client_packages")
-          .select("id, notes")
-          .eq("client_id", comandaToDelete.client_id)
-          .eq("status", "active");
-
-        if (clientPkgs) {
-          const comandaRef = comandaToDelete.comanda_number ? String(comandaToDelete.comanda_number).padStart(4, "0") : comandaToDelete.id.slice(0, 8);
-          for (const pkg of clientPkgs) {
-            // Match by comanda reference in notes or by timing
-            if (pkg.notes && pkg.notes.includes(comandaRef)) {
-              // Delete usage records for this package
-              await supabase.from("client_package_usage").delete().eq("client_package_id", pkg.id);
-              // Delete the package
-              await supabase.from("client_packages").delete().eq("id", pkg.id);
-            }
-          }
-        }
-      }
-
-      // Delete all other related records
-      await supabase.from("client_balance").delete().eq("comanda_id", comandaToDelete.id);
-      await supabase.from("client_debts").delete().eq("comanda_id", comandaToDelete.id);
-      await supabase.from("client_credits").delete().eq("comanda_id", comandaToDelete.id);
-      await supabase.from("comanda_items").delete().eq("comanda_id", comandaToDelete.id);
-      await supabase.from("payments").delete().eq("comanda_id", comandaToDelete.id);
-
-      // Delete the comanda
-      const { error: deleteError } = await supabase
-        .from("comandas")
-        .delete()
-        .eq("id", comandaToDelete.id);
 
       if (deleteError) throw deleteError;
 
       queryClient.invalidateQueries({ queryKey: ["comandas", salonId] });
+      queryClient.invalidateQueries({ queryKey: ["caixas", salonId] });
       toast({ title: "Comanda excluída com sucesso" });
       setDeleteModalOpen(false);
       setComandaToDelete(null);

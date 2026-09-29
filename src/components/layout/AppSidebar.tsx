@@ -1,11 +1,9 @@
 import {
-  Calendar,
   Users,
   Scissors,
   UserCog,
   Receipt,
   DollarSign,
-  Package,
   Megaphone,
   BarChart3,
   Settings,
@@ -36,9 +34,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
+// 29/09/2026 (auditoria D11): Agenda e Estoque saíram do menu; rotas e código continuam.
 const mainNavItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
-  { title: "Agenda", url: "/agenda", icon: Calendar },
   { title: "Clientes", url: "/clientes", icon: Users },
   { title: "Serviços", url: "/servicos", icon: Scissors },
   { title: "Profissionais", url: "/profissionais", icon: UserCog },
@@ -48,7 +46,6 @@ const operationItems = [
   { title: "Comandas", url: "/comandas", icon: Receipt },
   { title: "Fila", url: "/fila-admin", icon: ListOrdered },
   { title: "Financeiro", url: "/financeiro", icon: DollarSign },
-  { title: "Estoque", url: "/estoque", icon: Package },
   { title: "Pendências", url: "/pendencias", icon: AlertTriangle },
 ];
 
