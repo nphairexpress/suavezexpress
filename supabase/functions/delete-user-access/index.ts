@@ -127,8 +127,10 @@ Deno.serve(async (req) => {
       .eq("user_id", userId)
       .eq("salon_id", salonId);
 
-    // Optionally disable the auth user (soft delete)
-    // Not deleting auth user to preserve audit trail
+    // 29/09/2026 (auditoria S-08): sem papel e sem perfil o login ficava vivo e a conta virava
+    // órfã (podia se automatricular). Agora o acesso é banido; a conta fica para auditoria.
+    const { error: banError } = await adminClient.auth.admin.updateUserById(userId, { ban_duration: "876000h" });
+    if (banError) console.error("delete-user-access: ban failed", banError);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
