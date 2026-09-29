@@ -88,6 +88,15 @@ Deno.serve(async (req) => {
       .eq("salon_id", salonId)
       .maybeSingle();
 
+    // 29/09/2026 (auditoria): alvo precisa pertencer a ESTE salão; sem isso o banimento abaixo
+    // poderia atingir um usuário de fora (mesmo que hoje só exista um salão).
+    if (!targetRole) {
+      return new Response(JSON.stringify({ error: "Usuário não pertence ao salão" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (targetRole?.role === "admin") {
       return new Response(JSON.stringify({ error: "Cannot remove admin access" }), {
         status: 400,
