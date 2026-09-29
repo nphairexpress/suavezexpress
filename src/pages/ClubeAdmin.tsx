@@ -18,7 +18,22 @@ type Assinante = {
   created_at: string | null;
 };
 
-type Credito = { assinante_id: string; creditos_total: number; creditos_usados: number; inicio: string; fim: string };
+type Credito = {
+  assinante_id: string; creditos_total: number; creditos_usados: number; inicio: string; fim: string;
+  origem: string; maos_usadas: number; pes_usados: number;
+};
+
+// ciclos de pacote (unha/esmaltação) convivem com o da escova na mesma assinante
+const PACOTE_ESMALTACAO_VALOR = 148;
+const ehEscova = (c: Credito) => c.origem !== "pacote_unha" && c.origem !== "pacote_esmaltacao";
+
+function usoDoCiclo(c: Credito): { texto: string; faltam: number } {
+  if (c.origem === "pacote_unha") {
+    return { texto: `Mãos ${c.maos_usadas} de 4 · Pés ${c.pes_usados} de 2`, faltam: Math.max(0, 4 - c.maos_usadas) + Math.max(0, 2 - c.pes_usados) };
+  }
+  const t = c.origem === "pacote_esmaltacao" ? "Esmaltação " : "";
+  return { texto: `${t}${c.creditos_usados} de ${c.creditos_total}`, faltam: Math.max(0, c.creditos_total - c.creditos_usados) };
+}
 
 const fmtDia = (iso: string) =>
   new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit" }).format(new Date(iso));
@@ -48,7 +63,7 @@ export default function ClubeAdmin() {
       const [assinantesRes, creditosRes, receitaRes] = await Promise.all([
         supabase.from("clube_assinantes").select("id, nome, celular, plano, teto_mensal, status, created_at").order("created_at", { ascending: false }),
         // ciclos ATIVOS agora (inicio <= agora < fim); um assinante pode ter mais de um se renovou antes do fim
-        supabase.from("clube_creditos").select("assinante_id, creditos_total, creditos_usados, inicio, fim")
+        supabase.from("clube_creditos").select("assinante_id, creditos_total, creditos_usados, inicio, fim, origem, maos_usadas, pes_usados")
           .eq("bloqueado", false).lte("inicio", agora).gt("fim", agora).order("fim", { ascending: true }),
         supabase.from("financial_transactions").select("amount, transaction_date")
           .eq("category", "Clube da Escova").eq("transaction_type", "income")
@@ -63,13 +78,19 @@ export default function ClubeAdmin() {
   });
 
   const assinantes = data?.assinantes ?? [];
-  // ciclo vigente = o ativo que termina primeiro (ordem já vem por fim asc)
-  const creditosPorAssinante = new Map<string, Credito>();
-  for (const c of data?.creditos ?? []) if (!creditosPorAssinante.has(c.assinante_id)) creditosPorAssinante.set(c.assinante_id, c);
+  // ciclo vigente POR TIPO (escova / unha / esmaltação) = o ativo que termina primeiro (ordem já vem por fim asc)
+  const creditosPorAssinante = new Map<string, Credito[]>();
+  for (const c of data?.creditos ?? []) {
+    const lista = creditosPorAssinante.get(c.assinante_id) ?? [];
+    const tipo = ehEscova(c) ? "escova" : c.origem;
+    if (!lista.some((x) => (ehEscova(x) ? "escova" : x.origem) === tipo)) lista.push(c);
+    creditosPorAssinante.set(c.assinante_id, lista);
+  }
   const ativos = assinantes.filter((a) => a.status === "ativo");
   const inadimplentes = assinantes.filter((a) => a.status === "inadimplente");
-  const mrr = ativos.reduce((s, a) => s + (PLANO_ROTULO[a.plano]?.valor ?? 0), 0);
-  const usadasCiclos = (data?.creditos ?? []).reduce((s, c) => s + c.creditos_usados, 0);
+  const mrr = ativos.reduce((s, a) => s + (PLANO_ROTULO[a.plano]?.valor ?? 0)
+    + ((creditosPorAssinante.get(a.id) ?? []).some((c) => c.origem === "pacote_esmaltacao") ? PACOTE_ESMALTACAO_VALOR : 0), 0);
+  const usadasCiclos = (data?.creditos ?? []).filter(ehEscova).reduce((s, c) => s + c.creditos_usados, 0);
 
   return (
     <AppLayoutNew>
@@ -126,10 +147,9 @@ export default function ClubeAdmin() {
                 <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Nenhuma assinatura ainda.</td></tr>
               ) : (
                 assinantes.map((a) => {
-                  const cred = creditosPorAssinante.get(a.id);
                   // sem ciclo ativo = sem pagamento confirmado válido hoje: nada disponível
-                  const teto = cred?.creditos_total ?? 0;
-                  const usadas = cred?.creditos_usados ?? 0;
+                  const ciclos = creditosPorAssinante.get(a.id) ?? [];
+                  const temEsmaltacao = ciclos.some((c) => c.origem === "pacote_esmaltacao");
                   return (
                     <tr key={a.id} className="border-b last:border-b-0 hover:bg-muted/30">
                       <td className="p-3 font-medium">{a.nome ?? "—"}</td>
@@ -137,6 +157,9 @@ export default function ClubeAdmin() {
                       <td className="p-3">
                         {PLANO_ROTULO[a.plano]?.rotulo ?? a.plano}
                         <span className="text-muted-foreground"> · {brl(PLANO_ROTULO[a.plano]?.valor ?? 0)}</span>
+                        {temEsmaltacao && (
+                          <div>Esmaltação · 4/mês<span className="text-muted-foreground"> · {brl(PACOTE_ESMALTACAO_VALOR)}</span></div>
+                        )}
                       </td>
                       <td className="p-3">
                         {a.status === "ativo" ? (
@@ -147,9 +170,9 @@ export default function ClubeAdmin() {
                           <Badge variant="secondary">Cancelada</Badge>
                         )}
                       </td>
-                      <td className="p-3">{cred ? `${usadas} de ${teto}` : "—"}</td>
-                      <td className="p-3">{cred ? fmtDia(cred.fim) : <span className="text-red-600">sem ciclo ativo</span>}</td>
-                      <td className="p-3 font-medium">{cred ? Math.max(0, teto - usadas) : 0}</td>
+                      <td className="p-3">{ciclos.length ? ciclos.map((c) => <div key={c.origem + c.fim}>{usoDoCiclo(c).texto}</div>) : "—"}</td>
+                      <td className="p-3">{ciclos.length ? ciclos.map((c) => <div key={c.origem + c.fim}>{fmtDia(c.fim)}</div>) : <span className="text-red-600">sem ciclo ativo</span>}</td>
+                      <td className="p-3 font-medium">{ciclos.length ? ciclos.map((c) => <div key={c.origem + c.fim}>{usoDoCiclo(c).faltam}</div>) : 0}</td>
                     </tr>
                   );
                 })
