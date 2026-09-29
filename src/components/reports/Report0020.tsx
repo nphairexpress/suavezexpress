@@ -19,7 +19,7 @@ export function Report0020() {
     queryFn: async () => {
       if (!salonId) return [];
       const { data, error } = await supabase
-        .from("clients")
+        .from("clients_staff")
         .select("id, name, email, phone, return_days")
         .eq("salon_id", salonId)
         .order("name");

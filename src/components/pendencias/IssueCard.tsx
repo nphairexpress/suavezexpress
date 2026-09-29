@@ -47,6 +47,15 @@ const FIELD_LABELS: Record<string, string> = {
   description: "Descrição",
   candidate_comandas: "Comandas candidatas",
   queue_link: "Veio da fila online?",
+  // falta_dinheiro (rpc_fechar_caixa)
+  esperado_dinheiro: "Dinheiro esperado",
+  saldo_inicial: "Saldo inicial",
+  dinheiro_comandas: "Dinheiro das comandas",
+  suprimentos: "Suprimentos",
+  sangrias: "Sangrias",
+  contado: "Contado",
+  falta: "Falta",
+  caixa_id: "Caixa",
 };
 
 const METHOD_LABELS: Record<string, string> = {
@@ -76,6 +85,7 @@ function fmtValue(key: string, value: any): string {
     "system_total", "pagbank_total", "expected_pagbank", "asaas_subtracted",
     "diff", "total", "subtotal", "discount", "expected_total", "items_sum",
     "amount", "liquido", "value", "balance",
+    "esperado_dinheiro", "saldo_inicial", "dinheiro_comandas", "suprimentos", "sangrias", "contado", "falta",
   ];
   if (moneyKeys.includes(key) && typeof value === "number") {
     const sign = key === "diff" && value > 0 ? "+" : "";

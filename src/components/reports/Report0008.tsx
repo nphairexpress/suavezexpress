@@ -37,7 +37,7 @@ export function Report0008({ dateRange }: Props) {
       if (!salonId || selectedService === "all") return [];
       const { data, error } = await supabase
         .from("comanda_items")
-        .select("id, description, quantity, total_price, comanda_id, comandas!inner(id, created_at, closed_at, salon_id, clients(id, name, email, phone, phone_landline, birth_date))")
+        .select("id, description, quantity, total_price, comanda_id, comandas!inner(id, created_at, closed_at, salon_id, clients_staff(id, name, email, phone, phone_landline, birth_date))")
         .eq("service_id", selectedService)
         .eq("comandas.salon_id", salonId)
         .gte("comandas.created_at", format(dateRange.from, "yyyy-MM-dd"))
@@ -51,7 +51,7 @@ export function Report0008({ dateRange }: Props) {
   const rows = useMemo(() => {
     const clientMap: Record<string, { name: string; email: string; phone: string; phone_landline: string; birth_date: string; visits: number; total: number }> = {};
     comandas.forEach((item: any) => {
-      const client = item.comandas?.clients;
+      const client = item.comandas?.clients_staff;
       if (!client) return;
       const key = client.id;
       if (!clientMap[key]) {

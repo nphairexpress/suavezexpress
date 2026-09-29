@@ -56,7 +56,7 @@ export function EmailCampaignsTab() {
       if (!salonId) throw new Error("Salão não encontrado");
       // Get clients based on target_type
       let query = supabase
-        .from("clients")
+        .from("clients_staff")
         .select("id, name, email, tags, allow_email_campaigns")
         .eq("salon_id", salonId)
         .eq("allow_email_campaigns", true)

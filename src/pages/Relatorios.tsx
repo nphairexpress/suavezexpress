@@ -327,7 +327,7 @@ export default function Relatorios() {
     queryFn: async () => {
       if (!salonId) return [];
       const { data, error } = await supabase
-        .from("clients")
+        .from("clients_staff")
         .select("id, created_at")
         .eq("salon_id", salonId)
         .gte("created_at", format(dateRange.from, "yyyy-MM-dd"))

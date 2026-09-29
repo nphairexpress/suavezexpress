@@ -343,7 +343,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
     }
     (async () => {
       const { data: cli } = await supabase
-        .from("clients")
+        .from("clients_staff")
         .select("phone")
         .eq("id", comanda.client_id)
         .maybeSingle();
@@ -1252,7 +1252,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
             .eq("id", result.cashback_id)
             .single();
           const { data: clientData } = await supabase
-            .from("clients")
+            .from("clients_staff")
             .select("email")
             .eq("id", comanda.client_id)
             .single();

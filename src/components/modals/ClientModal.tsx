@@ -159,7 +159,13 @@ export function ClientModal({ open, onOpenChange, client, onSubmit, isLoading, i
       return;
     }
 
-    const payload = noEmail ? { ...formData, email: "" } : formData;
+    const payload = noEmail ? { ...formData, email: "" } : { ...formData };
+    if (!canViewCpf) {
+      // R-07: sem a permissão os campos chegam vazios da view clients_staff; não sobrescrever no banco
+      delete payload.cpf;
+      delete payload.rg;
+      delete payload.birth_date;
+    }
     if (client) {
       onSubmit({ ...payload, id: client.id });
     } else {

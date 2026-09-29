@@ -72,7 +72,7 @@ export default function Fila() {
     if (!clientId && entry.customer_phone) {
       const cleanPhone = entry.customer_phone.replace(/\D/g, "");
       const { data: existingClient } = await supabase
-        .from("clients")
+        .from("clients_staff")
         .select("id")
         .eq("salon_id", salonId)
         .or(`phone.eq.${cleanPhone},phone.eq.${entry.customer_phone}`)

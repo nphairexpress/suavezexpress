@@ -103,7 +103,7 @@ export function useAppointments(date?: Date) {
 
       // Send confirmation email (inside mutationFn to guarantee execution)
       try {
-        const { data: client } = await supabase.from("clients").select("name, email").eq("id", data.client_id).single();
+        const { data: client } = await supabase.from("clients_staff").select("name, email").eq("id", data.client_id).single();
         const { data: service } = await supabase.from("services").select("name").eq("id", data.service_id).single();
         const { data: prof } = await supabase.from("professionals").select("name").eq("id", data.professional_id).single();
         if (client?.email) {
@@ -155,7 +155,7 @@ export function useAppointments(date?: Date) {
       try {
         if (data.length > 0) {
           const first = data[0];
-          const { data: client } = await supabase.from("clients").select("name, email").eq("id", first.client_id).single();
+          const { data: client } = await supabase.from("clients_staff").select("name, email").eq("id", first.client_id).single();
           if (client?.email) {
             // Fetch service names for all appointments
             const serviceNames = [];
@@ -222,7 +222,7 @@ export function useAppointments(date?: Date) {
           const isCancelled = data.status === "cancelled";
           const emailType = isCancelled ? "appointment_cancellation" : "appointment_update";
 
-          supabase.from("clients").select("name, email").eq("id", data.client_id).single().then(({ data: client }) => {
+          supabase.from("clients_staff").select("name, email").eq("id", data.client_id).single().then(({ data: client }) => {
             if (client?.email) {
               supabase.from("services").select("name").eq("id", data.service_id).single().then(({ data: service }) => {
                 supabase.from("professionals").select("name").eq("id", data.professional_id).single().then(({ data: prof }) => {

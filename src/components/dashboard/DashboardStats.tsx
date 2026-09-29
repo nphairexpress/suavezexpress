@@ -205,14 +205,14 @@ export function DashboardStats({ professionalId }: DashboardStatsProps) {
       const lastMonthTicket = lastMonthCount > 0 ? lastMonthRevenue / lastMonthCount : 0;
 
       const { count: newClientsMonth } = await supabase
-        .from("clients")
+        .from("clients_staff")
         .select("id", { count: "exact", head: true })
         .eq("salon_id", salonId)
         .gte("created_at", monthStart)
         .lt("created_at", monthEnd);
 
       const { count: newClientsLastMonth } = await supabase
-        .from("clients")
+        .from("clients_staff")
         .select("id", { count: "exact", head: true })
         .eq("salon_id", salonId)
         .gte("created_at", lastMonthStart)

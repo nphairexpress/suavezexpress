@@ -135,7 +135,7 @@ function AbrirComandaDialog({ onOpenChange }: { onOpenChange: (open: boolean) =>
       if (novoCliente) {
         const cleanPhone = phone.replace(/\D/g, "");
         const { data: existing } = await supabase
-          .from("clients").select("id").eq("salon_id", salonId)
+          .from("clients_staff").select("id").eq("salon_id", salonId)
           .or(`phone.eq.${cleanPhone},phone.eq.${phone}`).limit(1).maybeSingle();
         if (existing) {
           resolvedClientId = existing.id;

@@ -1,7 +1,7 @@
 // Cliente HTTP do Asaas v3 — gateway de pagamento online da fila.
 // Diferente do PagBank (taxa real cartão presencial), o Asaas processa PIX +
-// cartão online. A API key fica em queue_settings.asaas_api_key (1 por salão)
-// e é passada pra cá pela generateReport.
+// cartão online. A API key vem do cofre salon_secrets (asaas_api_key) e
+// é passada pra cá pela generateReport.
 
 import type { AsaasPayment } from "./types.ts";
 

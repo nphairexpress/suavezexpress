@@ -81,7 +81,7 @@ export function useClients() {
       const pageSize = 1000;
       while (true) {
         const { data, error } = await supabase
-          .from("clients")
+          .from("clients_staff")
           .select("*")
           .eq("salon_id", salonId)
           .order("name")
@@ -110,7 +110,7 @@ export function useClients() {
       const { data, error } = await supabase
         .from("clients")
         .insert(cleaned)
-        .select()
+        .select("id, name, email")
         .single();
       if (error) throw error;
       return data;
@@ -145,7 +145,7 @@ export function useClients() {
         .from("clients")
         .update(cleaned)
         .eq("id", id)
-        .select()
+        .select("id")
         .single();
       if (error) throw error;
       return data;

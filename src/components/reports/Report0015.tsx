@@ -35,7 +35,7 @@ export function Report0015({ dateRange }: Props) {
     queryKey: ["report-0015-clients", salonId],
     queryFn: async () => {
       if (!salonId) return [];
-      const { data, error } = await supabase.from("clients").select("id, name, email, phone").eq("salon_id", salonId).order("name");
+      const { data, error } = await supabase.from("clients_staff").select("id, name, email, phone").eq("salon_id", salonId).order("name");
       if (error) throw error;
       return data || [];
     },
