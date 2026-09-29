@@ -28,6 +28,7 @@ const PLANO_ROTULO: Record<string, { rotulo: string; valor: number }> = {
   "4x_longo": { rotulo: "4x · longo", valor: 247 },
   "8x_curto_medio": { rotulo: "8x · curto/médio", valor: 347 },
   "8x_longo": { rotulo: "8x · longo", valor: 447 },
+  unha_4m2p: { rotulo: "Unha · 4 mãos + 2 pés", valor: 237 },
 };
 
 const brl = (n: number) => `R$ ${n.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
