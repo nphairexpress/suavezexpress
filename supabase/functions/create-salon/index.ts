@@ -126,6 +126,17 @@ Deno.serve(async (req) => {
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+    // 29/09/2026 (auditoria S-05): o salão já existe. Depois da instalação, ninguém cria um
+    // segundo salão (era o caminho para uma conta órfã virar "admin" e sobrescrever o master).
+    const guard = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+    const { data: setupDone } = await guard.rpc("is_setup_done");
+    if (setupDone === true) {
+      return new Response(JSON.stringify({ error: "Instalação já concluída: novo salão não pode ser criado" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
       auth: { persistSession: false },

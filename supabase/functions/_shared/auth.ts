@@ -40,6 +40,12 @@ export async function requireStaff(
   if (!profile?.salon_id) {
     return { ok: false, status: 403, error: "Usuário sem salão" };
   }
+  // 29/09/2026 (auditoria S-05): só o salão real. Um perfil de outro salon_id não usa
+  // proxies, e-mail ou relatórios deste projeto.
+  const salonEsperado = Deno.env.get("NPHAIR_EXPRESS_SALON_ID") ?? "";
+  if (salonEsperado && profile.salon_id !== salonEsperado) {
+    return { ok: false, status: 403, error: "Usuário fora do salão" };
+  }
 
   const { data: roleRows } = await supaAdmin
     .from("user_roles")
