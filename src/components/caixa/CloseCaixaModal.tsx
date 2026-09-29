@@ -102,15 +102,31 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
       const totals = { cash: 0, pix: 0, credit_card: 0, debit_card: 0, other: 0 };
 
       if (comandaIds.length > 0) {
+        // Pagamento anulado (reabertura) não conta: o caixa mostrava dinheiro a mais.
         const { data: payments } = await supabase
           .from("payments")
           .select("payment_method, amount")
-          .in("comanda_id", comandaIds);
+          .in("comanda_id", comandaIds)
+          .eq("voided", false);
 
         for (const p of (payments || [])) {
           const method = p.payment_method as keyof typeof totals;
           if (method in totals) totals[method] += Number(p.amount);
         }
+      }
+
+      // Movimentações: suprimento soma, sangria subtrai (mesma regra do trigger
+      // apply_caixa_movement). estorno_reabertura fica de fora — o pagamento
+      // anulado já não entrou na soma acima; abater de novo tiraria duas vezes.
+      const { data: caixaMovs } = await supabase
+        .from("caixa_movements")
+        .select("type, payment_method, amount")
+        .eq("caixa_id", caixa.id)
+        .in("type", ["suprimento", "sangria"]);
+
+      for (const m of (caixaMovs || [])) {
+        const method = m.payment_method as keyof typeof totals;
+        if (method in totals) totals[method] += m.type === "sangria" ? -Number(m.amount) : Number(m.amount);
       }
 
       // 3. Update caixa if totals don't match
@@ -216,6 +232,7 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
         payments(payment_method, amount)
       `)
       .eq("caixa_id", caixa.id)
+      .eq("payments.voided", false)
       .order("closed_at", { ascending: true });
 
     const PAYMENT_LABELS: Record<string, string> = {

@@ -2,7 +2,7 @@
 // Aceita { date } ou { start, end, professional_id? }. Calcula KPIs, detecta
 // issues, persiste (quando 1 dia) e devolve markdown + html prontos.
 import { createClient } from "supabase";
-import { requireStaff, requireCronSecret } from "../_shared/auth.ts";
+import { getSalonSecrets, requireStaff, requireCronSecret } from "../_shared/auth.ts";
 import { z } from "zod";
 import { fetchPagBankTransactional } from "./pagbank.ts";
 import { fetchAsaasPayments } from "./asaas.ts";
@@ -113,9 +113,10 @@ async function generateReport(input: GenerateInput): Promise<DailyReportResponse
       total, subtotal, discount, is_paid,
       created_at, closed_at,
       items:comanda_items(service_id, quantity, unit_price, total_price, services(name)),
-      payments(id, amount, payment_method, payment_provider, fee_amount, net_amount, installments)
+      payments(id, amount, payment_method, payment_provider, fee_amount, net_amount, installments, voided)
     `)
     .eq("salon_id", salonId)
+    .eq("payments.voided", false) // pagamento anulado (reabertura) fica fora
     .gte("created_at", startTz)
     .lte("created_at", endTz);
 
@@ -154,6 +155,7 @@ async function generateReport(input: GenerateInput): Promise<DailyReportResponse
       fee_amount: Number(p.fee_amount ?? 0),
       net_amount: Number(p.net_amount ?? 0),
       installments: Number(p.installments ?? 0),
+      voided: p.voided === true,
     })),
   }));
 
@@ -197,13 +199,9 @@ async function generateReport(input: GenerateInput): Promise<DailyReportResponse
   }
 
   // 5b) Asaas — 1 chamada cobrindo o range inteiro (filtra por dateCreated)
-  // API key vem de queue_settings (1 por salão).
-  const { data: qs } = await supa
-    .from("queue_settings")
-    .select("asaas_api_key")
-    .eq("salon_id", salonId)
-    .maybeSingle();
-  const asaasApiKey: string = qs?.asaas_api_key ?? "";
+  // API key vem do cofre salon_secrets (queue_settings.asaas_api_key está morta desde 21/08).
+  const secrets = await getSalonSecrets(supa, salonId);
+  const asaasApiKey: string = secrets?.asaas_api_key ?? "";
 
   const allAsaas: AsaasPayment[] = [];
   let asaasUnavailable = false;

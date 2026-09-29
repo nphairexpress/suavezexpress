@@ -42,7 +42,8 @@ export function Report0281({ dateRange }: Props) {
         .eq("comandas.salon_id", salonId)
         .gte("comandas.created_at", format(dateRange.from, "yyyy-MM-dd"))
         .lte("comandas.created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59")
-        .not("comandas.closed_at", "is", null);
+        .not("comandas.closed_at", "is", null)
+        .eq("voided", false);
       if (error) throw error;
       return data || [];
     },

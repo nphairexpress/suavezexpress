@@ -165,5 +165,6 @@ export interface ComandaWithItems {
     fee_amount: number;
     net_amount: number;
     installments: number;
+    voided?: boolean;
   }>;
 }

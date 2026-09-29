@@ -16,8 +16,9 @@ export function calculateRevenue(
 ): { gross: number; net: number; expected_from_pagbank: number; expected_from_asaas: number } {
   const paid = comandas.filter(c => c.is_paid);
   const gross = paid.reduce((sum, c) => sum + Number(c.total), 0);
+  // Pagamento anulado (voided) não entra no líquido.
   const net = paid.reduce(
-    (sum, c) => sum + c.payments.reduce(
+    (sum, c) => sum + c.payments.filter(p => !p.voided).reduce(
       (s, p) => s + (p.net_amount ?? p.amount), 0
     ),
     0
@@ -107,6 +108,7 @@ export function calculatePaymentMix(comandas: ComandaWithItems[]): PaymentMix {
   };
   for (const c of comandas.filter(x => x.is_paid)) {
     for (const p of c.payments) {
+      if (p.voided) continue; // pagamento anulado não entra no mix
       const key = (p.payment_method ?? "").toLowerCase() as keyof PaymentMix;
       if (!(key in mix)) continue;
       const amount = Number(p.amount);

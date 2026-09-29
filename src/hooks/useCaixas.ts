@@ -255,10 +255,12 @@ export function useCaixas() {
       const totals = { cash: 0, pix: 0, credit_card: 0, debit_card: 0, other: 0 };
 
       if (comandaIds.length > 0) {
+        // Pagamento anulado (reabertura) não conta: o caixa mostrava dinheiro a mais.
         const { data: payments, error: paymentsError } = await supabase
           .from("payments")
           .select("payment_method, amount")
-          .in("comanda_id", comandaIds);
+          .in("comanda_id", comandaIds)
+          .eq("voided", false);
         if (paymentsError) throw paymentsError;
 
         for (const p of (payments || [])) {
@@ -266,6 +268,23 @@ export function useCaixas() {
           if (method in totals) {
             totals[method] += Number(p.amount);
           }
+        }
+      }
+
+      // Movimentações: suprimento soma, sangria subtrai (mesma regra do trigger
+      // apply_caixa_movement). estorno_reabertura fica de fora — o pagamento
+      // anulado já não entrou na soma acima; abater de novo tiraria duas vezes.
+      const { data: caixaMovs, error: movsError } = await supabase
+        .from("caixa_movements")
+        .select("type, payment_method, amount")
+        .eq("caixa_id", caixaId)
+        .in("type", ["suprimento", "sangria"]);
+      if (movsError) throw movsError;
+
+      for (const m of (caixaMovs || [])) {
+        const method = m.payment_method as keyof typeof totals;
+        if (method in totals) {
+          totals[method] += m.type === "sangria" ? -Number(m.amount) : Number(m.amount);
         }
       }
 

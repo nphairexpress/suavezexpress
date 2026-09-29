@@ -54,6 +54,7 @@ export function CaixaCard({
         .from("comandas")
         .select("id, total, closed_at, created_at, comanda_number, client:clients(name), professional:professionals(name), payments(payment_method, amount)")
         .eq("caixa_id", caixa.id)
+        .eq("payments.voided", false)
         .order("closed_at", { ascending: false });
       if (error) throw error;
       return data ?? [];

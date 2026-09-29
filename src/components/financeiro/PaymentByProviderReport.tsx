@@ -86,7 +86,8 @@ export function PaymentByProviderReport() {
           "payment_provider, payment_method, amount, fee_amount, net_amount, created_at"
         )
         .gte("created_at", from)
-        .lte("created_at", to);
+        .lte("created_at", to)
+        .eq("voided", false);
       if (error) throw error;
       return (data ?? []) as PaymentRow[];
     },

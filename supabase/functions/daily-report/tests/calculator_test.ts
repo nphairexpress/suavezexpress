@@ -157,6 +157,30 @@ Deno.test("calculatePaymentMix: payment_provider ausente → manual (default def
   assertEquals(result.credit.by_provider.asaas, 0);
 });
 
+Deno.test("calculateRevenue + calculatePaymentMix: pagamento voided (reabertura) não entra nas somas", () => {
+  const comandas = [{
+    id: "c1", salon_id: "s1", client_id: null, professional_id: null,
+    comanda_number: 1, total: 100, is_paid: true,
+    created_at: "2026-05-09T10:00:00Z", closed_at: "2026-05-09T10:30:00Z",
+    items: [],
+    payments: [
+      // pagamento antigo, anulado na reabertura da comanda
+      { id: "p_old", amount: 100, payment_method: "cash", payment_provider: "manual" as const, fee_amount: 0, net_amount: 100, installments: 0, voided: true },
+      // pagamento válido do refechamento
+      { id: "p_new", amount: 100, payment_method: "pix",  payment_provider: "manual" as const, fee_amount: 0, net_amount: 100, installments: 0, voided: false },
+    ],
+  }];
+  const revenue = calculateRevenue(comandas, []);
+  assertEquals(revenue.gross, 100);
+  assertEquals(revenue.net, 100); // e não 200
+
+  const mix = calculatePaymentMix(comandas);
+  assertEquals(mix.cash.gross, 0);
+  assertEquals(mix.cash.count, 0);
+  assertEquals(mix.pix.gross, 100);
+  assertEquals(mix.pix.count, 1);
+});
+
 Deno.test("calculateRevenue: expected_from_asaas soma só CONFIRMED+RECEIVED+RECEIVED_IN_CASH", () => {
   const asaas = [
     { id: "p1", status: "RECEIVED",  billingType: "PIX",         value: 100, netValue: 99, customer: "c1", dateCreated: "2026-05-09" },
