@@ -33,6 +33,7 @@ import { useStockMovements } from "@/hooks/useStockMovements";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
 import { useCardBrands, getCardFeePercent } from "@/hooks/useCardBrands";
 import { useCurrentUserPermissions } from "@/hooks/useCurrentUserPermissions";
+import { useSalonPermissions } from "@/hooks/useSalonPermissions";
 import { ComandaServiceProducts } from "@/components/comanda/ComandaServiceProducts";
 import { useClientNetBalance } from "@/hooks/useClientBalance";
 
@@ -106,8 +107,10 @@ const INSTALLMENT_OPTIONS = [
 
 export function ComandaModal({ comanda, open, onClose, professionals, services, isEditingClosed = false, userCaixaId, onDelete, openCaixas = [], onViewClient }: ComandaModalProps) {
   const { toast } = useToast();
-  const { salonId, canDelete } = useAuth();
+  const { salonId } = useAuth();
   const { hasPermission, professionalId: currentProfessionalId, isMaster } = useCurrentUserPermissions();
+  const { pode } = useSalonPermissions();
+  const canDelete = pode("comanda.excluir");
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("itens");
   const { items, isLoading, addItem, removeItem, isAdding, isRemoving } = useComandaItems(comanda?.id || null);
@@ -1890,7 +1893,8 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                           <Button
                             size="sm"
                             variant={minOk ? "default" : "outline"}
-                            disabled={!minOk}
+                            disabled={!minOk || !pode("comanda.desconto_manual")}
+                            title={!pode("comanda.desconto_manual") ? "Sem permissão para desconto manual" : undefined}
                             onClick={async () => {
                               try {
                                 const creditAmt = Number(credit.credit_amount);
@@ -2248,7 +2252,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
               </Button>
             )}
             <Button variant="outline" onClick={onClose}>Confirmar</Button>
-            {comanda?.closed_at ? (
+            {comanda?.closed_at ? pode("comanda.reabrir") && (
               <Button
                 variant="outline"
                 className="gap-2 border-orange-500 text-orange-600 hover:bg-orange-50"

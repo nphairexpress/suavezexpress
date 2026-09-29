@@ -31,7 +31,7 @@
 --   comanda.reabrir / comanda.excluir           admin, financial
 --   comanda.desconto_manual                     admin, financial, receptionist
 --   pagamento.anular                            admin, financial
---   financeiro.ver                              admin, financial, manager
+--   financeiro.ver                              admin, financial, manager, receptionist (recepção abre/fecha caixa pela tela Financeiro)
 --   comissao.ver_todas / comissao.editar        admin, financial
 --   ficha.editar_propria_contato                todos
 --   ficha.editar_qualquer                       admin, financial
@@ -138,7 +138,7 @@ select s.id, k.key, k.roles
    ('comanda.excluir',               '{admin,financial}'::app_role[]),
    ('comanda.desconto_manual',       '{admin,financial,receptionist}'::app_role[]),
    ('pagamento.anular',              '{admin,financial}'::app_role[]),
-   ('financeiro.ver',                '{admin,financial,manager}'::app_role[]),
+   ('financeiro.ver',                '{admin,financial,manager,receptionist}'::app_role[]),
    ('comissao.ver_todas',            '{admin,financial}'::app_role[]),
    ('comissao.editar',               '{admin,financial}'::app_role[]),
    ('ficha.editar_propria_contato',  '{admin,financial,receptionist,manager,professional}'::app_role[]),

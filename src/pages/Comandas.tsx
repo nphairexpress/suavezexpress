@@ -22,6 +22,7 @@ import { useProfessionals } from "@/hooks/useProfessionals";
 import { useServices } from "@/hooks/useServices";
 import { useCaixas } from "@/hooks/useCaixas";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSalonPermissions } from "@/hooks/useSalonPermissions";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { format, isSameDay, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -73,7 +74,9 @@ export default function Comandas() {
   // só traz o mês atual e as comandas do mês anterior somem no dia 1º.
   const [mes, setMes] = useState(format(new Date(), "yyyy-MM"));
 
-  const { user, salonId, isMaster, canDelete } = useAuth();
+  const { user, salonId, isMaster } = useAuth();
+  const { pode } = useSalonPermissions();
+  const canDelete = pode("comanda.excluir");
   const queryClient = useQueryClient();
   const comandaTargetDate = comandaDate ? new Date(comandaDate + "T12:00:00") : undefined;
   const { hasPendingCaixa, message: pendingCaixaMessage } = usePendingCaixaCheck(comandaTargetDate);

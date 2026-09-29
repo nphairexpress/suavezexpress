@@ -12,6 +12,7 @@ import { ClientModal } from "@/components/modals/ClientModal";
 import { DeleteConfirmModal } from "@/components/modals/DeleteConfirmModal";
 import { ImportModal, ImportField } from "@/components/modals/ImportModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSalonPermissions } from "@/hooks/useSalonPermissions";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
@@ -30,6 +31,8 @@ export default function Clientes() {
 
   const { clients, isLoading, createClient, updateClient, deleteClient, isCreating, isUpdating, isDeleting } = useClients();
   const { isMaster, salonId } = useAuth();
+  const { pode } = useSalonPermissions();
+  const canViewCpf = pode("cliente.ver_cpf");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -295,9 +298,11 @@ export default function Clientes() {
                     <TableHead className="text-primary font-semibold">
                       Contato ▼
                     </TableHead>
-                    <TableHead className="text-primary font-semibold hidden md:table-cell">
-                      Aniversário ▼
-                    </TableHead>
+                    {canViewCpf && (
+                      <TableHead className="text-primary font-semibold hidden md:table-cell">
+                        Aniversário ▼
+                      </TableHead>
+                    )}
                     <TableHead className="text-primary font-semibold hidden lg:table-cell">
                       Gênero ▼
                     </TableHead>
@@ -350,9 +355,11 @@ export default function Clientes() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {formatBirthday(client.birth_date)}
-                      </TableCell>
+                      {canViewCpf && (
+                        <TableCell className="hidden md:table-cell">
+                          {formatBirthday(client.birth_date)}
+                        </TableCell>
+                      )}
                       <TableCell className="hidden lg:table-cell">
                         {getGenderLabel(client.gender)}
                       </TableCell>
@@ -371,14 +378,16 @@ export default function Clientes() {
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                            onClick={() => handleDelete(client)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {pode("cliente.excluir") && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                              onClick={() => handleDelete(client)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>

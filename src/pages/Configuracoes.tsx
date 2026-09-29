@@ -62,6 +62,7 @@ import { ApiGatewaySettingsSection } from "@/components/settings/ApiGatewaySetti
 import { ResendSettingsSection } from "@/components/settings/ResendSettingsSection";
 import { AuditLogSection } from "@/components/settings/AuditLogSection";
 import { QueueSettingsSection } from "@/components/settings/QueueSettingsSection";
+import { PermissionsSection } from "@/components/settings/PermissionsSection";
 
 const SPECIALTIES = [
   { value: "cabeleireiro", label: "Cabeleireiro(a)" },
@@ -592,6 +593,7 @@ export default function Configuracoes() {
     if (path.startsWith("/configuracoes/api")) return "api";
     if (path.startsWith("/configuracoes/email")) return "email";
     if (path.startsWith("/configuracoes/auditoria")) return "auditoria";
+    if (path.startsWith("/configuracoes/permissoes")) return "permissoes";
     if (path.startsWith("/configuracoes/fila")) return "fila";
     if (path.startsWith("/configuracoes/salao")) return "hub";
     return "hub";
@@ -751,6 +753,14 @@ export default function Configuracoes() {
                   title="Auditoria"
                   description="Registros de exclusões, alterações e ações críticas do sistema"
                   onClick={() => navigate("/configuracoes/auditoria")}
+                />
+              )}
+              {userRole === "admin" && (
+                <SettingsCard
+                  icon={ShieldAlert}
+                  title="Permissões"
+                  description="Defina o que cada nível de acesso pode fazer no sistema"
+                  onClick={() => navigate("/configuracoes/permissoes")}
                 />
               )}
             </div>
@@ -1233,6 +1243,15 @@ export default function Configuracoes() {
           <>
             <SettingsBreadcrumb label="Auditoria" />
             <AuditLogSection />
+          </>
+        )}
+
+        {/* ===== PERMISSÕES (etapa 6) ===== */}
+        {subPage === "permissoes" && userRole === "admin" && (
+          <>
+            <SettingsBreadcrumb label="Permissões" />
+            <h1 className="text-2xl font-bold tracking-tight">Permissões</h1>
+            <PermissionsSection />
           </>
         )}
 

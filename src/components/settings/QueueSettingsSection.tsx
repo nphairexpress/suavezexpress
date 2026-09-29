@@ -16,10 +16,6 @@ export function QueueSettingsSection() {
   const [creditDays, setCreditDays] = useState("30");
   const [notifyOptions, setNotifyOptions] = useState("20, 40, 60, 90");
   const [receptionEmail, setReceptionEmail] = useState("");
-  const [zapiInstanceId, setZapiInstanceId] = useState("");
-  const [zapiToken, setZapiToken] = useState("");
-  const [zapiClientToken, setZapiClientToken] = useState("");
-  const [asaasApiKey, setAsaasApiKey] = useState("");
   const [cashbackEnabled, setCashbackEnabled] = useState(true);
   const [cashbackPercent, setCashbackPercent] = useState("3");
   const [cashbackValidityDays, setCashbackValidityDays] = useState("15");
@@ -36,10 +32,6 @@ export function QueueSettingsSection() {
       setCreditDays(String(settings.credit_validity_days));
       setNotifyOptions(settings.notify_options.join(", "));
       setReceptionEmail(settings.reception_email || "");
-      setZapiInstanceId(settings.zapi_instance_id || "");
-      setZapiToken(settings.zapi_token || "");
-      setZapiClientToken(settings.zapi_client_token || "");
-      setAsaasApiKey(settings.asaas_api_key || "");
       setOpenWeekdays(settings.open_weekdays ?? [2, 3, 4, 5, 6]);
       setOpenTime((settings.open_time || "08:00").slice(0, 5));
       setCloseTime((settings.close_time || "18:00").slice(0, 5));
@@ -64,16 +56,17 @@ export function QueueSettingsSection() {
   }, [settings]);
 
   const handleSave = async () => {
+    const parsedInflation = parseFloat(inflationFactor);
+    if (isNaN(parsedInflation) || parsedInflation < 0 || parsedInflation > 5) {
+      toast({ title: "Fator de inflacao invalido", description: "Use um numero entre 0 e 5.", variant: "destructive" });
+      return;
+    }
     const parsedOptions = notifyOptions.split(",").map((s) => parseInt(s.trim())).filter((n) => !isNaN(n));
     updateSettings({
-      inflation_factor: parseFloat(inflationFactor) || 1.7,
+      inflation_factor: parsedInflation,
       credit_validity_days: parseInt(creditDays) || 30,
       notify_options: parsedOptions.length > 0 ? parsedOptions : [20, 40, 60, 90],
       reception_email: receptionEmail || null,
-      zapi_instance_id: zapiInstanceId || null,
-      zapi_token: zapiToken || null,
-      zapi_client_token: zapiClientToken || null,
-      asaas_api_key: asaasApiKey || null,
       open_weekdays: openWeekdays,
       open_time: openTime,
       close_time: closeTime,
@@ -187,11 +180,10 @@ export function QueueSettingsSection() {
       </Card>
       <Card>
         <CardHeader><CardTitle>Integracoes</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <div><Label>Asaas API Key</Label><Input type="password" value={asaasApiKey} onChange={(e) => setAsaasApiKey(e.target.value)} placeholder="$aact_..." /></div>
-          <div><Label>Z-API Instance ID</Label><Input value={zapiInstanceId} onChange={(e) => setZapiInstanceId(e.target.value)} placeholder="Instance ID" /></div>
-          <div><Label>Z-API Token</Label><Input type="password" value={zapiToken} onChange={(e) => setZapiToken(e.target.value)} placeholder="Token" /></div>
-          <div><Label>Z-API Client Token</Label><Input type="password" value={zapiClientToken} onChange={(e) => setZapiClientToken(e.target.value)} placeholder="Client Token" /></div>
+        <CardContent>
+          <p className="text-xs text-muted-foreground">
+            Chaves de integração (Asaas, WhatsApp) são configuradas pelo suporte, não por esta tela.
+          </p>
         </CardContent>
       </Card>
       <Button onClick={handleSave} disabled={isSaving}>{isSaving ? "Salvando..." : "Salvar configuracoes"}</Button>

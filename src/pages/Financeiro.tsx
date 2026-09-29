@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useLocation } from "react-router-dom";
+import { useSearchParams, useLocation, Navigate } from "react-router-dom";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { Plus, Loader2, CalendarIcon, ChevronLeft, ChevronRight } from "lucide-r
 import { useCaixas, Caixa } from "@/hooks/useCaixas";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCurrentUserPermissions } from "@/hooks/useCurrentUserPermissions";
+import { useSalonPermissions } from "@/hooks/useSalonPermissions";
 import { CaixaCard } from "@/components/caixa/CaixaCard";
 import { OpenCaixaModal } from "@/components/caixa/OpenCaixaModal";
 import { CloseCaixaModal } from "@/components/caixa/CloseCaixaModal";
@@ -32,6 +33,10 @@ export default function Financeiro() {
   const { user } = useAuth();
   const { isMaster, hasPermission } = useCurrentUserPermissions();
   const canViewAllCaixas = isMaster || hasPermission("caixas.view_others");
+  const { pode, isLoading: loadingPermissions } = useSalonPermissions();
+  const canOpenCaixa = pode("caixa.abrir");
+  const canCloseCaixa = pode("caixa.fechar");
+  const canEditCaixa = pode("caixa.reabrir_editar");
   const {
     caixas,
     openCaixas: allOpenCaixas,
@@ -117,6 +122,11 @@ export default function Financeiro() {
     );
   }
 
+  // Etapa 6: rota Financeiro só para quem tem financeiro.ver
+  if (!loadingPermissions && !pode("financeiro.ver")) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <AppLayoutNew>
       <div className="space-y-4">
@@ -136,7 +146,8 @@ export default function Financeiro() {
               <Button 
                 className="gap-2" 
                 onClick={() => setOpenCaixaModalOpen(true)}
-                disabled={!!userOpenCaixa}
+                disabled={!!userOpenCaixa || !canOpenCaixa}
+                title={!canOpenCaixa ? "Sem permissão para abrir caixa" : undefined}
               >
                 <Plus className="h-4 w-4" />
                 Abrir Meu Caixa
@@ -156,9 +167,9 @@ export default function Financeiro() {
                     <CaixaCard
                       key={userOpenCaixa.id}
                       caixa={userOpenCaixa}
-                      showCloseButton
+                      showCloseButton={canCloseCaixa}
                       onClose={() => handleOpenCloseModal(userOpenCaixa)}
-                      onRecalculate={canViewAllCaixas ? () => recalculateCaixaTotals(userOpenCaixa.id) : undefined}
+                      onRecalculate={canEditCaixa ? () => recalculateCaixaTotals(userOpenCaixa.id) : undefined}
                       isRecalculating={isRecalculating}
                       label="Seu Caixa"
                     />
@@ -170,11 +181,11 @@ export default function Financeiro() {
                     <CaixaCard
                       key={caixa.id}
                       caixa={caixa}
-                      showCloseButton={canViewAllCaixas}
-                      showEditButton={canViewAllCaixas}
+                      showCloseButton={canViewAllCaixas && canCloseCaixa}
+                      showEditButton={canEditCaixa}
                       onClose={() => handleOpenCloseModal(caixa)}
                       onEdit={() => handleOpenEditModal(caixa)}
-                      onRecalculate={canViewAllCaixas ? () => recalculateCaixaTotals(caixa.id) : undefined}
+                      onRecalculate={canEditCaixa ? () => recalculateCaixaTotals(caixa.id) : undefined}
                       isRecalculating={isRecalculating}
                     />
                   ))}
@@ -318,12 +329,12 @@ export default function Financeiro() {
                     <CaixaCard 
                       key={caixa.id} 
                       caixa={caixa}
-                      showEditButton={true}
-                      showReopenButton={true}
+                      showEditButton={canEditCaixa}
+                      showReopenButton={canEditCaixa}
                       onEdit={() => handleOpenEditModal(caixa)}
                       onReopen={() => handleReopenCaixa(caixa)}
                       onView={() => { setSelectedCaixa(caixa); setDetailCaixaModalOpen(true); }}
-                      onRecalculate={canViewAllCaixas ? () => recalculateCaixaTotals(caixa.id) : undefined}
+                      onRecalculate={canEditCaixa ? () => recalculateCaixaTotals(caixa.id) : undefined}
                       isRecalculating={isRecalculating}
                     />
                   ))}

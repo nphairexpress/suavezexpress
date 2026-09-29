@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useSalonPermissions } from "@/hooks/useSalonPermissions";
 import {
   DollarSign,
   Users,
@@ -89,6 +90,9 @@ const navItems: NavItem[] = [
 export function TopNavigation() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { pode, isLoading: loadingPermissions } = useSalonPermissions();
+  // Etapa 6: menu Financeiro só para quem tem financeiro.ver
+  const visibleNavItems = navItems.filter((item) => item.url !== "/financeiro" || loadingPermissions || pode("financeiro.ver"));
 
   const activeNavItem = navItems.find(item => {
     if (location.pathname === item.url) return true;
@@ -105,7 +109,7 @@ export function TopNavigation() {
     <div className="border-b border-border bg-card">
       {/* Main Nav — Avec-style icons with text */}
       <nav className="flex items-center gap-0 px-2 md:px-4 py-1 overflow-x-auto scrollbar-hide md:justify-center">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive = activeNavItem?.url === item.url;
           const Icon = item.icon;
 

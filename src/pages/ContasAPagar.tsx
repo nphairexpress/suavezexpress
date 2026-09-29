@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useSalonPermissions } from "@/hooks/useSalonPermissions";
+import { Navigate } from "react-router-dom";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -84,6 +86,7 @@ function StatusBadge({ status }: { status: AccountPayable["status"] }) {
 }
 
 export default function ContasAPagar() {
+  const { pode, isLoading: loadingPermissions } = useSalonPermissions();
   const {
     payables,
     isLoading,
@@ -252,6 +255,11 @@ export default function ContasAPagar() {
     markAsPaid(data, { onSuccess: () => setPaying(null) });
   };
 
+  // Etapa 6: rota Financeiro só para quem tem financeiro.ver
+  if (!loadingPermissions && !pode("financeiro.ver")) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <AppLayoutNew>
       <div className="space-y-4 md:space-y-6">
@@ -276,9 +284,11 @@ export default function ContasAPagar() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button onClick={() => setCreateOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" /> Nova conta
-            </Button>
+            {pode("despesas.lancar") && (
+              <Button onClick={() => setCreateOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" /> Nova conta
+              </Button>
+            )}
           </div>
         </div>
 

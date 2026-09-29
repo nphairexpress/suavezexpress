@@ -18,6 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Client, ClientInput } from "@/hooks/useClients";
+import { useSalonPermissions } from "@/hooks/useSalonPermissions";
 import { useClientComandas } from "@/hooks/useComandas";
 import { useProfessionals } from "@/hooks/useProfessionals";
 import { useCepLookup } from "@/hooks/useCepLookup";
@@ -107,6 +108,8 @@ const initialFormData: ClientInput = {
 };
 
 export function ClientModal({ open, onOpenChange, client, onSubmit, isLoading, initialName }: ClientModalProps) {
+  const { pode } = useSalonPermissions();
+  const canViewCpf = pode("cliente.ver_cpf");
   const [formData, setFormData] = useState<ClientInput>({ ...initialFormData, name: initialName || "" });
   const [noEmail, setNoEmail] = useState(false);
 
@@ -251,15 +254,17 @@ export function ClientModal({ open, onOpenChange, client, onSubmit, isLoading, i
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="birth_date">Data de Aniversário:</Label>
-                    <Input
-                      id="birth_date"
-                      type="date"
-                      value={formData.birth_date}
-                      onChange={(e) => updateField("birth_date", e.target.value)}
-                    />
-                  </div>
+                  {canViewCpf && (
+                    <div className="space-y-2">
+                      <Label htmlFor="birth_date">Data de Aniversário:</Label>
+                      <Input
+                        id="birth_date"
+                        type="date"
+                        value={formData.birth_date}
+                        onChange={(e) => updateField("birth_date", e.target.value)}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Celular e Telefone */}
@@ -320,7 +325,8 @@ export function ClientModal({ open, onOpenChange, client, onSubmit, isLoading, i
                   </RadioGroup>
                 </div>
 
-                {/* CPF e RG */}
+                {/* CPF e RG — R-07: só quem tem cliente.ver_cpf */}
+                {canViewCpf && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="cpf">CPF:</Label>
@@ -339,6 +345,7 @@ export function ClientModal({ open, onOpenChange, client, onSubmit, isLoading, i
                     />
                   </div>
                 </div>
+                )}
 
                 {/* Email e CEP */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

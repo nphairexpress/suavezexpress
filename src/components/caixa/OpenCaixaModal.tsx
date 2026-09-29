@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
-import { useAuth } from "@/contexts/AuthContext";
+import { useSalonPermissions } from "@/hooks/useSalonPermissions";
 
 interface OpenCaixaModalProps {
   open: boolean;
@@ -15,7 +15,8 @@ interface OpenCaixaModalProps {
 }
 
 export function OpenCaixaModal({ open, onClose, onConfirm, isLoading }: OpenCaixaModalProps) {
-  const { isMaster } = useAuth();
+  const { pode } = useSalonPermissions();
+  const isMaster = pode("caixa.reabrir_editar");
   const [openingBalance, setOpeningBalance] = useState("");
   const [notes, setNotes] = useState("");
   const [openedAtDate, setOpenedAtDate] = useState("");

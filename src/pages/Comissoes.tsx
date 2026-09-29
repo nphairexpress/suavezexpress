@@ -34,6 +34,8 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
+import { Navigate } from "react-router-dom";
+import { useSalonPermissions } from "@/hooks/useSalonPermissions";
 import { format, startOfMonth, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -68,14 +70,16 @@ export default function Comissoes() {
   const { professionals, isLoading: loadingProfessionals } = useProfessionals();
 
   // Auto-select the current professional's ID when they are a professional user
+  const { pode, isLoading: loadingPermissions } = useSalonPermissions();
+  const canViewAllCommissions = pode("comissao.ver_todas");
   useEffect(() => {
-    if (isProfessionalUser && currentProfessionalId) {
+    if (!canViewAllCommissions && currentProfessionalId) {
       setSelectedProfessional(currentProfessionalId);
     }
-  }, [isProfessionalUser, currentProfessionalId]);
+  }, [canViewAllCommissions, currentProfessionalId]);
   const { salonId, user, userRole, isMaster } = useAuth();
-  const canManageAdjustments = !isProfessionalUser && (isMaster || userRole === "admin" || userRole === "manager");
-  const canPayCommission = isMaster || !isProfessionalUser;
+  const canManageAdjustments = pode("comissao.editar");
+  const canPayCommission = pode("comissao.editar") && pode("despesas.lancar");
   const [adjustmentModalOpen, setAdjustmentModalOpen] = useState(false);
   const [adjustmentModalType, setAdjustmentModalType] = useState<AdjustmentType>("bonus");
   const [adjustmentToDelete, setAdjustmentToDelete] = useState<{ id: string; label: string } | null>(null);
@@ -686,6 +690,11 @@ export default function Comissoes() {
     );
   }
 
+  // Etapa 6: rota Financeiro só para quem tem financeiro.ver
+  if (!loadingPermissions && !pode("financeiro.ver")) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <AppLayoutNew>
       <Sensitive block>
@@ -714,7 +723,7 @@ export default function Comissoes() {
                   onChange={e => setDateEnd(e.target.value)}
                 />
               </div>
-              {!isProfessionalUser && (
+              {canViewAllCommissions && (
                 <div className="space-y-2">
                   <Label>Profissionais:</Label>
                   <Select value={selectedProfessional} onValueChange={setSelectedProfessional}>

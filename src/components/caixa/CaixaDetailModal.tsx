@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Printer, FileText, Eye, Pencil, Loader2, Gift, AlertTriangle, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { Caixa } from "@/hooks/useCaixas";
 import { useCaixaMovements, CaixaMovementType } from "@/hooks/useCaixaMovements";
+import { useSalonPermissions } from "@/hooks/useSalonPermissions";
 import { SangriaSuprimentoModal } from "./SangriaSuprimentoModal";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/dynamicSupabaseClient";
@@ -24,6 +25,7 @@ export function CaixaDetailModal({ open, onClose, caixa }: CaixaDetailModalProps
   const [movementModalOpen, setMovementModalOpen] = useState(false);
   const [movementType, setMovementType] = useState<CaixaMovementType>("sangria");
   const { movements } = useCaixaMovements(open ? caixa?.id : undefined);
+  const { pode } = useSalonPermissions();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -230,7 +232,7 @@ export function CaixaDetailModal({ open, onClose, caixa }: CaixaDetailModalProps
           <div className="flex items-center justify-between">
             <DialogTitle>Detalhes do Caixa — {displayName}</DialogTitle>
             <div className="flex gap-2 flex-wrap">
-              {!caixa.closed_at && (
+              {!caixa.closed_at && pode("caixa.sangria_suprimento") && (
                 <>
                   <Button
                     variant="outline"
