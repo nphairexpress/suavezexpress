@@ -169,6 +169,7 @@ export default function Financeiro() {
                       caixa={userOpenCaixa}
                       showCloseButton={canCloseCaixa}
                       onClose={() => handleOpenCloseModal(userOpenCaixa)}
+                      onView={() => { setSelectedCaixa(userOpenCaixa); setDetailCaixaModalOpen(true); }}
                       onRecalculate={canEditCaixa ? () => recalculateCaixaTotals(userOpenCaixa.id) : undefined}
                       isRecalculating={isRecalculating}
                       label="Seu Caixa"
@@ -185,6 +186,7 @@ export default function Financeiro() {
                       showEditButton={canEditCaixa}
                       onClose={() => handleOpenCloseModal(caixa)}
                       onEdit={() => handleOpenEditModal(caixa)}
+                      onView={() => { setSelectedCaixa(caixa); setDetailCaixaModalOpen(true); }}
                       onRecalculate={canEditCaixa ? () => recalculateCaixaTotals(caixa.id) : undefined}
                       isRecalculating={isRecalculating}
                     />
