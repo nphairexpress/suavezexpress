@@ -37,15 +37,6 @@ export function useQueue() {
         return d.toISOString();
       })();
 
-      // Auto-arquiva qualquer zumbi ativo de antes de hoje (se houver)
-      // — protege contra entradas que ficaram presas por bug ou queda de luz
-      await supabase
-        .from("queue_entries")
-        .update({ status: "completed", updated_at: new Date().toISOString() })
-        .eq("salon_id", salonId)
-        .in("status", ["waiting", "checked_in", "in_service"])
-        .lt("created_at", todayStartUtc);
-
       const { data, error } = await supabase
         .from("queue_entries")
         .select(`
@@ -63,6 +54,24 @@ export function useQueue() {
     },
     enabled: !!salonId,
   });
+
+  // Auto-arquiva qualquer zumbi ativo de antes de hoje (se houver)
+  // — protege contra entradas que ficaram presas por bug ou queda de luz.
+  // Disparado uma vez ao montar a página da Fila (não roda dentro do queryFn).
+  const archiveStaleEntries = async () => {
+    if (!salonId) return;
+    const todayStartUtc = (() => {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      return d.toISOString();
+    })();
+    await supabase
+      .from("queue_entries")
+      .update({ status: "completed", updated_at: new Date().toISOString() })
+      .eq("salon_id", salonId)
+      .in("status", ["waiting", "checked_in", "in_service"])
+      .lt("created_at", todayStartUtc);
+  };
 
   const getNextPosition = async (): Promise<number> => {
     if (!salonId) return 1;
@@ -275,6 +284,7 @@ export function useQueue() {
     activeEntries,
     stats,
     isLoading: query.isLoading,
+    archiveStaleEntries,
     addToQueue: addToQueueMutation.mutateAsync,
     isAdding: addToQueueMutation.isPending,
     checkIn: checkInMutation.mutate,

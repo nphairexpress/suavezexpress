@@ -28,6 +28,7 @@ import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePendingCaixaCheck } from "@/hooks/usePendingCaixaCheck";
+import type { Database } from "@/integrations/supabase/types";
 
 interface AppointmentData {
   id: string;
@@ -38,6 +39,7 @@ interface AppointmentData {
   duration_minutes: number;
   price: number | null;
   notes: string | null;
+  status: Database["public"]["Enums"]["appointment_status"];
   clients?: { id: string; name: string; phone: string | null } | null;
   professionals?: { id: string; name: string } | null;
   services?: { id: string; name: string; price: number } | null;
@@ -71,7 +73,7 @@ export default function Comandas() {
   // só traz o mês atual e as comandas do mês anterior somem no dia 1º.
   const [mes, setMes] = useState(format(new Date(), "yyyy-MM"));
 
-  const { user, salonId, isMaster } = useAuth();
+  const { user, salonId, isMaster, canDelete } = useAuth();
   const queryClient = useQueryClient();
   const comandaTargetDate = comandaDate ? new Date(comandaDate + "T12:00:00") : undefined;
   const { hasPendingCaixa, message: pendingCaixaMessage } = usePendingCaixaCheck(comandaTargetDate);
@@ -83,16 +85,14 @@ export default function Comandas() {
   const { clients, createClient, updateClient } = useClients();
   const { professionals } = useProfessionals();
   const { services } = useServices();
-  const { getCurrentUserOpenCaixa, openCaixas, caixas } = useCaixas();
+  const { openCaixas, caixas } = useCaixas();
 
-  // Check for user's open caixa
+  // Check for user's open caixa (derivado do array já carregado — caixas vem
+  // ordenado por opened_at desc, então o find pega o mais recente)
   useEffect(() => {
-    const checkCaixa = async () => {
-      const caixa = await getCurrentUserOpenCaixa();
-      setUserOpenCaixaId(caixa?.id || null);
-    };
-    checkCaixa();
-  }, [openCaixas]);
+    const caixa = user ? openCaixas.find(c => c.user_id === user.id) : null;
+    setUserOpenCaixaId(caixa?.id || null);
+  }, [openCaixas, user]);
 
   // Open comanda from URL param (e.g. from caixa card)
   useEffect(() => {
@@ -133,6 +133,7 @@ export default function Comandas() {
           duration_minutes,
           price,
           notes,
+          status,
           clients(id, name, phone),
           professionals(id, name),
           services(id, name, price)
@@ -693,14 +694,16 @@ export default function Comandas() {
                               <Pencil className="h-4 w-4" />
                             </Button>
                           )}
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => handleDeleteClick(comanda)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteClick(comanda)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary">
                             <Printer className="h-4 w-4" />
                           </Button>

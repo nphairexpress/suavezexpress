@@ -88,11 +88,15 @@ async function sendMetaCapiPurchase(payment: any, reg: any, def: { plano: string
 }
 
 // ── Clube da Escova: planos identificados pelo valor da cobrança ──
-const CLUBE_PLANOS: Record<string, { plano: string; teto: number; rotulo: string; valor: string }> = {
-  "197": { plano: "4x_curto_medio", teto: 4, rotulo: "4 escovas por mês · cabelo curto/médio", valor: "R$ 197/mês" },
-  "247": { plano: "4x_longo", teto: 4, rotulo: "4 escovas por mês · cabelo longo", valor: "R$ 247/mês" },
-  "347": { plano: "8x_curto_medio", teto: 8, rotulo: "8 escovas por mês · cabelo curto/médio", valor: "R$ 347/mês" },
-  "447": { plano: "8x_longo", teto: 8, rotulo: "8 escovas por mês · cabelo longo", valor: "R$ 447/mês" },
+// 29/09/2026: pacotes de unha/esmaltação entram pelo mesmo webhook; `origem` é a do ciclo em clube_creditos
+// (os triggers consome_pacote_unha/consome_credito_clube escolhem o ciclo pela origem, não pelo plano).
+const CLUBE_PLANOS: Record<string, { plano: string; teto: number; rotulo: string; valor: string; origem: string }> = {
+  "197": { plano: "4x_curto_medio", teto: 4, rotulo: "4 escovas por mês · cabelo curto/médio", valor: "R$ 197/mês", origem: "asaas_pagamento" },
+  "247": { plano: "4x_longo", teto: 4, rotulo: "4 escovas por mês · cabelo longo", valor: "R$ 247/mês", origem: "asaas_pagamento" },
+  "347": { plano: "8x_curto_medio", teto: 8, rotulo: "8 escovas por mês · cabelo curto/médio", valor: "R$ 347/mês", origem: "asaas_pagamento" },
+  "447": { plano: "8x_longo", teto: 8, rotulo: "8 escovas por mês · cabelo longo", valor: "R$ 447/mês", origem: "asaas_pagamento" },
+  "237": { plano: "unha_4m2p", teto: 6, rotulo: "Pacote de unha · 4 mãos + 2 pés por mês", valor: "R$ 237/mês", origem: "pacote_unha" },
+  "148": { plano: "esmaltacao_4x", teto: 4, rotulo: "Pacote de esmaltação · 4 por mês", valor: "R$ 148/mês", origem: "pacote_esmaltacao" },
 };
 
 function clubeEmailBoasVindas(nome: string, def: { rotulo: string; valor: string }): string {
@@ -186,18 +190,27 @@ async function handleClube(supa: any, event: string, payment: any): Promise<stri
     }
   }
 
-  const { data: reg, error: upErr } = await supa.from("clube_assinantes").upsert({
-    asaas_customer_id: payment.customer,
-    asaas_subscription_id: payment.subscription,
+  // Assinante já cadastrada (ex.: pacote de unha + esmaltação na mesma pessoa): não sobrescrever
+  // plano/teto/assinatura — o ciclo abaixo já carrega a origem certa.
+  const { data: existente } = await supa.from("clube_assinantes")
+    .select("id").eq("asaas_customer_id", payment.customer).maybeSingle();
+  const dadosCliente = {
     nome: cli.name || null,
     cpf: cli.cpfCnpj || null,
     celular: cli.mobilePhone || cli.phone || null,
     email: cli.email || null,
-    plano: def.plano,
-    teto_mensal: def.teto,
     status: "ativo",
     updated_at: new Date().toISOString(),
-  }, { onConflict: "asaas_customer_id" }).select().single();
+  };
+  const { data: reg, error: upErr } = existente
+    ? await supa.from("clube_assinantes").update(dadosCliente).eq("id", existente.id).select().single()
+    : await supa.from("clube_assinantes").insert({
+        asaas_customer_id: payment.customer,
+        asaas_subscription_id: payment.subscription,
+        plano: def.plano,
+        teto_mensal: def.teto,
+        ...dadosCliente,
+      }).select().single();
   if (upErr || !reg) {
     console.error("clube: upsert assinante falhou:", upErr);
     return "clube_upsert_erro";
@@ -214,7 +227,7 @@ async function handleClube(supa: any, event: string, payment: any): Promise<stri
       competencia: inicio.toISOString().slice(0, 7),
       inicio: inicio.toISOString(), fim: fim.toISOString(),
       creditos_total: def.teto, creditos_usados: 0,
-      origem: "asaas_pagamento", asaas_payment_id: payment.id ?? null,
+      origem: def.origem, asaas_payment_id: payment.id ?? null,
     },
     { onConflict: "asaas_payment_id", ignoreDuplicates: true },
   );
@@ -223,7 +236,7 @@ async function handleClube(supa: any, event: string, payment: any): Promise<stri
   // Mensalidade no financeiro do dia (income, categoria Clube da Escova).
   // Idempotente pelo id do pagamento Asaas na descrição — retry do webhook não duplica.
   try {
-    const descTx = `Clube da Escova — mensalidade ${reg.nome ?? "assinante"} (${payment.id})`;
+    const descTx = `${def.origem === "asaas_pagamento" ? "Clube da Escova" : def.rotulo} — mensalidade ${reg.nome ?? "assinante"} (${payment.id})`;
     const { data: jaTem } = await supa
       .from("financial_transactions").select("id").like("description", `%(${payment.id})%`).limit(1);
     if (!jaTem || jaTem.length === 0) {
@@ -250,7 +263,7 @@ async function handleClube(supa: any, event: string, payment: any): Promise<stri
   // E-mail de boas-vindas (só no primeiro pagamento).
   // RESEND_API_KEY: APENAS Supabase Secrets — system_config NÃO é cofre.
   let emailStatus = "sem_email";
-  if (!reg.welcome_email_enviado && reg.email) {
+  if (!reg.welcome_email_enviado && reg.email && def.origem === "asaas_pagamento") {
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (resendKey) {
       const primeiroNome = (reg.nome || "Bem-vinda").split(" ")[0];

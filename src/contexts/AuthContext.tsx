@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 
@@ -14,6 +15,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isMaster: boolean;
   canDelete: boolean;
+  recoveryMode: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (
     email: string,
@@ -30,13 +32,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Fallback master user email - will be overridden by system config
 const DEFAULT_MASTER_EMAIL = "vanieri_2006@hotmail.com";
 
+// Link de recuperação de senha chega com o token no hash (#access_token=...&type=recovery).
+// Capturado no carregamento do módulo porque o supabase-js limpa o hash depois de validar
+// o token e só dispara PASSWORD_RECOVERY num setTimeout, depois de getSession() resolver.
+const OPENED_WITH_RECOVERY_LINK =
+  typeof window !== "undefined" && window.location.hash.includes("type=recovery");
+
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [salonId, setSalonId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<AppRole | null>(null);
   const [masterEmail, setMasterEmail] = useState<string>(DEFAULT_MASTER_EMAIL);
+  const [recoveryMode, setRecoveryMode] = useState(OPENED_WITH_RECOVERY_LINK);
 
   useEffect(() => {
     // Fetch master email from system config
@@ -58,6 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         
+        if (event === "PASSWORD_RECOVERY") {
+          setRecoveryMode(true);
+          navigate("/auth/nova-senha", { replace: true });
+        }
+
         // Defer fetching salon ID to avoid deadlock
         if (session?.user) {
           setTimeout(() => {
@@ -154,6 +169,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setSalonId(null);
     setUserRole(null);
+    setRecoveryMode(false);
   };
 
   const isMaster = user?.email === masterEmail;
@@ -170,6 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAdmin,
       isMaster,
       canDelete,
+      recoveryMode,
       signIn, 
       signUp, 
       signOut, 

@@ -56,6 +56,20 @@ export interface ComandaItem {
     id: string;
     name: string;
   };
+  comanda_item_products?: ComandaItemProduct[];
+}
+
+export interface ComandaItemProduct {
+  id: string;
+  comanda_item_id: string;
+  product_id: string | null;
+  product_name: string;
+  quantity_units: number;
+  quantity_fractional: number;
+  unit_of_measure: string;
+  unit_quantity: number;
+  cost_per_unit: number;
+  total_cost: number;
 }
 
 export interface ComandaInput {
@@ -380,7 +394,8 @@ export function useComandaItems(comandaId: string | null) {
         .from("comanda_items")
         .select(`
           *,
-          professional:professionals(id, name)
+          professional:professionals(id, name),
+          comanda_item_products(*)
         `)
         .eq("comanda_id", comandaId)
         .order("created_at");

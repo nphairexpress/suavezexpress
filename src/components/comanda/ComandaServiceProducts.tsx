@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Package, Plus, Check, Trash2, ChevronDown, ChevronUp, Search, Save } from "lucide-react";
 import { useAllServiceProducts } from "@/hooks/useServiceProducts";
 import { useProducts } from "@/hooks/useProducts";
-import { supabase } from "@/lib/dynamicSupabaseClient";
+import type { ComandaItemProduct } from "@/hooks/useComandas";
 import { cn } from "@/lib/utils";
 
 interface ProductUsage {
@@ -30,6 +30,8 @@ interface ComandaServiceProductsProps {
   onProductUsageChange: (serviceId: string, products: ProductUsage[]) => void;
   disabled?: boolean;
   savedProductCost?: number;
+  // Linhas de comanda_item_products já carregadas junto com os itens (evita 1 request por item)
+  savedProducts?: ComandaItemProduct[];
 }
 
 export function ComandaServiceProducts({
@@ -42,6 +44,7 @@ export function ComandaServiceProducts({
   onProductUsageChange,
   disabled = false,
   savedProductCost = 0,
+  savedProducts,
 }: ComandaServiceProductsProps) {
   const { getProductsForService } = useAllServiceProducts();
   const { products: allProducts } = useProducts();
@@ -63,15 +66,10 @@ export function ComandaServiceProducts({
   useEffect(() => {
     if (initialized) return;
 
-    const loadFromDb = async () => {
-      // Try loading saved product usage from comanda_item_products
-      const { data: savedProducts } = await supabase
-        .from("comanda_item_products")
-        .select("*")
-        .eq("comanda_item_id", comandaItemId);
-
+    const loadFromDb = () => {
+      // Saved product usage from comanda_item_products (already fetched with the items)
       if (savedProducts && savedProducts.length > 0) {
-        const loaded: ProductUsage[] = savedProducts.map((sp: any) => ({
+        const loaded: ProductUsage[] = savedProducts.map((sp) => ({
           id: sp.id,
           product_id: sp.product_id,
           product_name: sp.product_name,
@@ -113,7 +111,7 @@ export function ComandaServiceProducts({
     };
 
     loadFromDb();
-  }, [serviceId, comandaItemId, quantity, getProductsForService, allProducts.length, initialized]);
+  }, [serviceId, comandaItemId, quantity, getProductsForService, allProducts.length, initialized, savedProducts]);
 
   // Save products explicitly — only called by user action
   const saveProducts = useCallback(() => {

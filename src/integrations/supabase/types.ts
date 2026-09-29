@@ -2250,6 +2250,7 @@ export type Database = {
         | "confirmed"
         | "in_progress"
         | "completed"
+        | "paid"
         | "no_show"
         | "cancelled"
       payment_method: "cash" | "pix" | "credit_card" | "debit_card" | "other"
@@ -2394,6 +2395,7 @@ export const Constants = {
         "confirmed",
         "in_progress",
         "completed",
+        "paid",
         "no_show",
         "cancelled",
       ],

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireStaff } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,17 +14,29 @@ serve(async (req) => {
   }
 
   try {
-    const { salonId, professionalId } = await req.json();
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // 29/09/2026 (auditoria S-04): só staff logado (ou service role) — antes qualquer POST anônimo
+    // concluía atendimento e disparava WhatsApp/e-mail para a próxima cliente.
+    const staff = await requireStaff(req, supabase);
+    if (!staff.ok) {
+      return new Response(
+        JSON.stringify({ error: staff.error }),
+        { status: staff.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const body = await req.json();
+    const professionalId = body?.professionalId;
+    const salonId = staff.salonId === "*" ? body?.salonId : staff.salonId;
     if (!salonId || !professionalId) {
       return new Response(
         JSON.stringify({ error: "salonId and professionalId required" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // 1. Mark current queue entry as completed
     const { data: currentEntry } = await supabase

@@ -24,6 +24,8 @@ type ClubeResposta = {
   nome?: string;
   usadas?: number;
   total?: number;
+  valido_ate?: string | null;
+  mensagem?: string;
 };
 
 // Data de fim do ciclo do Clube (timestamp do servidor) em DD/MM, fuso de Brasília.

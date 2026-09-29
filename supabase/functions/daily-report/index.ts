@@ -2,6 +2,7 @@
 // Aceita { date } ou { start, end, professional_id? }. Calcula KPIs, detecta
 // issues, persiste (quando 1 dia) e devolve markdown + html prontos.
 import { createClient } from "supabase";
+import { requireStaff, requireCronSecret } from "../_shared/auth.ts";
 import { z } from "zod";
 import { fetchPagBankTransactional } from "./pagbank.ts";
 import { fetchAsaasPayments } from "./asaas.ts";
@@ -38,6 +39,19 @@ const SALON_ID = Deno.env.get("NPHAIR_EXPRESS_SALON_ID") ?? "9793948a-e208-4054-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("", { headers: corsHeaders() });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+
+  // 29/09/2026 (auditoria S-03): a anon key é um JWT válido e passava no gateway; a função não
+  // autenticava nada. Aceita staff financeiro (tela Fechamentos), service role ou x-cron-secret (job).
+  const supaAuth = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    { auth: { persistSession: false } },
+  );
+  const cron = requireCronSecret(req);
+  if (!cron.ok) {
+    const staff = await requireStaff(req, supaAuth, ["admin", "financial", "manager"]);
+    if (!staff.ok) return json({ error: staff.error }, staff.status);
+  }
 
   let body: unknown;
   try {

@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "verify": "tsc --noEmit -p tsconfig.app.json && vitest run && vite build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

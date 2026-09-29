@@ -33,7 +33,7 @@ export default function AuthNew() {
       return;
     }
     setResetLoading(true);
-    const redirectTo = `${window.location.origin}/auth`;
+    const redirectTo = `${window.location.origin}/auth/nova-senha`;
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
     setResetLoading(false);
     if (error) {

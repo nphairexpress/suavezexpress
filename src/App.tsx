@@ -14,6 +14,7 @@ import Clientes from "./pages/Clientes";
 import Servicos from "./pages/Servicos";
 import Pacotes from "./pages/Pacotes";
 import AuthNew from "./pages/AuthNew";
+import AuthNovaSenha from "./pages/AuthNovaSenha";
 import { Profissionais } from "./pages/Profissionais";
 import Comandas from "./pages/Comandas";
 import AtendimentoTerminal from "./pages/AtendimentoTerminal";
@@ -37,7 +38,9 @@ import Pendencias from "@/pages/Pendencias";
 import Fechamentos from "@/pages/Fechamentos";
 import ContasAPagar from "@/pages/ContasAPagar";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 60_000, refetchOnWindowFocus: false } },
+});
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -52,7 +55,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AppRoutes() {
-  const { user, loading, userRole } = useAuth();
+  const { user, loading, userRole, recoveryMode } = useAuth();
   // Profissional loga e cai DIRETO no terminal de atendimento (mobile), não na Dashboard.
   const homeElement = userRole === "professional"
     ? <Navigate to="/atendimento" replace />
@@ -112,7 +115,8 @@ function AppRoutes() {
     return (
       <Routes>
         <Route path="/setup" element={<Navigate to="/auth" replace />} />
-        <Route path="/auth" element={user ? <Navigate to="/" replace /> : <AuthNew />} />
+        <Route path="/auth" element={user ? <Navigate to={recoveryMode ? "/auth/nova-senha" : "/"} replace /> : <AuthNew />} />
+        <Route path="/auth/nova-senha" element={<AuthNovaSenha />} />
         <Route path="/" element={<ProtectedRoute>{homeElement}</ProtectedRoute>} />
         <Route path="/agenda" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
         <Route path="/agenda/*" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
@@ -182,7 +186,8 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/setup" element={<SetupWizard />} />
-      <Route path="/auth" element={user ? <Navigate to="/" replace /> : <AuthNew />} />
+      <Route path="/auth" element={user ? <Navigate to={recoveryMode ? "/auth/nova-senha" : "/"} replace /> : <AuthNew />} />
+      <Route path="/auth/nova-senha" element={<AuthNovaSenha />} />
       <Route path="/" element={<ProtectedRoute>{homeElement}</ProtectedRoute>} />
       <Route path="/agenda" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />
       <Route path="/agenda/*" element={<ProtectedRoute><Agenda /></ProtectedRoute>} />

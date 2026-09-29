@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
@@ -332,7 +333,7 @@ export function useCaixas() {
   };
 
   // Get open caixas (all users)
-  const openCaixas = caixas.filter(c => !c.closed_at);
+  const openCaixas = useMemo(() => caixas.filter(c => !c.closed_at), [caixas]);
 
   // Get closed caixas
   const closedCaixas = caixas.filter(c => c.closed_at);

@@ -33,6 +33,7 @@ export function useQueueSettings() {
           reception_email: null,
           zapi_instance_id: null,
           zapi_token: null,
+          zapi_client_token: null,
           asaas_api_key: null,
           open_weekdays: [2, 3, 4, 5, 6],
           open_time: "08:00",

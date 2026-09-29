@@ -78,6 +78,7 @@ export interface QueueSettings {
   reception_email: string | null;
   zapi_instance_id: string | null;
   zapi_token: string | null;
+  zapi_client_token: string | null;
   asaas_api_key: string | null;
   open_weekdays: number[];
   open_time: string;

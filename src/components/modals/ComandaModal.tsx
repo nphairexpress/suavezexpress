@@ -107,7 +107,7 @@ const INSTALLMENT_OPTIONS = [
 
 export function ComandaModal({ comanda, open, onClose, professionals, services, isEditingClosed = false, userCaixaId, onDelete, openCaixas = [], onViewClient }: ComandaModalProps) {
   const { toast } = useToast();
-  const { salonId } = useAuth();
+  const { salonId, canDelete } = useAuth();
   const { hasPermission, professionalId: currentProfessionalId, isMaster } = useCurrentUserPermissions();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("itens");
@@ -1618,6 +1618,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                               onProductUsageChange={handleProductUsageChange}
                               disabled={!!isComandaLocked}
                               savedProductCost={item.product_cost || 0}
+                              savedProducts={item.comanda_item_products}
                             />
                           )}
                         </>
@@ -1832,6 +1833,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                                     onProductUsageChange={handleProductUsageChange}
                                     disabled={!!isComandaLocked}
                                     savedProductCost={item.product_cost || 0}
+                                    savedProducts={item.comanda_item_products}
                                   />
                                 </TableCell>
                               </TableRow>
@@ -2392,15 +2394,17 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
             <Button variant="outline" size="icon" onClick={handlePrintReceipt} title="Imprimir">
               <Printer className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="text-destructive hover:text-destructive"
-              onClick={() => { if (comanda && onDelete) onDelete(comanda); }}
-              title="Excluir"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {canDelete && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="text-destructive hover:text-destructive"
+                onClick={() => { if (comanda && onDelete) onDelete(comanda); }}
+                title="Excluir"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
             <Button variant="outline" onClick={onClose}>Confirmar</Button>
             {comanda?.closed_at ? (
               <Button

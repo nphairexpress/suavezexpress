@@ -16,6 +16,9 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Plus, Search, Loader2, Save, Trash2, UserCog, KeyRound, Scissors,
   FileText, Clock, CreditCard, Phone, MapPin, X,
 } from "lucide-react";
@@ -168,6 +171,9 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
   const [newAccessPassword, setNewAccessPassword] = useState("");
   const [newAccessEmail, setNewAccessEmail] = useState("");
   const [isCreatingAccess, setIsCreatingAccess] = useState(false);
+  const [setPasswordOpen, setSetPasswordOpen] = useState(false);
+  const [setPasswordValue, setSetPasswordValue] = useState("");
+  const [isSettingPassword, setIsSettingPassword] = useState(false);
 
   // Professional data form
   const [form, setForm] = useState({
@@ -379,12 +385,46 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
       return;
     }
     if (!confirm(`Enviar link de redefinicao de senha para ${email}?`)) return;
-    const redirectTo = `${window.location.origin}/auth`;
+    const redirectTo = `${window.location.origin}/auth/nova-senha`;
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
     if (error) {
       toast({ title: "Erro ao enviar link", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Link enviado!", description: `Verifique a caixa de entrada de ${email}` });
+    }
+  };
+
+  // Admin define a senha do profissional direto (sem email), via edge function
+  const handleSetNewPassword = async () => {
+    if (!professional.user_id) {
+      toast({ title: "Este profissional nao tem acesso criado ainda", variant: "destructive" });
+      return;
+    }
+    if (setPasswordValue.length < 8) {
+      toast({ title: "A senha deve ter pelo menos 8 caracteres", variant: "destructive" });
+      return;
+    }
+    setIsSettingPassword(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("reset-user-password", {
+        body: { userId: professional.user_id, newPassword: setPasswordValue },
+      });
+      if (error) {
+        const msg = (error as any)?.context?.body || error.message || "Erro desconhecido";
+        toast({ title: "Erro ao definir senha", description: String(msg).slice(0, 200), variant: "destructive" });
+        return;
+      }
+      if ((data as any)?.error) {
+        toast({ title: "Erro ao definir senha", description: (data as any).error, variant: "destructive" });
+        return;
+      }
+      toast({ title: "Senha definida com sucesso!" });
+      setSetPasswordValue("");
+      setSetPasswordOpen(false);
+    } catch (e: any) {
+      toast({ title: "Erro inesperado", description: e?.message, variant: "destructive" });
+    } finally {
+      setIsSettingPassword(false);
     }
   };
 
@@ -626,6 +666,9 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" className="gap-1" onClick={handleSendResetPassword}>
                       <KeyRound className="h-3.5 w-3.5" /> Trocar Senha
+                    </Button>
+                    <Button variant="outline" size="sm" className="gap-1" onClick={() => setSetPasswordOpen(true)}>
+                      <KeyRound className="h-3.5 w-3.5" /> Definir nova senha
                     </Button>
                     <Button variant="destructive" size="sm" className="gap-1" onClick={handleDeleteAccess}>
                       <Trash2 className="h-3.5 w-3.5" /> Excluir Acesso
@@ -1124,6 +1167,31 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+
+      <Dialog open={setPasswordOpen} onOpenChange={(open) => { setSetPasswordOpen(open); if (!open) setSetPasswordValue(""); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Definir nova senha</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label className="text-xs">Nova senha de {form.email}:</Label>
+            <Input
+              type="password"
+              value={setPasswordValue}
+              onChange={(e) => setSetPasswordValue(e.target.value)}
+              placeholder="Mínimo 8 caracteres"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSetPasswordOpen(false)} disabled={isSettingPassword}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSetNewPassword} disabled={isSettingPassword || setPasswordValue.length < 8}>
+              {isSettingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : "Salvar senha"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

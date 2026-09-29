@@ -27,7 +27,7 @@ export default function Fila() {
   const navigate = useNavigate();
   const { salonId } = useAuth();
   const { toast } = useToast();
-  const { entries, stats, addToQueue, checkIn, assignProfessional, skip, remove, markNoShow, reorder, complete } = useQueue();
+  const { entries, stats, addToQueue, checkIn, assignProfessional, skip, remove, markNoShow, reorder, complete, archiveStaleEntries } = useQueue();
   const { pendingLeads, notifiedLeads, markNotified } = useQueueLeads();
   const { getCurrentUserOpenCaixa, openCaixaAsync, updateCaixaTotalsAsync } = useCaixas();
   const { createComandaAsync } = useComandas();
@@ -39,6 +39,12 @@ export default function Fila() {
   const [venderClubeOpen, setVenderClubeOpen] = useState(false);
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<QueueEntry | null>(null);
+
+  // Arquiva zumbis de dias anteriores uma vez ao abrir a Fila
+  useEffect(() => {
+    archiveStaleEntries();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [salonId]);
 
   const [prevCount, setPrevCount] = useState(entries.length);
   useEffect(() => {

@@ -22,7 +22,32 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Play, Loader2, UserPlus, CalendarDays, Plus } from "lucide-react";
 
+// Botão leve: fica no layout de todas as páginas e NÃO carrega dado nenhum.
+// Os hooks de dados (clientes, serviços, profissionais, comandas, fila, caixas)
+// só montam quando o diálogo abre (P-01 da auditoria de lentidão).
 export function IniciarAtendimentoFab() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      {/* FAB */}
+      <div className="w-full bg-green-600 text-white px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <Button
+          onClick={() => setOpen(true)}
+          className="h-11 rounded-full gap-2 px-5 font-semibold bg-white text-green-700 hover:bg-white/90"
+        >
+          <Plus className="h-5 w-5" />
+          Abrir Comanda
+        </Button>
+        <span className="text-sm font-medium">Quando a cliente chegar, comece aqui</span>
+      </div>
+
+      {open && <AbrirComandaDialog onOpenChange={setOpen} />}
+    </>
+  );
+}
+
+function AbrirComandaDialog({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
   const navigate = useNavigate();
   const { salonId } = useAuth();
   const { toast } = useToast();
@@ -33,7 +58,8 @@ export function IniciarAtendimentoFab() {
   const { addToQueue } = useQueue();
   const { getCurrentUserOpenCaixa, openCaixaAsync } = useCaixas();
 
-  const [open, setOpen] = useState(false);
+  const open = true;
+  const setOpen = onOpenChange;
   const [loading, setLoading] = useState(false);
 
   // Cliente: existente (clientId) OU novo (newName/newPhone/newEmail)
@@ -179,19 +205,6 @@ export function IniciarAtendimentoFab() {
   };
 
   return (
-    <>
-      {/* FAB */}
-      <div className="w-full bg-green-600 text-white px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-        <Button
-          onClick={() => setOpen(true)}
-          className="h-11 rounded-full gap-2 px-5 font-semibold bg-white text-green-700 hover:bg-white/90"
-        >
-          <Plus className="h-5 w-5" />
-          Abrir Comanda
-        </Button>
-        <span className="text-sm font-medium">Quando a cliente chegar, comece aqui</span>
-      </div>
-
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -272,6 +285,5 @@ export function IniciarAtendimentoFab() {
           </div>
         </DialogContent>
       </Dialog>
-    </>
   );
 }

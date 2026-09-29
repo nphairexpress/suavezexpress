@@ -22,7 +22,7 @@ export function ProfessionalCommissionSummary({ professionalId, commissionPercen
   const { salonId } = useAuth();
   const navigate = useNavigate();
   const { services } = useServices();
-  const { commissionSettings } = useCommissionSettings();
+  const { settings: commissionSettings } = useCommissionSettings();
 
   const serviceMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -52,7 +52,7 @@ export function ProfessionalCommissionSummary({ professionalId, commissionPercen
   }, [profServiceCommissions]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["dashboard-commission-summary", salonId, professionalId, profCommMap.size],
+    queryKey: ["dashboard-commission-summary", salonId, professionalId, profCommMap.size, commissionSettings.service_cost_enabled, commissionSettings.product_cost_deduction],
     queryFn: async () => {
       if (!salonId || !professionalId) return null;
 
