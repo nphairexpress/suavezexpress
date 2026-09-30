@@ -690,8 +690,10 @@ export default function Comissoes() {
     );
   }
 
-  // Etapa 6: rota Financeiro só para quem tem financeiro.ver
-  if (!loadingPermissions && !pode("financeiro.ver")) {
+  // Etapa 6: rota Financeiro só para quem tem financeiro.ver.
+  // 30/09: profissional entra mesmo sem financeiro.ver para ver a PRÓPRIA comissão
+  // (RLS e o auto-select acima já limitam à dela) — a etapa 6 tinha fechado isso por engano.
+  if (!loadingPermissions && !pode("financeiro.ver") && !isProfessionalUser) {
     return <Navigate to="/" replace />;
   }
 

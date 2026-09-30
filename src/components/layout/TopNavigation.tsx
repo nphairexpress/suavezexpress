@@ -91,10 +91,14 @@ export function TopNavigation() {
   const location = useLocation();
   const navigate = useNavigate();
   const { pode, isLoading: loadingPermissions } = useSalonPermissions();
-  // Etapa 6: menu Financeiro só para quem tem financeiro.ver
-  const visibleNavItems = navItems.filter((item) => item.url !== "/financeiro" || loadingPermissions || pode("financeiro.ver"));
+  // Etapa 6: menu Financeiro só para quem tem financeiro.ver.
+  // 30/09: quem não tem vê só "Comissões" (a própria), em vez de perder o acesso inteiro.
+  const visibleNavItems = navItems.flatMap((item) => {
+    if (item.url !== "/financeiro" || loadingPermissions || pode("financeiro.ver")) return [item];
+    return [{ title: "Comissões", url: "/financeiro/comissoes", icon: item.icon }];
+  });
 
-  const activeNavItem = navItems.find(item => {
+  const activeNavItem = visibleNavItems.find(item => {
     if (location.pathname === item.url) return true;
     if (item.subItems) {
       return item.subItems.some(sub => {
