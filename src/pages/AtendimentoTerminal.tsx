@@ -10,12 +10,13 @@ import { useServices } from "@/hooks/useServices";
 import { useProfessionals } from "@/hooks/useProfessionals";
 import { useToast } from "@/hooks/use-toast";
 import { Button, IconButton, Input, EmptyState } from "@design-system";
+import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, ChevronRight, Plus, Pencil, Trash2, Check, X, RefreshCw, Search, Loader2, UserRound, AlertTriangle, Receipt } from "lucide-react";
+import { ArrowLeft, ChevronRight, Plus, Pencil, Trash2, Check, X, RefreshCw, Search, Loader2, UserRound, AlertTriangle, Receipt, Percent } from "lucide-react";
 
 // Tema ESCURO fixo (preto + âmbar) aplicado aqui dentro: a rota ainda vive na lista np-legacy do App.tsx,
 // então as variáveis do shadcn estão nos valores antigos. Tudo que é visual usa var(--np-*) ou componentes do DS.
@@ -28,6 +29,7 @@ const PORTAL = "border-[color:var(--np-border-strong)] bg-[color:var(--np-surfac
 const brl = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
 export default function AtendimentoTerminal() {
+  const navigate = useNavigate();
   const { salonId } = useAuth();
   const { services } = useServices();
   const { professionals } = useProfessionals();
@@ -173,7 +175,11 @@ export default function AtendimentoTerminal() {
       <div data-theme="dark" className={ROOT}>
         <header className={HEADER + " justify-between"}>
           <h1 className="np-display text-2xl">Atendimento</h1>
-          <Button variant="secondary" size="lg" icon={RefreshCw} onClick={loadComandas} loading={loadingList}>Atualizar</Button>
+          <div className="flex items-center gap-2">
+            {/* 01/10: o terminal não tem menu; este é o caminho da profissional para a própria comissão */}
+            <Button variant="secondary" size="lg" icon={Percent} onClick={() => navigate("/financeiro/comissoes")}>Comissão</Button>
+            <Button variant="secondary" size="lg" icon={RefreshCw} onClick={loadComandas} loading={loadingList}>Atualizar</Button>
+          </div>
         </header>
 
         <div className="p-4 space-y-3 max-w-2xl mx-auto">
