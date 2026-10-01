@@ -28,7 +28,7 @@ export default function AuthNew() {
     setResetError(undefined);
     setResetMessage(undefined);
     if (!email) {
-      toast({ title: "Digite seu email primeiro", description: "Preencha o campo email acima e clique de novo em 'Esqueci minha senha'.", variant: "destructive" });
+      toast({ title: "Digite seu email primeiro", description: "Preencha o campo email acima e clique de novo em 'Esqueci a senha'.", variant: "destructive" });
       setResetError("Digite seu email primeiro");
       return;
     }

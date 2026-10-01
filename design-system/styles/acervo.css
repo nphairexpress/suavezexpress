@@ -226,14 +226,25 @@
 .np-page-header__actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .np-shell{display:flex;gap:var(--np-sidebar-gap);height:100vh;height:100dvh;padding:var(--np-sidebar-gap);overflow:hidden}
 .np-shell__sidebar{flex:none;height:100%;z-index:30}
-.np-shell__main{flex:1;min-width:0;display:flex;flex-direction:column;gap:20px;overflow-y:auto;padding:8px 8px 24px 0}
+.np-shell__main{flex:1;min-width:0;display:flex;flex-direction:column;gap:20px;overflow-y:auto;overflow-x:hidden;padding:8px 8px 24px 0}
 .np-shell__scrim{position:fixed;inset:0;z-index:25;border:0;background:rgba(13,10,8,.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
 @media (max-width:900px){
-  .np-shell{padding:12px}
-  .np-shell__sidebar{position:fixed;top:12px;bottom:12px;left:12px;height:auto;transform:translateX(calc(-100% - 24px));transition:transform var(--np-dur-slow) var(--np-ease-out)}
+  .np-shell{padding:16px 16px 0}
+  .np-shell__sidebar{position:fixed;top:16px;bottom:16px;left:16px;height:auto;transform:translateX(calc(-100% - 32px));transition:transform var(--np-dur-slow) var(--np-ease-out)}
   .np-shell__sidebar.is-open{transform:none}
-  .np-shell__main{padding:0 0 24px}
+  /* respiro no fim: o botão flutuante "Ver valores" (fixed, bottom 16px, ~44px) não cobre o último cartão */
+  .np-shell__main{padding:0 0 calc(88px + env(safe-area-inset-bottom,0px))}
   .np-topbar__menu{display:inline-grid}
+}
+/* top bar no celular: menu, título, tema e avatar numa linha só, na margem do conteúdo (o nome completo do usuário fica na sidebar) */
+@media (max-width:600px){
+  .np-topbar{flex-wrap:nowrap;gap:10px}
+  .np-topbar__title-wrap{flex:1 1 0}
+  .np-topbar__title{font-size:20px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .np-topbar__subtitle{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .np-topbar > *:not(.np-topbar__title-wrap){flex:none}
+  .np-topbar__user{padding:2px}
+  .np-topbar__user-text{display:none}
 }
 
 /* ---------- login deslizante (acervo ig-frontendjoe-login-deslizante) ---------- */

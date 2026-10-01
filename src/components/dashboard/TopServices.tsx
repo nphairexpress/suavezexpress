@@ -64,8 +64,9 @@ export function TopServices() {
     refetchInterval: 5 * 60 * 1000,
   });
 
+  // min-w-0: item de grade; sem isso o nome longo (truncate) alarga a coluna além da tela em 360 px
   return (
-    <GlassCard title="Serviços Mais Vendidos">
+    <GlassCard title="Serviços Mais Vendidos" className="min-w-0">
       {services.length === 0 ? (
         <EmptyState icon="scissors" title="Nenhum serviço vendido nos últimos 30 dias" />
       ) : (

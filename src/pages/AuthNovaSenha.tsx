@@ -57,7 +57,7 @@ export default function AuthNovaSenha() {
         ) : !hasRecoverySession ? (
           <>
             <h2 className="np-display">Link inválido ou expirado</h2>
-            <p>Peça um novo link em "Esqueci minha senha" na tela de entrada.</p>
+            <p>Peça um novo link em "Esqueci a senha" na tela de entrada.</p>
             <Button block size="lg" onClick={() => navigate("/auth", { replace: true })}>
               Ir para a tela de entrada
             </Button>

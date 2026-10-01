@@ -206,12 +206,15 @@ export default function Financeiro() {
               {/* Date Selector */}
               <Card>
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-4 flex-wrap">
-                    <div className="flex items-center gap-2">
+                  {/* Celular: grade de 3 colunas (dia | mês | ano, depois ‹ | Hoje | › e a contagem), tudo na largura do cartão.
+                      A partir de sm volta à linha única de antes. */}
+                  <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.8fr)_minmax(0,1.2fr)] gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-4">
+                    <div className="contents sm:flex sm:items-center sm:gap-2">
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-11 w-11"
+                        aria-label="Dia anterior"
+                        className="order-4 h-11 w-full sm:order-none sm:w-11"
                         onClick={() => {
                           const newDate = new Date(selectedDate);
                           newDate.setDate(newDate.getDate() - 1);
@@ -229,7 +232,7 @@ export default function Financeiro() {
                           setSelectedDate(newDate);
                         }}
                       >
-                        <SelectTrigger className="h-11 w-[72px]">
+                        <SelectTrigger className="order-1 h-11 w-full sm:order-none sm:w-[72px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -250,7 +253,7 @@ export default function Financeiro() {
                           setSelectedDate(newDate);
                         }}
                       >
-                        <SelectTrigger className="h-11 w-[130px] capitalize">
+                        <SelectTrigger className="order-2 h-11 w-full capitalize sm:order-none sm:w-[130px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -271,7 +274,7 @@ export default function Financeiro() {
                           setSelectedDate(newDate);
                         }}
                       >
-                        <SelectTrigger className="h-11 w-[92px]">
+                        <SelectTrigger className="order-3 h-11 w-full sm:order-none sm:w-[92px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -289,7 +292,8 @@ export default function Financeiro() {
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-11 w-11"
+                        aria-label="Próximo dia"
+                        className="order-6 h-11 w-full sm:order-none sm:w-11"
                         onClick={() => {
                           const newDate = new Date(selectedDate);
                           newDate.setDate(newDate.getDate() + 1);
@@ -302,13 +306,13 @@ export default function Financeiro() {
 
                     <Button
                       variant="outline"
-                      className="h-11"
+                      className="order-5 h-11 w-full sm:order-none sm:w-auto"
                       onClick={() => setSelectedDate(new Date())}
                     >
                       Hoje
                     </Button>
 
-                    <Badge variant="outline" className="ml-auto border-border text-muted-foreground tabular-nums">
+                    <Badge variant="outline" className="order-7 col-span-3 justify-self-start border-border text-muted-foreground tabular-nums sm:order-none sm:ml-auto">
                       {caixasByDate.length} caixa{caixasByDate.length !== 1 ? "s" : ""} encontrado{caixasByDate.length !== 1 ? "s" : ""}
                     </Badge>
                   </div>
@@ -316,9 +320,15 @@ export default function Financeiro() {
               </Card>
 
               {/* Selected Date Display */}
-              <div className={`${display} flex items-center gap-2 text-lg font-semibold capitalize text-foreground`}>
-                <CalendarIcon className="h-5 w-5 text-primary" />
-                {format(selectedDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              <div className={`${display} flex items-start gap-2 text-lg font-semibold leading-snug text-foreground`}>
+                <CalendarIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                {/* só a 1ª letra maiúscula ("Quinta-feira, 01 de outubro de 2026"); o capitalize do CSS gerava "De Outubro De" */}
+                <span className="min-w-0">
+                  {(() => {
+                    const d = format(selectedDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+                    return d.charAt(0).toUpperCase() + d.slice(1);
+                  })()}
+                </span>
               </div>
 
               {/* Caixas List */}
