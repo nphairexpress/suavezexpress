@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { glassModal, modalTitle } from "@/components/financeiro/glass";
 import {
   Dialog,
   DialogContent,
@@ -93,13 +94,13 @@ export function DailyReportDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className={`max-w-3xl max-h-[80vh] overflow-y-auto ${glassModal}`}>
         <DialogHeader>
-          <DialogTitle>Fechamento de {formattedDate}</DialogTitle>
+          <DialogTitle className={modalTitle}>Fechamento de {formattedDate}</DialogTitle>
         </DialogHeader>
 
         {loadingHtml ? (
-          <div className="flex items-center justify-center py-12 text-slate-500">
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin mr-2" />
             Gerando relatório formatado...
           </div>
@@ -109,7 +110,7 @@ export function DailyReportDetailModal({
             dangerouslySetInnerHTML={{ __html: html }}
           />
         ) : (
-          <div className="text-sm text-slate-500 py-6 text-center">
+          <div className="text-sm text-muted-foreground py-6 text-center">
             Não foi possível gerar o relatório formatado.
           </div>
         )}

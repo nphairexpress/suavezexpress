@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, toneText } from "@/components/settings/settingsUi";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@design-system";
 import { Loader2, ShieldAlert, Trash2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
@@ -67,14 +67,6 @@ export function AuditLogSection() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <ShieldAlert className="h-6 w-6 text-primary" />
-        <div>
-          <h2 className="text-xl font-semibold">Auditoria do Sistema</h2>
-          <p className="text-sm text-muted-foreground">Registro de todas as ações críticas realizadas no sistema</p>
-        </div>
-      </div>
-
       {/* Comandas Excluídas */}
       <Card>
         <CardHeader>
@@ -83,17 +75,17 @@ export function AuditLogSection() {
             Comandas Excluídas
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0 sm:px-0">
           {logs.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <ShieldAlert className="h-10 w-10 mx-auto mb-2 opacity-50" />
               <p>Nenhuma exclusão registrada</p>
             </div>
           ) : (
-            <Table>
+            <Table className="min-w-[900px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Data da Exclusão</TableHead>
+                  <TableHead className="pl-5 sm:pl-6">Data da Exclusão</TableHead>
                   <TableHead>Comanda</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Profissional</TableHead>
@@ -106,7 +98,7 @@ export function AuditLogSection() {
               <TableBody>
                 {logs.map((log) => (
                   <TableRow key={log.id}>
-                    <TableCell className="text-sm">
+                    <TableCell className="pl-5 sm:pl-6 text-sm tabular-nums whitespace-nowrap">
                       {format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                     </TableCell>
                     <TableCell>
@@ -120,12 +112,12 @@ export function AuditLogSection() {
                     </TableCell>
                     <TableCell className="font-medium">{log.client_name || "—"}</TableCell>
                     <TableCell>{log.professional_name || "—"}</TableCell>
-                    <TableCell className="text-right font-medium">
+                    <TableCell className="text-right font-medium tabular-nums whitespace-nowrap">
                       {formatCurrency(log.comanda_total)}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <AlertTriangle className="h-3 w-3 text-amber-500" />
+                        <AlertTriangle className="h-3 w-3 shrink-0" style={toneText.accent} />
                         <span className="text-sm">{log.reason || "Sem motivo"}</span>
                       </div>
                     </TableCell>
@@ -136,9 +128,9 @@ export function AuditLogSection() {
                     </TableCell>
                     <TableCell>
                       {log.original_closed_at ? (
-                        <Badge variant="secondary">Fechada</Badge>
+                        <Badge>Fechada</Badge>
                       ) : (
-                        <Badge className="bg-amber-500">Aberta</Badge>
+                        <Badge tone="accent" dot>Aberta</Badge>
                       )}
                     </TableCell>
                   </TableRow>

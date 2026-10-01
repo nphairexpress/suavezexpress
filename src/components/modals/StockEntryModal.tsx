@@ -127,7 +127,7 @@ export function StockEntryModal({ open, onOpenChange, products, suppliers }: Sto
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5 text-green-600" />
+            <Plus className="h-5 w-5 text-[var(--np-positive-text)]" />
             Entrada de Estoque
           </DialogTitle>
         </DialogHeader>
@@ -193,14 +193,14 @@ export function StockEntryModal({ open, onOpenChange, products, suppliers }: Sto
                 </div>
               </div>
 
-              <div className="rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 p-3 text-sm">
+              <div className="rounded-lg bg-[var(--np-positive-soft)] border border-[var(--np-positive-border)] p-3 text-sm">
                 <div className="flex justify-between">
                   <span>Novo estoque:</span>
                   <span className="font-medium">{(selectedProduct.current_stock || 0) + quantity} unidade(s)</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Custo total desta entrada:</span>
-                  <span className="font-medium text-green-600">{formatCurrency(totalCost)}</span>
+                  <span className="font-medium text-[var(--np-positive-text)]">{formatCurrency(totalCost)}</span>
                 </div>
               </div>
 
@@ -224,7 +224,7 @@ export function StockEntryModal({ open, onOpenChange, products, suppliers }: Sto
             <Button 
               type="submit" 
               disabled={isLoading || !selectedProductId}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-[var(--np-positive)] hover:brightness-95 text-[var(--np-black)]"
             >
               {isLoading ? "Registrando..." : "Registrar Entrada"}
             </Button>

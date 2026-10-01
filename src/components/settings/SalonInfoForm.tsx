@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/settings/settingsUi";
+import { Button as NpButton } from "@design-system";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -141,8 +142,8 @@ export function SalonInfoForm() {
           <CardDescription>O logo aparecerá no cabeçalho do sistema.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-6">
-            <Avatar className="h-24 w-24 rounded-xl">
+          <div className="flex flex-wrap items-center gap-6">
+            <Avatar className="h-24 w-24 rounded-xl border border-border">
               <AvatarImage src={form.logo_url || undefined} className="object-cover" />
               <AvatarFallback className="rounded-xl bg-primary/10 text-primary text-2xl font-bold">
                 {form.name?.charAt(0)?.toUpperCase() || "S"}
@@ -151,7 +152,7 @@ export function SalonInfoForm() {
             <div className="space-y-2">
               <Label
                 htmlFor="logo-upload"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-input bg-background hover:bg-accent cursor-pointer text-sm font-medium"
+                className="np-btn np-btn--secondary cursor-pointer"
               >
                 {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                 {isUploading ? "Enviando..." : "Enviar Logo"}
@@ -168,7 +169,7 @@ export function SalonInfoForm() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-destructive gap-1"
+                  className="text-destructive gap-1 h-11"
                   onClick={() => setForm(prev => ({ ...prev, logo_url: "" }))}
                 >
                   <X className="h-3 w-3" /> Remover
@@ -255,10 +256,9 @@ export function SalonInfoForm() {
             </div>
           </div>
           <div className="flex justify-end pt-2">
-            <Button onClick={handleSave} disabled={isSaving} className="gap-2">
-              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            <NpButton icon={Save} loading={isSaving} onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto">
               {isSaving ? "Salvando..." : "Salvar Dados"}
-            </Button>
+            </NpButton>
           </div>
         </CardContent>
       </Card>

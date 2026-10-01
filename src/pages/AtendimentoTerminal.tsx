@@ -9,13 +9,21 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useServices } from "@/hooks/useServices";
 import { useProfessionals } from "@/hooks/useProfessionals";
 import { useToast } from "@/hooks/use-toast";
-import { Input } from "@/components/ui/input";
+import { Button, IconButton, Input, EmptyState } from "@design-system";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ArrowLeft, ChevronRight, Plus, Pencil, Trash2, Check, X, RefreshCw, Search, Loader2, UserRound } from "lucide-react";
+import { ArrowLeft, ChevronRight, Plus, Pencil, Trash2, Check, X, RefreshCw, Search, Loader2, UserRound, AlertTriangle, Receipt } from "lucide-react";
+
+// Tema ESCURO fixo (preto + âmbar) aplicado aqui dentro: a rota ainda vive na lista np-legacy do App.tsx,
+// então as variáveis do shadcn estão nos valores antigos. Tudo que é visual usa var(--np-*) ou componentes do DS.
+const ROOT = "np-app np-bg np-bg--waves min-h-[100dvh] text-[color:var(--np-text-primary)]";
+const HEADER = "sticky top-0 z-10 px-4 py-3 flex items-center gap-3 border-b border-[color:var(--np-border-glass)] bg-[color:var(--np-surface-glass-strong)] backdrop-blur-xl";
+const MUTED = "text-[color:var(--np-text-secondary)]";
+// Conteúdo em portal (Select, AlertDialog) fica fora do wrapper: recebe o tema no próprio elemento.
+const PORTAL = "border-[color:var(--np-border-strong)] bg-[color:var(--np-surface-glass-strong)] text-[color:var(--np-text-primary)] backdrop-blur-xl";
 
 const brl = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0);
 
@@ -41,8 +49,23 @@ export default function AtendimentoTerminal() {
   const [confirmDel, setConfirmDel] = useState<any | null>(null); // item aguardando confirmação de exclusão
 
   // 29/09/2026 (auditoria O-01): nenhum erro do banco fica mudo — vira toast com a mensagem.
-  const showError = (title: string, e: any) =>
+  // Além do toast, o último erro fica num aviso fixo na tela (some ao tocar no X) — só apresentação.
+  const [erro, setErro] = useState<{ title: string; msg: string } | null>(null);
+  const showError = (title: string, e: any) => {
+    setErro({ title, msg: e?.message || String(e) });
     toast({ title, description: e?.message || String(e), variant: "destructive" });
+  };
+
+  const avisoErro = erro && (
+    <div role="alert" className="flex items-start gap-3 rounded-2xl border border-[color:var(--np-danger-border)] bg-[color:var(--np-danger-soft)] p-4">
+      <AlertTriangle className="h-6 w-6 shrink-0 text-[color:var(--np-danger-text)]" />
+      <div className="min-w-0 flex-1">
+        <div className="text-lg font-semibold text-[color:var(--np-danger-text)]">{erro.title}</div>
+        <div className="text-base break-words">{erro.msg}</div>
+      </div>
+      <IconButton icon={X} label="Fechar aviso" variant="ghost" size="lg" onClick={() => setErro(null)} />
+    </div>
+  );
 
   const loadComandas = async () => {
     if (!salonId) return;
@@ -147,32 +170,36 @@ export default function AtendimentoTerminal() {
   // ---------- LISTA DE CLIENTES (comandas abertas) ----------
   if (!sel) {
     return (
-      <div className="min-h-[100dvh] bg-white text-zinc-900">
-        <header className="sticky top-0 z-10 bg-zinc-900 text-white px-4 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Atendimento</h1>
-          <button onClick={loadComandas} className="flex items-center gap-2 text-base bg-white/10 rounded-full px-4 py-2 active:bg-white/20">
-            <RefreshCw className="h-5 w-5" /> Atualizar
-          </button>
+      <div data-theme="dark" className={ROOT}>
+        <header className={HEADER + " justify-between"}>
+          <h1 className="np-display text-2xl">Atendimento</h1>
+          <Button variant="secondary" size="lg" icon={RefreshCw} onClick={loadComandas} loading={loadingList}>Atualizar</Button>
         </header>
 
-        <div className="p-4 space-y-3">
-          <p className="text-lg text-zinc-500">Toque no nome da cliente:</p>
+        <div className="p-4 space-y-3 max-w-2xl mx-auto">
+          {avisoErro}
+          <p className={"text-lg " + MUTED}>Toque no nome da cliente:</p>
           {loadingList ? (
-            <div className="py-16 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-zinc-400" /></div>
+            <div className="py-16 text-center"><Loader2 className="h-10 w-10 animate-spin mx-auto text-[color:var(--np-accent-text)]" /></div>
           ) : comandas.length === 0 ? (
-            <div className="py-16 text-center text-xl text-zinc-500">Nenhuma comanda aberta agora.</div>
+            <div className="np-glass-card [&_.np-empty__title]:text-xl [&_.np-empty__desc]:text-base" style={{ padding: 24 }}>
+              <EmptyState icon={Receipt} title="Nenhuma comanda aberta agora." description="Quando a recepção abrir uma comanda, ela aparece aqui. Toque em Atualizar." />
+            </div>
           ) : (
             comandas.map((c) => (
               <button
                 key={c.id}
                 onClick={() => openComanda(c)}
-                className="w-full flex items-center justify-between gap-3 rounded-2xl border-2 border-zinc-200 bg-white px-5 py-5 text-left active:bg-zinc-50 shadow-sm"
+                className="np-glass-card np-glass-card--lift w-full min-h-[88px] flex items-center justify-between gap-3 text-left active:scale-[.98] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--np-focus-ring)]"
+                style={{ padding: "18px 20px" }}
               >
                 <div className="min-w-0">
-                  <div className="text-2xl font-bold leading-tight truncate">{c.client?.name || "Cliente"}</div>
-                  <div className="text-base text-zinc-500 mt-1">Comanda {String(c.comanda_number).padStart(4, "0")}</div>
+                  <div className="np-display text-[28px] leading-tight truncate">{c.client?.name || "Cliente"}</div>
+                  <div className={"text-base mt-1 tabular-nums " + MUTED}>Comanda {String(c.comanda_number).padStart(4, "0")}</div>
                 </div>
-                <ChevronRight className="h-8 w-8 text-orange-500 shrink-0" />
+                <span className="grid place-items-center h-12 w-12 shrink-0 rounded-full bg-[color:var(--np-accent)] text-[color:var(--np-text-on-accent)]">
+                  <ChevronRight className="h-7 w-7" />
+                </span>
               </button>
             ))
           )}
@@ -183,74 +210,67 @@ export default function AtendimentoTerminal() {
 
   // ---------- SERVIÇOS DA COMANDA ----------
   return (
-    <div className="min-h-[100dvh] bg-white text-zinc-900 pb-28">
-      <header className="sticky top-0 z-10 bg-zinc-900 text-white px-4 py-4 flex items-center gap-3">
-        <button onClick={backToList} className="flex items-center gap-1 text-lg active:opacity-70">
-          <ArrowLeft className="h-7 w-7" />
-        </button>
+    <div data-theme="dark" className={ROOT + " pb-32"}>
+      <header className={HEADER}>
+        <IconButton icon={ArrowLeft} label="Voltar para a lista" size="lg" onClick={backToList} />
         <div className="min-w-0">
-          <div className="text-2xl font-bold truncate">{sel.client?.name || "Cliente"}</div>
-          <div className="text-sm text-white/70">Comanda {String(sel.comanda_number).padStart(4, "0")}</div>
+          <div className="np-display text-2xl truncate">{sel.client?.name || "Cliente"}</div>
+          <div className={"text-sm tabular-nums " + MUTED}>Comanda {String(sel.comanda_number).padStart(4, "0")}</div>
         </div>
       </header>
 
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 max-w-2xl mx-auto">
+        {avisoErro}
         {loadingItems ? (
-          <div className="py-12 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-zinc-400" /></div>
+          <div className="py-12 text-center"><Loader2 className="h-10 w-10 animate-spin mx-auto text-[color:var(--np-accent-text)]" /></div>
         ) : items.length === 0 ? (
-          <div className="py-10 text-center text-xl text-zinc-500">Nenhum serviço lançado ainda.</div>
+          <div className="np-glass-card" style={{ padding: 24 }}>
+            <EmptyState icon={Receipt} title="Nenhum serviço lançado ainda." description="Toque em Adicionar serviço lá embaixo." />
+          </div>
         ) : (
           items.map((it) => (
-            <div key={it.id} className="rounded-2xl border-2 border-zinc-200 p-4 space-y-3">
+            <div key={it.id} className="np-glass-card space-y-4" style={{ padding: 18 }}>
               <div className="flex items-start justify-between gap-3">
-                <div className="text-xl font-bold leading-tight">{it.description}</div>
-                <div className="text-2xl font-extrabold whitespace-nowrap">{brl(it.total_price)}</div>
+                <div className="text-xl font-semibold leading-tight">{it.description}</div>
+                <div className="np-display text-2xl whitespace-nowrap tabular-nums">{brl(it.total_price)}</div>
               </div>
 
               {editId === it.id ? (
                 <div className="space-y-3">
+                  <Input label="Valor (R$)" type="number" inputMode="decimal" step="0.01" value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    variant="money" className="h-14 text-2xl font-bold text-right tabular-nums" />
                   <div>
-                    <label className="text-base text-zinc-500">Valor (R$)</label>
-                    <Input type="number" inputMode="decimal" step="0.01" value={editPrice}
-                      onChange={(e) => setEditPrice(e.target.value)}
-                      className="h-14 text-2xl font-bold text-right" />
-                  </div>
-                  <div>
-                    <label className="text-base text-zinc-500">Profissional</label>
+                    <label className={"block mb-1.5 text-base " + MUTED}>Profissional</label>
                     <Select value={editProf} onValueChange={setEditProf}>
-                      <SelectTrigger className="h-14 text-lg"><SelectValue placeholder="Escolher" /></SelectTrigger>
-                      <SelectContent>
+                      <SelectTrigger className="h-14 text-lg rounded-xl border-[color:var(--np-border-strong)] bg-[color:var(--np-surface-inset)] text-[color:var(--np-text-primary)]">
+                        <SelectValue placeholder="Escolher" />
+                      </SelectTrigger>
+                      <SelectContent data-theme="dark" className={PORTAL}>
                         {profs.map((p: any) => (
-                          <SelectItem key={p.id} value={p.id} className="text-lg py-3">{p.name}</SelectItem>
+                          <SelectItem key={p.id} value={p.id} className="text-lg py-3 min-h-[48px] focus:bg-[color:var(--np-accent-soft)] focus:text-[color:var(--np-text-primary)]">{p.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="flex gap-3">
-                    <button onClick={() => saveEdit(it)} disabled={busy}
-                      className="flex-1 h-14 rounded-xl bg-orange-500 text-white text-xl font-bold flex items-center justify-center gap-2 active:bg-orange-600 disabled:opacity-60">
-                      {busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <Check className="h-6 w-6" />} Salvar
-                    </button>
-                    <button onClick={() => setEditId(null)} className="h-14 px-5 rounded-xl border-2 border-zinc-300 text-lg active:bg-zinc-100">
+                    <Button size="xl" block icon={Check} loading={busy} onClick={() => saveEdit(it)} className="flex-1">Salvar</Button>
+                    <Button size="xl" variant="secondary" onClick={() => setEditId(null)} aria-label="Cancelar edição" title="Cancelar edição">
                       <X className="h-6 w-6" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center gap-2 text-lg text-zinc-600">
-                    <UserRound className="h-5 w-5 text-zinc-400" />
+                  <div className={"flex items-center gap-2 text-lg " + MUTED}>
+                    <UserRound className="h-5 w-5" />
                     {it.professional_id ? profName(it.professional_id) : (sel.professional_id ? profName(sel.professional_id) : "Sem profissional")}
                   </div>
                   <div className="flex gap-3">
-                    <button onClick={() => startEdit(it)}
-                      className="flex-1 h-14 rounded-xl border-2 border-orange-500 text-orange-600 text-xl font-bold flex items-center justify-center gap-2 active:bg-orange-50">
-                      <Pencil className="h-6 w-6" /> Editar
-                    </button>
-                    <button onClick={() => setConfirmDel(it)} disabled={busy}
-                      className="h-14 px-5 rounded-xl border-2 border-zinc-300 text-red-600 active:bg-red-50 disabled:opacity-60">
+                    <Button size="lg" variant="secondary" block icon={Pencil} onClick={() => startEdit(it)} className="flex-1 !min-h-[56px] text-xl">Editar</Button>
+                    <Button size="lg" variant="danger" disabled={busy} onClick={() => setConfirmDel(it)} aria-label="Remover serviço" title="Remover serviço" className="!min-h-[56px] px-5">
                       <Trash2 className="h-6 w-6" />
-                    </button>
+                    </Button>
                   </div>
                 </>
               )}
@@ -260,36 +280,35 @@ export default function AtendimentoTerminal() {
       </div>
 
       {/* Botão grande fixo: adicionar serviço */}
-      <div className="fixed bottom-0 inset-x-0 p-4 bg-white border-t-2 border-zinc-100">
-        <button onClick={() => { setAddOpen(true); setAddSearch(""); }}
-          className="w-full h-16 rounded-2xl bg-zinc-900 text-white text-2xl font-bold flex items-center justify-center gap-3 active:bg-zinc-800">
-          <Plus className="h-8 w-8" /> Adicionar serviço
-        </button>
+      <div className="fixed bottom-0 inset-x-0 p-4 border-t border-[color:var(--np-border-glass)] bg-[color:var(--np-surface-glass-strong)] backdrop-blur-xl">
+        <div className="max-w-2xl mx-auto">
+          <Button size="xl" block icon={Plus} onClick={() => { setAddOpen(true); setAddSearch(""); }} className="text-xl">
+            Adicionar serviço
+          </Button>
+        </div>
       </div>
 
       {/* Seletor de serviço — tela cheia, lista grande */}
       {addOpen && (
-        <div className="fixed inset-0 z-50 bg-white flex flex-col">
-          <header className="bg-zinc-900 text-white px-4 py-4 flex items-center gap-3">
-            <button onClick={() => setAddOpen(false)}><ArrowLeft className="h-7 w-7" /></button>
-            <h2 className="text-2xl font-bold">Escolher serviço</h2>
+        <div data-theme="dark" className={ROOT + " fixed inset-0 z-50 flex flex-col"}>
+          <header className={HEADER}>
+            <IconButton icon={ArrowLeft} label="Voltar" size="lg" onClick={() => setAddOpen(false)} />
+            <h2 className="np-display text-2xl">Escolher serviço</h2>
           </header>
-          <div className="p-4">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-zinc-400" />
-              <Input autoFocus placeholder="Buscar serviço..." value={addSearch}
-                onChange={(e) => setAddSearch(e.target.value)}
-                className="h-14 pl-12 text-xl" />
-            </div>
+          <div className="p-4 max-w-2xl w-full mx-auto">
+            <Input autoFocus placeholder="Buscar serviço..." value={addSearch} icon={Search}
+              onChange={(e) => setAddSearch(e.target.value)}
+              className="h-14 text-xl" />
           </div>
-          <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-2">
+          <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-2 max-w-2xl w-full mx-auto">
             {activeServices
               .filter((s: any) => s.name.toLowerCase().includes(addSearch.toLowerCase()))
               .map((s: any) => (
                 <button key={s.id} onClick={() => addService(s)} disabled={busy}
-                  className="w-full flex items-center justify-between gap-3 rounded-xl border-2 border-zinc-200 px-5 py-4 text-left active:bg-zinc-50 disabled:opacity-60">
+                  className="np-glass-card w-full min-h-[64px] flex items-center justify-between gap-3 text-left active:scale-[.98] transition-transform disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--np-focus-ring)]"
+                  style={{ padding: "14px 20px" }}>
                   <span className="text-xl font-semibold">{s.name}</span>
-                  <span className="text-xl font-bold whitespace-nowrap">{brl(s.price)}</span>
+                  <span className="np-display text-xl whitespace-nowrap tabular-nums text-[color:var(--np-accent-text)]">{brl(s.price)}</span>
                 </button>
               ))}
           </div>
@@ -298,17 +317,17 @@ export default function AtendimentoTerminal() {
 
       {/* Confirmação antes de remover serviço (O-01): lixeira não apaga mais no primeiro toque */}
       <AlertDialog open={!!confirmDel} onOpenChange={(o) => { if (!o) setConfirmDel(null); }}>
-        <AlertDialogContent>
+        <AlertDialogContent data-theme="dark" className={PORTAL + " np-app rounded-2xl"}>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl">Remover serviço?</AlertDialogTitle>
-            <AlertDialogDescription className="text-lg">
+            <AlertDialogTitle className="np-display text-2xl">Remover serviço?</AlertDialogTitle>
+            <AlertDialogDescription className={"text-lg " + MUTED}>
               {confirmDel?.description} ({brl(confirmDel?.total_price)}) sai da comanda.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="h-14 text-lg">Cancelar</AlertDialogCancel>
+          <AlertDialogFooter className="gap-3">
+            <AlertDialogCancel className="h-14 text-lg rounded-xl border-[color:var(--np-border-strong)] bg-[color:var(--np-surface-inset)] text-[color:var(--np-text-primary)] hover:bg-[color:var(--np-surface-inset-hover)] hover:text-[color:var(--np-text-primary)]">Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="h-14 text-lg bg-red-600 text-white hover:bg-red-700"
+              className="h-14 text-lg rounded-xl bg-[color:var(--np-danger-solid)] text-[color:var(--np-text-on-danger)] hover:bg-[color:var(--np-danger-solid-hover)]"
               onClick={() => { const it = confirmDel; setConfirmDel(null); if (it) removeItem(it); }}
             >
               Remover

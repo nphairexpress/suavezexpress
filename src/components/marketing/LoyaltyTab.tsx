@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { GlassCard, StatCard, EmptyState, Badge, brl } from "@design-system";
+import { txtAccent, txtPositive, inset } from "@/components/clients/clientsUi";
 import { Loader2, Gift, Clock, CheckCircle, XCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
@@ -63,84 +63,57 @@ export function LoyaltyTab() {
           : `Créditos de cashback gerados ao fechar comandas (${cashbackCfg?.percent ?? "3"}% padrão, válido por ${cashbackCfg?.validityDays ?? "15"} dias, compras acima de R$ ${cashbackCfg?.minPurchase ?? "100"}). O profissional decide cliente a cliente e pode ajustar a %.`}
       </p>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Gift className="h-8 w-8 mx-auto mb-2 text-primary" />
-            <p className="text-2xl font-bold">{stats.total}</p>
-            <p className="text-sm text-muted-foreground">Créditos Gerados</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <Clock className="h-8 w-8 mx-auto mb-2 text-orange-500" />
-            <p className="text-2xl font-bold">{stats.active}</p>
-            <p className="text-sm text-muted-foreground">Ativos</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-600" />
-            <p className="text-2xl font-bold">{stats.used}</p>
-            <p className="text-sm text-muted-foreground">Utilizados</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-primary">R$ {stats.totalValue.toFixed(2)}</p>
-            <p className="text-sm text-muted-foreground">Valor Ativo Total</p>
-          </CardContent>
-        </Card>
-      </div>
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+          <StatCard title="Créditos Gerados" value={stats.total} icon={Gift} />
+          <StatCard title="Ativos" value={stats.active} icon={Clock} />
+          <StatCard title="Utilizados" value={stats.used} icon={CheckCircle} />
+          <StatCard title="Valor Ativo Total" value={brl(stats.totalValue)} />
+        </div>
 
-      {!credits || credits.length === 0 ? (
-        <Card className="flex items-center justify-center py-12">
-          <div className="text-center text-muted-foreground">
-            <Gift className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Nenhum crédito gerado ainda</p>
-            <p className="text-sm">Créditos são gerados automaticamente ao fechar comandas</p>
-          </div>
-        </Card>
+        {!credits || credits.length === 0 ? (
+        <GlassCard>
+          <EmptyState
+            icon={Gift}
+            title="Nenhum crédito gerado ainda"
+            description="Créditos são gerados automaticamente ao fechar comandas"
+            className="py-8"
+          />
+        </GlassCard>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Histórico de Créditos</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <GlassCard title="Histórico de Créditos" className="p-4 sm:p-6" padding="">
             <div className="space-y-3">
               {credits.map((credit: any) => {
                 const isExpired = credit.is_expired || (!credit.is_used && new Date(credit.expires_at) <= new Date());
                 const status = credit.is_used ? "used" : isExpired ? "expired" : "active";
                 const statusConfig = {
-                  active: { label: "Ativo", variant: "default" as const, icon: Clock },
-                  used: { label: "Utilizado", variant: "secondary" as const, icon: CheckCircle },
-                  expired: { label: "Expirado", variant: "destructive" as const, icon: XCircle },
+                  active: { label: "Ativo", tone: "accent" as const, icon: Clock },
+                  used: { label: "Utilizado", tone: "positive" as const, icon: CheckCircle },
+                  expired: { label: "Expirado", tone: "danger" as const, icon: XCircle },
                 };
                 const config = statusConfig[status];
                 const StatusIcon = config.icon;
 
                 return (
-                  <div key={credit.id} className="flex items-center justify-between rounded-lg border p-4">
-                    <div className="flex items-center gap-4">
-                      <StatusIcon className={`h-5 w-5 ${status === "active" ? "text-orange-500" : status === "used" ? "text-green-600" : "text-muted-foreground"}`} />
+                  <div key={credit.id} className={`flex flex-wrap items-center justify-between gap-3 p-4 ${inset}`}>
+                    <div className="flex min-w-0 items-center gap-4">
+                      <StatusIcon className={`h-5 w-5 shrink-0 ${status === "active" ? txtAccent : status === "used" ? txtPositive : "text-muted-foreground"}`} />
                       <div>
-                        <p className="font-medium">{(credit.clients as any)?.name || "Cliente"}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="font-medium text-foreground">{(credit.clients as any)?.name || "Cliente"}</p>
+                        <p className="text-sm text-muted-foreground tabular-nums">
                           Criado em {format(new Date(credit.created_at), "dd/MM/yyyy", { locale: ptBR })}
                           {" • "}Expira em {format(new Date(credit.expires_at), "dd/MM/yyyy", { locale: ptBR })}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="font-bold text-lg">R$ {Number(credit.credit_amount).toFixed(2)}</span>
-                      <Badge variant={config.variant}>{config.label}</Badge>
+                      <span className="np-num text-lg text-foreground">{brl(credit.credit_amount)}</span>
+                      <Badge tone={config.tone}>{config.label}</Badge>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
+          </GlassCard>
       )}
     </div>
   );

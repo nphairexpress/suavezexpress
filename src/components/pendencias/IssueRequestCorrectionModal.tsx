@@ -65,32 +65,35 @@ export function IssueRequestCorrectionModal({ open, onClose, issue }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Solicitar correção</DialogTitle>
+          <DialogTitle className="np-display text-xl">Solicitar correção</DialogTitle>
         </DialogHeader>
 
-        <label className="block text-sm font-medium mt-2">
+        <label className="block text-sm font-medium text-foreground mt-2">
           Para (telefone com DDI)
         </label>
         <Input
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="5511..."
+          className="h-11 tabular-nums"
         />
 
-        <label className="block text-sm font-medium mt-3">Mensagem</label>
+        <label className="block text-sm font-medium text-foreground mt-3">Mensagem</label>
         <Textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           rows={10}
+          className="text-sm"
         />
 
-        <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" onClick={onClose}>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-4">
+          <Button variant="outline" className="h-12 sm:h-11" onClick={onClose}>
             Cancelar
           </Button>
           <Button
+            className="h-12 sm:h-11"
             onClick={handleSend}
             disabled={!phone || !message || send.isPending}
           >

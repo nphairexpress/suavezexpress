@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Loader2, ListOrdered } from "lucide-react";
+import { Download, ListOrdered } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { exportToExcel } from "./utils/exportExcel";
+import { NUM, ReportLoading, ReportTitle } from "./ReportKit";
 
 export function Report0033() {
   const { salonId } = useAuth();
@@ -54,25 +55,26 @@ export function Report0033() {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+    return <ReportLoading />;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ListOrdered className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">Tabela de Preços dos Serviços</h3>
-        </div>
-        <Button variant="outline" size="sm" onClick={handleExport} disabled={services.length === 0}>
-          <Download className="h-4 w-4 mr-2" />Exportar Excel
-        </Button>
-      </div>
+      <ReportTitle
+        icon={ListOrdered}
+        actions={
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={services.length === 0}>
+            <Download className="h-4 w-4 mr-2" />Exportar Excel
+          </Button>
+        }
+      >
+        Tabela de Preços dos Serviços
+      </ReportTitle>
 
       {grouped.map(([category, svcList]) => (
         <Card key={category}>
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle className="np-display text-lg flex items-center gap-2">
               {category}
               <Badge variant="secondary">{svcList.length}</Badge>
             </CardTitle>
@@ -93,9 +95,9 @@ export function Report0033() {
                   {svcList.map(s => (
                     <TableRow key={s.id}>
                       <TableCell className="font-medium">{s.name}</TableCell>
-                      <TableCell className="text-right">R$ {Number(s.price || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                      <TableCell className="text-right">{s.duration_minutes || 0} min</TableCell>
-                      <TableCell className="text-right">{s.commission_percent || 0}%</TableCell>
+                      <TableCell className={NUM}>R$ {Number(s.price || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                      <TableCell className={NUM}>{s.duration_minutes || 0} min</TableCell>
+                      <TableCell className={NUM}>{s.commission_percent || 0}%</TableCell>
                       <TableCell>
                         <Badge variant={s.is_active ? "default" : "secondary"}>
                           {s.is_active ? "Ativo" : "Inativo"}

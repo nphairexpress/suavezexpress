@@ -1,9 +1,9 @@
 // @ts-nocheck
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Notice, toneText } from "@/components/settings/settingsUi";
+import { GlassCard, NavTabs, PageHeader, Button as NpButton, Badge as NpBadge } from "@design-system";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -147,7 +147,7 @@ function MasterProfessionalProfile() {
   const showForm = isEditing || !masterProfessional;
 
   return (
-    <Card className="border-primary/20">
+    <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
           <UserCog className="h-5 w-5 text-primary" />
@@ -165,13 +165,12 @@ function MasterProfessionalProfile() {
               <p className="text-muted-foreground">Você ainda não está cadastrado como profissional.</p>
               <p className="text-sm text-muted-foreground">Cadastre-se para aparecer na agenda.</p>
             </div>
-            <Button onClick={() => {
+            <NpButton icon={Plus} onClick={() => {
               setFormData(prev => ({ ...prev, name: user?.user_metadata?.full_name || user?.email?.split("@")[0] || "" }));
               setIsEditing(true);
-            }} className="gap-2">
-              <Plus className="h-4 w-4" />
+            }}>
               Cadastrar como Profissional
-            </Button>
+            </NpButton>
           </div>
         ) : showForm ? (
           <div className="space-y-6">
@@ -184,7 +183,7 @@ function MasterProfessionalProfile() {
                 size="lg"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Nome Completo <span className="text-destructive">*</span></Label>
                 <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
@@ -194,7 +193,7 @@ function MasterProfessionalProfile() {
                 <Input value={formData.nickname} onChange={(e) => setFormData({ ...formData, nickname: e.target.value })} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>CPF</Label>
                 <Input value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: e.target.value })} placeholder="000.000.000-00" />
@@ -211,7 +210,7 @@ function MasterProfessionalProfile() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Telefone</Label>
                 <Input value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
@@ -231,36 +230,35 @@ function MasterProfessionalProfile() {
                 <Label htmlFor="master_can_be_assistant" className="cursor-pointer">Posso ser assistente</Label>
               </div>
             </div>
-            <div className="flex gap-3 justify-end">
-              {masterProfessional && <Button variant="outline" onClick={() => setIsEditing(false)}>Cancelar</Button>}
-              <Button onClick={handleSave} disabled={isCreating || isUpdating} className="gap-2">
-                <Save className="h-4 w-4" />
+            <div className="flex flex-wrap gap-3 justify-end">
+              {masterProfessional && <NpButton variant="secondary" onClick={() => setIsEditing(false)}>Cancelar</NpButton>}
+              <NpButton icon={Save} onClick={handleSave} disabled={isCreating || isUpdating}>
                 {isCreating || isUpdating ? "Salvando..." : "Salvar"}
-              </Button>
+              </NpButton>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               <Avatar className="h-16 w-16">
                 <AvatarFallback className="bg-primary/10 text-primary text-xl">
                   {masterProfessional.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold">{masterProfessional.name}</h3>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold text-foreground">{masterProfessional.name}</h3>
                 {masterProfessional.nickname && <p className="text-sm text-muted-foreground">"{masterProfessional.nickname}"</p>}
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex flex-wrap items-center gap-2 mt-1">
                   {masterProfessional.role && (
-                    <Badge variant="secondary">{SPECIALTIES.find(s => s.value === masterProfessional.role)?.label || masterProfessional.role}</Badge>
+                    <NpBadge>{SPECIALTIES.find(s => s.value === masterProfessional.role)?.label || masterProfessional.role}</NpBadge>
                   )}
-                  <Badge variant={masterProfessional.has_schedule ? "default" : "outline"}>{masterProfessional.has_schedule ? "Com agenda" : "Sem agenda"}</Badge>
-                  <Badge variant="outline">{masterProfessional.commission_percent || 0}% comissão</Badge>
+                  <NpBadge tone={masterProfessional.has_schedule ? "positive" : "neutral"} dot>{masterProfessional.has_schedule ? "Com agenda" : "Sem agenda"}</NpBadge>
+                  <NpBadge><span className="tabular-nums">{masterProfessional.commission_percent || 0}% comissão</span></NpBadge>
                 </div>
               </div>
-              <Button variant="outline" onClick={() => setIsEditing(true)} className="gap-2">
-                <Pencil className="h-4 w-4" /><span className="hidden sm:inline">Editar</span>
-              </Button>
+              <NpButton variant="secondary" icon={Pencil} onClick={() => setIsEditing(true)} aria-label="Editar">
+                <span className="hidden sm:inline">Editar</span>
+              </NpButton>
             </div>
           </div>
         )}
@@ -270,11 +268,11 @@ function MasterProfessionalProfile() {
 }
 
 const ROLE_LABELS: Record<AppRole, { label: string; description: string; color: string }> = {
-  admin: { label: "Administrador", description: "Acesso total ao sistema", color: "bg-red-500" },
-  manager: { label: "Gerente", description: "Acesso completo exceto configurações do salão", color: "bg-orange-500" },
-  receptionist: { label: "Recepcionista", description: "Agenda, clientes, comandas e caixa", color: "bg-blue-500" },
-  financial: { label: "Financeiro", description: "Relatórios financeiros, caixa e comandas", color: "bg-green-500" },
-  professional: { label: "Profissional", description: "Visualiza agenda pessoal e comandas", color: "bg-purple-500" },
+  admin: { label: "Administrador", description: "Acesso total ao sistema", color: "var(--np-danger)" },
+  manager: { label: "Gerente", description: "Acesso completo exceto configurações do salão", color: "var(--np-accent)" },
+  receptionist: { label: "Recepcionista", description: "Agenda, clientes, comandas e caixa", color: "var(--np-text-secondary)" },
+  financial: { label: "Financeiro", description: "Relatórios financeiros, caixa e comandas", color: "var(--np-positive)" },
+  professional: { label: "Profissional", description: "Visualiza agenda pessoal e comandas", color: "var(--np-text-tertiary)" },
 };
 
 // ===== SETTINGS HUB CARD =====
@@ -287,34 +285,104 @@ interface SettingsCardProps {
 
 function SettingsCard({ icon: Icon, title, description, onClick }: SettingsCardProps) {
   return (
-    <Card
-      className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all duration-200 group"
+    <GlassCard
+      lift
+      padding={20}
+      role="button"
+      tabIndex={0}
+      className="cursor-pointer group min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--np-focus-ring)]"
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
     >
-      <CardContent className="p-5">
-        <div className="flex items-start gap-3">
-          <Icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors mt-0.5 shrink-0" />
-          <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-foreground group-hover:text-primary transition-colors">{title}</h3>
-            <p className="text-sm text-muted-foreground mt-1">{description}</p>
-          </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-primary transition-colors shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3">
+        <span
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[color:var(--np-border-glass)] bg-[color:var(--np-surface-inset)] text-muted-foreground transition-colors group-hover:text-primary"
+          aria-hidden="true"
+        >
+          <Icon className="h-5 w-5" />
+        </span>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-foreground transition-colors group-hover:text-primary">{title}</h3>
+          <p className="text-sm text-muted-foreground mt-1">{description}</p>
         </div>
-      </CardContent>
-    </Card>
+        <ChevronRight className="h-5 w-5 text-muted-foreground/60 group-hover:text-primary transition-colors shrink-0 mt-2.5" />
+      </div>
+    </GlassCard>
   );
 }
 
-// ===== BREADCRUMB =====
-function SettingsBreadcrumb({ label }: { label: string }) {
+// ===== NAVEGAÇÃO ENTRE SEÇÕES (mesmas rotas /configuracoes/<seção>, só o visual mudou) =====
+function useSettingsTabs() {
+  const { isMaster, userRole } = useAuth();
+  const tabs = [
+    { id: "estabelecimento", label: "Estabelecimento", icon: Home },
+    { id: "agendamento", label: "Agendamento", icon: Calendar },
+    { id: "comissoes", label: "Comissões", icon: Percent },
+    { id: "financeiro", label: "Financeiro", icon: DollarSign },
+    { id: "acessos", label: "Acessos", icon: Shield },
+    { id: "webhook", label: "Webhook / IA", icon: Webhook },
+    { id: "api", label: "API REST", icon: Globe },
+    { id: "email", label: "E-mails", icon: Mail },
+    { id: "fila", label: "Fila Digital", icon: ListOrdered },
+  ];
+  if (isMaster) tabs.push({ id: "auditoria", label: "Auditoria", icon: ShieldAlert });
+  if (userRole === "admin") tabs.push({ id: "permissoes", label: "Permissões", icon: Lock });
+  return tabs;
+}
+
+function SettingsTabsNav() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const tabs = useSettingsTabs();
+  const current = tabs.find((t) => location.pathname.startsWith(`/configuracoes/${t.id}`))?.id;
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Mantém a aba ativa visível quando a barra rola na horizontal (celular)
+  useEffect(() => {
+    const el = scrollRef.current?.querySelector<HTMLElement>(`[data-tab="${current}"]`);
+    el?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [current]);
+
+  return (
+    <div
+      ref={scrollRef}
+      className="max-w-full overflow-x-auto rounded-full border border-[color:var(--np-border-glass)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      style={{ background: "var(--np-tabs-bg)", boxShadow: "var(--np-shadow-sm)" }}
+    >
+      <NavTabs
+        aria-label="Seções das configurações"
+        tabs={tabs}
+        value={current}
+        onChange={(id) => navigate(`/configuracoes/${id}`)}
+        className="w-max !border-0 !bg-transparent !shadow-none ![backdrop-filter:none] [&_.np-tab]:h-11 [&_.np-tab]:whitespace-nowrap"
+      />
+    </div>
+  );
+}
+
+// ===== BREADCRUMB + CABEÇALHO DA SEÇÃO =====
+function SettingsBreadcrumb({ label, title, description, actions }: { label: string; title?: React.ReactNode; description?: React.ReactNode; actions?: React.ReactNode }) {
   const navigate = useNavigate();
   return (
-    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-      <button onClick={() => navigate("/configuracoes")} className="hover:text-primary transition-colors">
-        Configurações
-      </button>
-      <ChevronRight className="h-3 w-3" />
-      <span className="text-foreground font-medium">{label}</span>
+    <div className="min-w-0">
+      <nav aria-label="Caminho" className="flex items-center gap-1 text-sm text-muted-foreground mb-2">
+        <button
+          onClick={() => navigate("/configuracoes")}
+          className="inline-flex min-h-[44px] items-center rounded-md px-1 -ml-1 hover:text-primary transition-colors"
+        >
+          Configurações
+        </button>
+        <ChevronRight className="h-3 w-3 shrink-0" />
+        <span className="text-foreground font-medium truncate">{label}</span>
+      </nav>
+      <PageHeader title={title ?? label} description={description} actions={actions} className="!mb-0">
+        <SettingsTabsNav />
+      </PageHeader>
     </div>
   );
 }
@@ -389,8 +457,7 @@ function SchedulingSettingsSection() {
 
   return (
     <>
-      <SettingsBreadcrumb label="Agendamento" />
-      <h1 className="text-2xl font-bold tracking-tight">Agendamento</h1>
+      <SettingsBreadcrumb label="Agendamento" description="Horários, intervalos e regras da agenda do salão." />
       <div className="space-y-4">
         <Card>
           <CardHeader>
@@ -558,10 +625,9 @@ function SchedulingSettingsSection() {
         </Card>
 
         <div className="flex justify-end">
-          <Button className="gap-2" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          <NpButton icon={Save} loading={isSaving} onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto">
             {isSaving ? "Salvando..." : "Salvar Configurações"}
-          </Button>
+          </NpButton>
         </div>
       </div>
     </>
@@ -678,14 +744,11 @@ export default function Configuracoes() {
 
   return (
     <AppLayoutNew>
-      <div className="space-y-6">
+      <div className="space-y-6 min-w-0 [&_input:not([type=checkbox]):not([type=radio]):not([type=file])]:min-h-11 [&_button[role=combobox]]:min-h-11 [&_textarea]:min-h-[88px]">
         {/* ===== HUB - GRID OF CARDS ===== */}
         {subPage === "hub" && (
           <>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Configurações</h1>
-              <p className="text-muted-foreground">Gerencie as configurações do seu estabelecimento.</p>
-            </div>
+            <PageHeader eyebrow="Sistema" title="Configurações" description="Gerencie as configurações do seu estabelecimento." className="!mb-0" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <SettingsCard
                 icon={Home}
@@ -770,8 +833,7 @@ export default function Configuracoes() {
         {/* ===== INFORMAÇÕES DO ESTABELECIMENTO ===== */}
         {subPage === "estabelecimento" && (
           <>
-            <SettingsBreadcrumb label="Informações do Estabelecimento" />
-            <h1 className="text-2xl font-bold tracking-tight">Informações do Estabelecimento</h1>
+            <SettingsBreadcrumb label="Informações do Estabelecimento" description="Seu perfil profissional, logo e dados do salão." />
             <MasterProfessionalProfile />
             <SalonInfoForm />
           </>
@@ -793,20 +855,19 @@ export default function Configuracoes() {
         {/* ===== FINANCEIRO ===== */}
         {subPage === "financeiro" && (
           <>
-            <SettingsBreadcrumb label="Financeiro" />
-            <h1 className="text-2xl font-bold tracking-tight">Financeiro</h1>
+            <SettingsBreadcrumb label="Financeiro" description="Bandeiras de cartão, taxa de PIX e contas bancárias." />
             <div className="space-y-4">
               {/* Card Brands */}
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
                       <CardTitle className="text-lg">Bandeiras de Cartão</CardTitle>
                       <CardDescription>Cadastre as bandeiras e suas taxas para descontar do valor pago.</CardDescription>
                     </div>
-                    <Button onClick={() => { setSelectedCardBrand(null); setCardBrandModalOpen(true); }} className="gap-2">
-                      <Plus className="h-4 w-4" />Nova Bandeira
-                    </Button>
+                    <NpButton icon={Plus} onClick={() => { setSelectedCardBrand(null); setCardBrandModalOpen(true); }}>
+                      Nova Bandeira
+                    </NpButton>
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
@@ -819,6 +880,7 @@ export default function Configuracoes() {
                       <p className="text-sm">Adicione bandeiras para controlar as taxas.</p>
                     </div>
                   ) : (
+                    <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -836,45 +898,36 @@ export default function Configuracoes() {
                         {cardBrands.map((brand) => (
                           <TableRow key={brand.id}>
                             <TableCell className="font-medium">{brand.name}</TableCell>
-                            <TableCell className="text-center"><Badge variant="outline">{brand.debit_fee_percent.toFixed(2)}%</Badge></TableCell>
-                            <TableCell className="text-center"><Badge variant="outline">{brand.credit_fee_percent.toFixed(2)}%</Badge></TableCell>
-                            <TableCell className="text-center"><Badge variant="outline">{(brand.credit_2_6_fee_percent || 0).toFixed(2)}%</Badge></TableCell>
-                            <TableCell className="text-center"><Badge variant="outline">{(brand.credit_7_12_fee_percent || 0).toFixed(2)}%</Badge></TableCell>
-                            <TableCell className="text-center"><Badge variant="outline">{(brand.credit_13_18_fee_percent || 0).toFixed(2)}%</Badge></TableCell>
-                            <TableCell className="text-center"><Badge variant={brand.is_active ? "default" : "secondary"}>{brand.is_active ? "Ativa" : "Inativa"}</Badge></TableCell>
+                            <TableCell className="text-center"><span className="tabular-nums">{brand.debit_fee_percent.toFixed(2)}%</span></TableCell>
+                            <TableCell className="text-center"><span className="tabular-nums">{brand.credit_fee_percent.toFixed(2)}%</span></TableCell>
+                            <TableCell className="text-center"><span className="tabular-nums">{(brand.credit_2_6_fee_percent || 0).toFixed(2)}%</span></TableCell>
+                            <TableCell className="text-center"><span className="tabular-nums">{(brand.credit_7_12_fee_percent || 0).toFixed(2)}%</span></TableCell>
+                            <TableCell className="text-center"><span className="tabular-nums">{(brand.credit_13_18_fee_percent || 0).toFixed(2)}%</span></TableCell>
+                            <TableCell className="text-center"><NpBadge tone={brand.is_active ? "positive" : "neutral"} dot>{brand.is_active ? "Ativa" : "Inativa"}</NpBadge></TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" onClick={() => { setSelectedCardBrand(brand); setCardBrandModalOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => { setCardBrandToDelete(brand); setDeleteCardBrandModalOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-11 w-11" aria-label="Editar" onClick={() => { setSelectedCardBrand(brand); setCardBrandModalOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-11 w-11 text-destructive hover:text-destructive" aria-label="Excluir" onClick={() => { setCardBrandToDelete(brand); setDeleteCardBrandModalOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
                               </div>
                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
+                    </div>
                   )}
                 </CardContent>
               </Card>
 
-              <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <CreditCard className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
-                    <div>
-                      <h4 className="font-medium text-amber-900 dark:text-amber-100">Como funcionam as taxas</h4>
-                      <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                        Ao finalizar uma comanda, o sistema descontará automaticamente a taxa correspondente ao método de pagamento (débito, crédito, parcelamento ou PIX). A comissão será calculada sobre o valor líquido.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <Notice tone="accent" icon={CreditCard} title="Como funcionam as taxas">
+                Ao finalizar uma comanda, o sistema descontará automaticamente a taxa correspondente ao método de pagamento (débito, crédito, parcelamento ou PIX). A comissão será calculada sobre o valor líquido.
+              </Notice>
 
               {/* PIX Fee */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <Percent className="h-5 w-5" />Taxa de PIX
+                    <Percent className="h-5 w-5 text-primary" />Taxa de PIX
                   </CardTitle>
                   <CardDescription>Defina a taxa cobrada pela maquininha ou banco nos pagamentos via PIX.</CardDescription>
                 </CardHeader>
@@ -888,7 +941,7 @@ export default function Configuracoes() {
                       max="100"
                       value={commissionSettings.pix_fee_percent || 0}
                       onChange={(e) => saveCommissionSettings({ pix_fee_percent: parseFloat(e.target.value) || 0 })}
-                      className="w-24 text-center"
+                      className="w-24 text-center tabular-nums"
                     />
                     <span className="text-sm text-muted-foreground">%</span>
                   </div>
@@ -898,14 +951,14 @@ export default function Configuracoes() {
               {/* Bank Accounts */}
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg flex items-center gap-2"><Landmark className="h-5 w-5" />Contas Bancárias (PIX)</CardTitle>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <CardTitle className="text-lg flex items-center gap-2"><Landmark className="h-5 w-5 text-primary" />Contas Bancárias (PIX)</CardTitle>
                       <CardDescription>Cadastre as contas bancárias para destinar pagamentos via PIX.</CardDescription>
                     </div>
-                    <Button onClick={() => { setSelectedBankAccount(null); setBankAccountModalOpen(true); }} className="gap-2">
-                      <Plus className="h-4 w-4" />Nova Conta
-                    </Button>
+                    <NpButton icon={Plus} onClick={() => { setSelectedBankAccount(null); setBankAccountModalOpen(true); }}>
+                      Nova Conta
+                    </NpButton>
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
@@ -930,11 +983,11 @@ export default function Configuracoes() {
                         {bankAccounts.map((account) => (
                           <TableRow key={account.id}>
                             <TableCell className="font-medium">{account.name}</TableCell>
-                            <TableCell className="text-center"><Badge variant={account.is_active ? "default" : "secondary"}>{account.is_active ? "Ativa" : "Inativa"}</Badge></TableCell>
+                            <TableCell className="text-center"><NpBadge tone={account.is_active ? "positive" : "neutral"} dot>{account.is_active ? "Ativa" : "Inativa"}</NpBadge></TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="icon" onClick={() => { setSelectedBankAccount(account); setBankAccountModalOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => { setBankAccountToDelete(account); setDeleteBankAccountModalOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-11 w-11" aria-label="Editar" onClick={() => { setSelectedBankAccount(account); setBankAccountModalOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-11 w-11 text-destructive hover:text-destructive" aria-label="Excluir" onClick={() => { setBankAccountToDelete(account); setDeleteBankAccountModalOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -945,19 +998,9 @@ export default function Configuracoes() {
                 </CardContent>
               </Card>
 
-              <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <Landmark className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
-                    <div>
-                      <h4 className="font-medium text-green-900 dark:text-green-100">Como funcionam as contas</h4>
-                      <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                        Ao receber um pagamento via PIX, você poderá selecionar para qual conta bancária o valor está sendo destinado.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <Notice tone="positive" icon={Landmark} title="Como funcionam as contas">
+                Ao receber um pagamento via PIX, você poderá selecionar para qual conta bancária o valor está sendo destinado.
+              </Notice>
             </div>
           </>
         )}
@@ -965,29 +1008,21 @@ export default function Configuracoes() {
         {/* ===== GRUPOS DE ACESSOS ===== */}
         {subPage === "acessos" && (
           <>
-            <SettingsBreadcrumb label="Grupos de Acessos" />
-            <h1 className="text-2xl font-bold tracking-tight">Grupos de Acessos</h1>
+            <SettingsBreadcrumb label="Grupos de Acessos" description="Quem acessa o sistema e o que cada grupo pode fazer." />
             <div className="space-y-4">
               {/* Info Card */}
-              <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <Shield className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-                    <div>
-                      <h4 className="font-medium text-blue-900 dark:text-blue-100">Sobre os níveis de acesso</h4>
-                      <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                        Os acessos são criados ao cadastrar um profissional com "Criar acesso ao sistema" habilitado. 
-                        Aqui você pode alterar o nível de permissão de cada usuário.
-                      </p>
-                      {!canManageAccess && (
-                        <p className="text-sm text-orange-600 dark:text-orange-400 mt-2 font-medium">
-                          ⚠️ Apenas o usuário master pode alterar permissões.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <Notice tone="neutral" icon={Shield} title="Sobre os níveis de acesso">
+                <p>
+                  Os acessos são criados ao cadastrar um profissional com "Criar acesso ao sistema" habilitado. 
+                  Aqui você pode alterar o nível de permissão de cada usuário.
+                </p>
+                {!canManageAccess && (
+                  <p className="mt-2 font-medium flex items-center gap-1.5" style={toneText.accent}>
+                    <ShieldAlert className="h-4 w-4 shrink-0" />
+                    Apenas o usuário master pode alterar permissões.
+                  </p>
+                )}
+              </Notice>
 
               {/* Users Table */}
               <Card>
@@ -1001,6 +1036,7 @@ export default function Configuracoes() {
                   ) : users.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">Nenhum usuário cadastrado.</div>
                   ) : (
+                    <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -1021,9 +1057,9 @@ export default function Configuracoes() {
                                 <div className="flex items-center gap-3">
                                   <Avatar><AvatarFallback className="bg-primary/10 text-primary">{getInitials(userAccess.full_name)}</AvatarFallback></Avatar>
                                   <div>
-                                    <p className="font-medium">
+                                    <p className="font-medium text-foreground whitespace-nowrap">
                                       {userAccess.full_name}
-                                      {isCurrentUser && <Badge variant="outline" className="ml-2 text-xs">Você</Badge>}
+                                      {isCurrentUser && <NpBadge tone="accent" className="ml-2">Você</NpBadge>}
                                     </p>
                                   </div>
                                 </div>
@@ -1038,7 +1074,7 @@ export default function Configuracoes() {
                                       {Object.entries(ROLE_LABELS).map(([key, value]) => (
                                         <SelectItem key={key} value={key}>
                                           <div className="flex items-center gap-2">
-                                            <div className={`h-2 w-2 rounded-full ${value.color}`} />
+                                            <div className="h-2 w-2 rounded-full" style={{ background: value.color }} />
                                             {value.label}
                                           </div>
                                         </SelectItem>
@@ -1046,10 +1082,10 @@ export default function Configuracoes() {
                                     </SelectContent>
                                   </Select>
                                 ) : (
-                                  <div className="flex items-center gap-2">
-                                    <div className={`h-2 w-2 rounded-full ${roleInfo.color}`} />
+                                  <div className="flex items-center gap-2 whitespace-nowrap">
+                                    <div className="h-2 w-2 rounded-full" style={{ background: roleInfo.color }} />
                                     <span>{roleInfo.label}</span>
-                                    {isAdmin && <Badge variant="destructive" className="text-xs">Master</Badge>}
+                                    {isAdmin && <NpBadge tone="danger">Master</NpBadge>}
                                   </div>
                                 )}
                               </TableCell>
@@ -1057,13 +1093,13 @@ export default function Configuracoes() {
                                 {canManageAccess && !isAdmin ? (
                                   <Switch checked={userAccess.can_open_caixa} onCheckedChange={() => handleToggleCanOpenCaixa(userAccess.user_id, userAccess.can_open_caixa)} disabled={isUpdating} />
                                 ) : (
-                                  <Badge variant={userAccess.can_open_caixa ? "default" : "secondary"}>{userAccess.can_open_caixa ? "Sim" : "Não"}</Badge>
+                                  <NpBadge tone={userAccess.can_open_caixa ? "positive" : "neutral"}>{userAccess.can_open_caixa ? "Sim" : "Não"}</NpBadge>
                                 )}
                               </TableCell>
                               <TableCell>
                                 {canManageAccess && !isAdmin && !isCurrentUser && (
                                   <DropdownMenu>
-                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-11 w-11" aria-label="Mais ações"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                       <DropdownMenuItem onClick={() => handleDeleteAccess(userAccess)} className="text-destructive">
                                         <Trash2 className="h-4 w-4 mr-2" />Remover Acesso
@@ -1077,6 +1113,7 @@ export default function Configuracoes() {
                         })}
                       </TableBody>
                     </Table>
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -1084,15 +1121,15 @@ export default function Configuracoes() {
               {/* Access Levels - AVEC Style */}
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
                       <CardTitle className="text-lg">Grupos de Acessos</CardTitle>
                       <CardDescription>Configure os grupos de acesso e suas permissões para os profissionais.</CardDescription>
                     </div>
                     {canManageAccess && (
-                      <Button onClick={() => setCreateAccessLevelModalOpen(true)} className="gap-2">
-                        <Plus className="h-4 w-4" /> Adicionar grupo
-                      </Button>
+                      <NpButton icon={Plus} onClick={() => setCreateAccessLevelModalOpen(true)}>
+                        Adicionar grupo
+                      </NpButton>
                     )}
                   </div>
                 </CardHeader>
@@ -1101,9 +1138,9 @@ export default function Configuracoes() {
                     <div className="text-center py-8 text-destructive">
                       Erro ao carregar grupos: {(accessLevelsError as Error).message}
                       <br />
-                      <Button variant="outline" size="sm" className="mt-2" onClick={() => queryClient.invalidateQueries({ queryKey: ["access-levels"] })}>
+                      <NpButton variant="secondary" className="mt-2" onClick={() => queryClient.invalidateQueries({ queryKey: ["access-levels"] })}>
                         Tentar novamente
-                      </Button>
+                      </NpButton>
                     </div>
                   ) : isLoadingAccessLevels ? (
                     <div className="flex items-center justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
@@ -1111,12 +1148,12 @@ export default function Configuracoes() {
                     <div className="text-center py-8 text-muted-foreground">
                       Nenhum grupo de acesso configurado.
                       <br />
-                      <Button variant="outline" size="sm" className="mt-2" onClick={() => queryClient.invalidateQueries({ queryKey: ["access-levels"] })}>
+                      <NpButton variant="secondary" className="mt-2" onClick={() => queryClient.invalidateQueries({ queryKey: ["access-levels"] })}>
                         Recarregar
-                      </Button>
+                      </NpButton>
                     </div>
                   ) : (
-                    <div className="border rounded-lg overflow-hidden">
+                    <div className="border border-border rounded-xl overflow-x-auto">
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -1136,7 +1173,7 @@ export default function Configuracoes() {
                             return (
                               <TableRow key={level.id}>
                                 <TableCell className="font-medium">{level.name}</TableCell>
-                                <TableCell>{profCount}</TableCell>
+                                <TableCell className="tabular-nums">{profCount}</TableCell>
                                 <TableCell className="text-right">
                                   {level.system_key === "admin" ? (
                                     <span className="text-sm text-muted-foreground">Acesso completo</span>
@@ -1145,7 +1182,8 @@ export default function Configuracoes() {
                                       <Button
                                         variant="outline"
                                         size="icon"
-                                        className="h-8 w-8"
+                                        className="h-11 w-11"
+                                        aria-label="Editar grupo"
                                         onClick={() => { setSelectedAccessLevelId(level.id); setAccessLevelConfigModalOpen(true); }}
                                       >
                                         <Pencil className="h-4 w-4" />
@@ -1154,7 +1192,8 @@ export default function Configuracoes() {
                                         <Button
                                           variant="destructive"
                                           size="icon"
-                                          className="h-8 w-8"
+                                          className="h-11 w-11"
+                                          aria-label="Excluir grupo"
                                           onClick={() => { setAccessLevelToDelete(level); setDeleteAccessLevelModalOpen(true); }}
                                         >
                                           <Trash2 className="h-4 w-4" />
@@ -1175,21 +1214,21 @@ export default function Configuracoes() {
 
               {/* Master Transfer */}
               {isMaster && (
-                <Card className="border-red-200 dark:border-red-800">
+                <Card className="border-[color:var(--np-danger-border)]">
                   <CardHeader>
                     <div className="flex items-center gap-2">
-                      <ArrowRightLeft className="h-5 w-5 text-red-600 dark:text-red-400" />
-                      <CardTitle className="text-lg text-red-600 dark:text-red-400">Transferir Acesso Master</CardTitle>
+                      <ArrowRightLeft className="h-5 w-5" style={toneText.danger} />
+                      <CardTitle className="text-lg" style={toneText.danger}>Transferir Acesso Master</CardTitle>
                     </div>
                     <CardDescription>Transfira seu acesso master para outro usuário. Esta ação é irreversível.</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4 rounded-lg">
-                        <p className="text-sm text-red-700 dark:text-red-300">
-                          <strong>Atenção:</strong> Ao transferir o acesso master, você perderá as permissões exclusivas de:
+                      <div className="border p-4 rounded-xl" style={{ background: "var(--np-danger-soft)", borderColor: "var(--np-danger-border)" }}>
+                        <p className="text-sm text-foreground">
+                          <strong style={toneText.danger}>Atenção:</strong> Ao transferir o acesso master, você perderá as permissões exclusivas de:
                         </p>
-                        <ul className="mt-2 text-sm text-red-600 dark:text-red-400 list-disc list-inside">
+                        <ul className="mt-2 text-sm text-foreground/80 list-disc list-inside">
                           <li>Excluir registros do sistema</li>
                           <li>Alterar permissões de outros usuários</li>
                           <li>Remover acessos de usuários</li>
@@ -1197,9 +1236,9 @@ export default function Configuracoes() {
                         </ul>
                       </div>
                       {eligibleUsersForMaster.length > 0 ? (
-                        <Button variant="destructive" onClick={() => setTransferMasterModalOpen(true)} className="gap-2">
-                          <ArrowRightLeft className="h-4 w-4" />Transferir Acesso Master
-                        </Button>
+                        <NpButton variant="danger" icon={ArrowRightLeft} onClick={() => setTransferMasterModalOpen(true)}>
+                          Transferir Acesso Master
+                        </NpButton>
                       ) : (
                         <p className="text-sm text-muted-foreground">Não há outros usuários disponíveis para receber o acesso master.</p>
                       )}
@@ -1215,7 +1254,6 @@ export default function Configuracoes() {
         {subPage === "webhook" && (
           <>
             <SettingsBreadcrumb label="Webhook / Agente IA" />
-            <h1 className="text-2xl font-bold tracking-tight">Webhook / Agente IA</h1>
             <WebhookSettingsSection />
           </>
         )}
@@ -1223,8 +1261,7 @@ export default function Configuracoes() {
         {/* ===== API REST ===== */}
         {subPage === "api" && (
           <>
-            <SettingsBreadcrumb label="API REST" />
-            <h1 className="text-2xl font-bold tracking-tight">API REST Gateway</h1>
+            <SettingsBreadcrumb label="API REST" title="API REST Gateway" />
             <ApiGatewaySettingsSection />
           </>
         )}
@@ -1233,7 +1270,6 @@ export default function Configuracoes() {
         {subPage === "email" && (
           <>
             <SettingsBreadcrumb label="E-mails Automáticos" />
-            <h1 className="text-2xl font-bold tracking-tight">E-mails Automáticos</h1>
             <ResendSettingsSection />
           </>
         )}
@@ -1241,7 +1277,7 @@ export default function Configuracoes() {
         {/* ===== AUDITORIA ===== */}
         {subPage === "auditoria" && isMaster && (
           <>
-            <SettingsBreadcrumb label="Auditoria" />
+            <SettingsBreadcrumb label="Auditoria" title="Auditoria do Sistema" description="Registro de todas as ações críticas realizadas no sistema" />
             <AuditLogSection />
           </>
         )}
@@ -1250,7 +1286,6 @@ export default function Configuracoes() {
         {subPage === "permissoes" && userRole === "admin" && (
           <>
             <SettingsBreadcrumb label="Permissões" />
-            <h1 className="text-2xl font-bold tracking-tight">Permissões</h1>
             <PermissionsSection />
           </>
         )}
@@ -1258,8 +1293,7 @@ export default function Configuracoes() {
         {/* ===== FILA DIGITAL ===== */}
         {subPage === "fila" && (
           <>
-            <SettingsBreadcrumb label="Fila Digital" />
-            <h1 className="text-2xl font-bold tracking-tight">Fila Digital</h1>
+            <SettingsBreadcrumb label="Fila Digital" description="Fila online, horário, cashback e integrações." />
             <QueueSettingsSection />
           </>
         )}

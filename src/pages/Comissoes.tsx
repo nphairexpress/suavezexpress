@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { calculateItemCardFee as calcItemCardFee } from "@/lib/commissionFees";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
 import { Sensitive } from "@/components/common/SensitiveData";
+import { PageHeader, StatCard, Badge as DsBadge } from "@design-system";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Loader2, DollarSign, ChevronDown, ChevronUp, FileText, Printer, Gift, MinusCircle, Trash2 } from "lucide-react";
+import { Search, Loader2, DollarSign, Scissors, ChevronDown, ChevronUp, FileText, Printer, Gift, MinusCircle, Trash2 } from "lucide-react";
 import { useProfessionals } from "@/hooks/useProfessionals";
 import { useComandas } from "@/hooks/useComandas";
 import { useServices } from "@/hooks/useServices";
@@ -701,20 +702,19 @@ export default function Comissoes() {
     <AppLayoutNew>
       <Sensitive block>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Comissões</h1>
-        </div>
+        <PageHeader eyebrow="Financeiro" title="Comissões" description="Produção, ajustes e pagamento por profissional no período." />
 
         {/* Filters */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card className="rounded-2xl">
+          <CardContent className="p-4 md:p-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="space-y-2">
                 <Label>Data Início:</Label>
                 <Input 
                   type="date" 
                   value={dateStart} 
                   onChange={e => setDateStart(e.target.value)}
+                  className="h-11 tabular-nums"
                 />
               </div>
               <div className="space-y-2">
@@ -723,13 +723,14 @@ export default function Comissoes() {
                   type="date" 
                   value={dateEnd} 
                   onChange={e => setDateEnd(e.target.value)}
+                  className="h-11 tabular-nums"
                 />
               </div>
               {canViewAllCommissions && (
                 <div className="space-y-2">
                   <Label>Profissionais:</Label>
                   <Select value={selectedProfessional} onValueChange={setSelectedProfessional}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-11">
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
@@ -746,7 +747,7 @@ export default function Comissoes() {
               <div className="space-y-2">
                 <Label>Comissões:</Label>
                 <Select value={commissionStatus} onValueChange={setCommissionStatus}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-11">
                     <SelectValue placeholder="Todas" />
                   </SelectTrigger>
                   <SelectContent>
@@ -757,7 +758,7 @@ export default function Comissoes() {
                 </Select>
               </div>
               <div className="space-y-2 flex items-end">
-                <Button className="gap-2 w-full">
+                <Button className="gap-2 w-full h-11">
                   <Search className="h-4 w-4" />
                   Buscar
                 </Button>
@@ -772,17 +773,17 @@ export default function Comissoes() {
             {/* Detailed Table */}
             <div className="lg:col-span-3 space-y-4">
               {/* Professional Header */}
-              <Card>
+              <Card className="rounded-2xl">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12">
+                    <Avatar className="h-12 w-12 shrink-0">
                       <AvatarImage src={selectedProfessionalData.avatar_url || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary">
+                      <AvatarFallback className="bg-[color:var(--np-accent-soft)] text-[color:var(--np-accent-text)] font-semibold">
                         {getInitials(selectedProfessionalData.name)}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <h2 className="text-xl font-semibold">{selectedProfessionalData.name}</h2>
+                    <div className="min-w-0">
+                      <h2 className="np-display text-xl truncate">{selectedProfessionalData.name}</h2>
                       <p className="text-sm text-muted-foreground">
                         {getSpecialtyLabel((selectedProfessionalData as any).role) || "Profissional"} • {commissionDetails.length} serviço{commissionDetails.length !== 1 ? "s" : ""} no período
                       </p>
@@ -791,17 +792,24 @@ export default function Comissoes() {
                 </CardContent>
               </Card>
 
+              {/* Totais do período (mesmos valores do resumo) */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <StatCard title="Valor dos serviços" value={<span className="tabular-nums">{formatCurrency(professionalTotals.baseRateio)}</span>} icon={Scissors} />
+                <StatCard title="Comissão" value={<span className="tabular-nums">{formatCurrency(professionalTotals.totalRateio)}</span>} icon={DollarSign} />
+                <StatCard title="Total a pagar" value={<span className="tabular-nums">{formatCurrency(professionalTotals.totalPagar)}</span>} icon="wallet" accent />
+              </div>
+
               {/* Report Actions */}
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="text-sm text-muted-foreground">
                   Relatório de comissão
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handlePrint}>
+                  <Button variant="outline" className="h-11" onClick={handlePrint}>
                     <Printer className="h-4 w-4 mr-2" />
                     Imprimir
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handlePDF}>
+                  <Button variant="outline" className="h-11" onClick={handlePDF}>
                     <FileText className="h-4 w-4 mr-2" />
                     PDF
                   </Button>
@@ -815,13 +823,13 @@ export default function Comissoes() {
                   placeholder="Buscar por comanda, cliente ou valor..."
                   value={detailSearch}
                   onChange={(e) => setDetailSearch(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 h-11"
                 />
               </div>
 
               {/* Desktop: Detailed Services Table */}
               <div className="hidden md:block">
-                <Card>
+                <Card className="rounded-2xl overflow-hidden">
                   <CardContent className="p-0">
                     <Table>
                       <TableHeader>
@@ -840,22 +848,22 @@ export default function Comissoes() {
                       <TableBody>
                         {filteredDetails.map((item, idx) => (
                           <TableRow key={`${item.comandaId}-${idx}`}>
-                            <TableCell className="font-mono text-sm">{item.comandaNumber}</TableCell>
-                            <TableCell>{item.date}</TableCell>
+                            <TableCell className="text-sm tabular-nums whitespace-nowrap">{item.comandaNumber}</TableCell>
+                            <TableCell className="tabular-nums">{item.date}</TableCell>
                             <TableCell>{item.serviceName}</TableCell>
                             <TableCell>{item.clientName}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(item.serviceValue)}</TableCell>
-                            <TableCell className="text-right text-destructive">
+                            <TableCell className="text-right tabular-nums whitespace-nowrap">{formatCurrency(item.serviceValue)}</TableCell>
+                            <TableCell className="text-right tabular-nums whitespace-nowrap np-text-danger">
                               {item.productCost > 0 ? `-${formatCurrency(item.productCost)}` : "-"}
                             </TableCell>
-                            <TableCell className="text-right text-destructive">
+                            <TableCell className="text-right tabular-nums whitespace-nowrap np-text-danger">
                               {item.cardFee > 0 ? `-${formatCurrency(item.cardFee)}` : "-"}
                             </TableCell>
-                            <TableCell className="text-right">{formatCurrency(item.netValue)}</TableCell>
+                            <TableCell className="text-right tabular-nums whitespace-nowrap">{formatCurrency(item.netValue)}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-2">
-                                <Badge variant="secondary">{item.commissionPercent}%</Badge>
-                                <span className="font-medium text-primary">{formatCurrency(item.commissionValue)}</span>
+                                <Badge variant="secondary" className="tabular-nums">{item.commissionPercent}%</Badge>
+                                <span className="font-semibold tabular-nums whitespace-nowrap text-[color:var(--np-accent-text)]">{formatCurrency(item.commissionValue)}</span>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -876,28 +884,28 @@ export default function Comissoes() {
               {/* Mobile: Daily cards with expandable details */}
               <div className="md:hidden space-y-3">
                 {dailyCommissions.length === 0 ? (
-                  <Card>
+                  <Card className="rounded-2xl">
                     <CardContent className="py-8 text-center text-muted-foreground text-sm">
                       Nenhum serviço encontrado no período
                     </CardContent>
                   </Card>
                 ) : (
                   dailyCommissions.map(day => (
-                    <Card key={day.date}>
+                    <Card key={day.date} className="rounded-2xl">
                       <CardContent className="p-0">
                         <button
                           type="button"
-                          className="w-full flex items-center gap-4 p-4"
+                          className="w-full min-h-[56px] flex items-center gap-3 p-4 text-left"
                           onClick={() => toggleDay(day.date)}
                         >
-                          <span className="text-primary font-semibold text-lg">{day.date.slice(0, 5)}</span>
-                          <div className="border-l-2 border-primary/40 pl-4">
+                          <span className="np-num text-lg text-[color:var(--np-accent-text)]">{day.date.slice(0, 5)}</span>
+                          <div className="border-l-2 border-[color:var(--np-accent-border)] pl-3 min-w-0">
                             <p className="text-xs text-muted-foreground font-medium uppercase">produção</p>
-                            <p className="font-semibold">{formatCurrency(day.totalProduction)}</p>
+                            <p className="font-semibold tabular-nums whitespace-nowrap">{formatCurrency(day.totalProduction)}</p>
                           </div>
-                          <div className="border-l-2 border-primary/40 pl-4">
+                          <div className="border-l-2 border-[color:var(--np-accent-border)] pl-3 min-w-0">
                             <p className="text-xs text-muted-foreground font-medium uppercase">rateio</p>
-                            <p className="font-semibold">{formatCurrency(day.totalCommission)}</p>
+                            <p className="font-semibold tabular-nums whitespace-nowrap">{formatCurrency(day.totalCommission)}</p>
                           </div>
                           <div className="ml-auto">
                             {expandedDays.has(day.date) ? (
@@ -911,16 +919,16 @@ export default function Comissoes() {
                         {expandedDays.has(day.date) && (
                           <div className="px-4 pb-4 space-y-3">
                             {day.items.map((item, idx) => (
-                              <div key={`${item.comandaId}-${idx}`} className="border rounded-lg p-3 bg-muted/30 text-sm space-y-1">
-                                <p className="font-semibold text-primary">{item.comandaNumber.split(" (")[0]} {item.date}</p>
+                              <div key={`${item.comandaId}-${idx}`} className="border border-border rounded-xl p-3 bg-muted/30 text-sm space-y-1 tabular-nums">
+                                <p className="font-semibold text-[color:var(--np-accent-text)]">{item.comandaNumber.split(" (")[0]} {item.date}</p>
                                 <p><span className="font-medium">Item:</span> {item.serviceName}</p>
                                 <p><span className="font-medium">Cliente:</span> {item.clientName}</p>
                                 <p><span className="font-medium">Valor:</span> {formatCurrency(item.serviceValue)}</p>
                                 <p><span className="font-medium">Tipo de Pagamento:</span> {item.paymentMethod}</p>
                                 {item.productCost > 0 && (
-                                  <p className="text-destructive"><span className="font-medium">Custo de Produto:</span> -{formatCurrency(item.productCost)}</p>
+                                  <p className="np-text-danger"><span className="font-medium">Custo de Produto:</span> -{formatCurrency(item.productCost)}</p>
                                 )}
-                                <p className="text-primary font-medium">
+                                <p className="text-[color:var(--np-accent-text)] font-semibold">
                                   Comissão: {formatCurrency(item.commissionValue)} ({item.commissionPercent}%)
                                 </p>
                               </div>
@@ -936,14 +944,14 @@ export default function Comissoes() {
 
             {/* Summary Card */}
             <div className="lg:col-span-1">
-              <Card className="sticky top-4">
+              <Card className="rounded-2xl lg:sticky lg:top-4 tabular-nums">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Resumo</CardTitle>
+                  <CardTitle className="np-display text-lg">Resumo</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {/* Base de Rateio Geral */}
-                  <div className="pb-3 border-b">
-                    <div className="flex justify-between font-medium mb-2">
+                  <div className="pb-3 border-b border-border">
+                    <div className="flex justify-between gap-2 font-medium mb-2">
                       <span>Base de Rateio (Valor dos Serviços):</span>
                       <span>{formatCurrency(professionalTotals.baseRateio)}</span>
                     </div>
@@ -957,8 +965,8 @@ export default function Comissoes() {
 
                   {/* Product Cost Deduction */}
                   {professionalTotals.productCost > 0 && (
-                    <div className="pb-3 border-b">
-                      <div className="flex justify-between font-medium mb-2 text-destructive">
+                    <div className="pb-3 border-b border-border">
+                      <div className="flex justify-between gap-2 font-medium mb-2 np-text-danger">
                         <span>(-) Custo de Produtos:</span>
                         <span>-{formatCurrency(professionalTotals.productCost)}</span>
                       </div>
@@ -970,8 +978,8 @@ export default function Comissoes() {
 
                   {/* Card Fee Deduction */}
                   {professionalTotals.cardFee > 0 && (
-                    <div className="pb-3 border-b">
-                      <div className="flex justify-between font-medium mb-2 text-destructive">
+                    <div className="pb-3 border-b border-border">
+                      <div className="flex justify-between gap-2 font-medium mb-2 np-text-danger">
                         <span>(-) Taxa de Cartão:</span>
                         <span>-{formatCurrency(professionalTotals.cardFee)}</span>
                       </div>
@@ -982,16 +990,16 @@ export default function Comissoes() {
                   )}
 
                   {/* Net Value */}
-                  <div className="pb-3 border-b">
-                    <div className="flex justify-between font-medium mb-2">
+                  <div className="pb-3 border-b border-border">
+                    <div className="flex justify-between gap-2 font-medium mb-2">
                       <span>Valor Líquido (Base para Comissão):</span>
                       <span>{formatCurrency(professionalTotals.netValue)}</span>
                     </div>
                   </div>
 
                   {/* Rateio */}
-                  <div className="pb-3 border-b">
-                    <div className="flex justify-between font-medium mb-2">
+                  <div className="pb-3 border-b border-border">
+                    <div className="flex justify-between gap-2 font-medium mb-2">
                       <span>Rateio (Comissão):</span>
                       <span>{formatCurrency(professionalTotals.totalRateio)}</span>
                     </div>
@@ -1004,7 +1012,7 @@ export default function Comissoes() {
                   </div>
 
                   {/* Ajustes (Bônus e Descontos) com motivo inline */}
-                  <div className="pb-3 border-b space-y-2">
+                  <div className="pb-3 border-b border-border space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Ajustes do período</span>
                       {canManageAdjustments && (
@@ -1012,7 +1020,7 @@ export default function Comissoes() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-green-700 hover:bg-green-50"
+                            className="h-11 w-11 np-text-positive hover:bg-[color:var(--np-positive-soft)]"
                             onClick={() => openAdjustmentModal("bonus")}
                             aria-label="Adicionar bônus"
                             title="Adicionar bônus"
@@ -1022,7 +1030,7 @@ export default function Comissoes() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                            className="h-11 w-11 np-text-danger hover:bg-[color:var(--np-danger-soft)]"
                             onClick={() => openAdjustmentModal("discount")}
                             aria-label="Adicionar desconto"
                             title="Adicionar desconto"
@@ -1042,8 +1050,8 @@ export default function Comissoes() {
                         {periodAdjustments.map(adj => {
                           const isBonus = adj.adjustment_type === "bonus";
                           return (
-                            <div key={adj.id} className="flex items-start gap-2 text-xs">
-                              <span className={`shrink-0 ${isBonus ? "text-green-700" : "text-destructive"}`}>
+                            <div key={adj.id} className="flex items-center gap-2 text-xs">
+                              <span className={`shrink-0 ${isBonus ? "np-text-positive" : "np-text-danger"}`}>
                                 {isBonus ? <Gift className="h-3.5 w-3.5" /> : <MinusCircle className="h-3.5 w-3.5" />}
                               </span>
                               <div className="flex-1 min-w-0">
@@ -1054,13 +1062,13 @@ export default function Comissoes() {
                                   {format(new Date(adj.adjustment_date + "T00:00:00"), "dd/MM/yyyy", { locale: ptBR })}
                                 </p>
                               </div>
-                              <span className={`shrink-0 font-semibold ${isBonus ? "text-green-700" : "text-destructive"}`}>
+                              <span className={`shrink-0 font-semibold tabular-nums ${isBonus ? "np-text-positive" : "np-text-danger"}`}>
                                 {isBonus ? "+" : "-"}{formatCurrency(Number(adj.amount))}
                               </span>
                               {canManageAdjustments && (
                                 <button
                                   type="button"
-                                  className="shrink-0 text-muted-foreground hover:text-destructive"
+                                  className="shrink-0 h-11 w-11 -my-2 grid place-items-center rounded-md text-muted-foreground hover:text-destructive"
                                   onClick={() =>
                                     setAdjustmentToDelete({
                                       id: adj.id,
@@ -1080,9 +1088,9 @@ export default function Comissoes() {
                     )}
 
                     {(professionalTotals.totalBonus > 0 || professionalTotals.totalDiscount > 0) && (
-                      <div className="flex justify-between text-sm pt-2 border-t border-dashed">
+                      <div className="flex justify-between text-sm pt-2 border-t border-dashed border-border">
                         <span className="text-muted-foreground">Líquido dos ajustes:</span>
-                        <span className={professionalTotals.descontosBonus > 0 ? "text-green-700 font-semibold" : professionalTotals.descontosBonus < 0 ? "text-destructive font-semibold" : ""}>
+                        <span className={professionalTotals.descontosBonus > 0 ? "np-text-positive font-semibold" : professionalTotals.descontosBonus < 0 ? "np-text-danger font-semibold" : ""}>
                           {professionalTotals.descontosBonus > 0 ? "+" : ""}{formatCurrency(professionalTotals.descontosBonus)}
                         </span>
                       </div>
@@ -1091,12 +1099,12 @@ export default function Comissoes() {
 
                   {/* Total */}
                   <div className="pt-2">
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-wrap justify-between items-center gap-2">
                       <span className="font-semibold flex items-center gap-2">
                         Total a pagar:
-                        {currentPayment && <Badge className="bg-emerald-600 hover:bg-emerald-600">PAGO</Badge>}
+                        {currentPayment && <DsBadge tone="positive" size="md">PAGO</DsBadge>}
                       </span>
-                      <span className="text-2xl font-bold text-primary">
+                      <span className="np-num text-2xl text-[color:var(--np-accent-text)]">
                         {formatCurrency(professionalTotals.totalPagar)}
                       </span>
                     </div>
@@ -1104,24 +1112,24 @@ export default function Comissoes() {
 
                   {currentPayment ? (
                     <div className="mt-4 space-y-2">
-                      <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-center">
-                        <p className="text-sm font-semibold text-emerald-700">
+                      <div className="rounded-xl bg-[color:var(--np-positive-soft)] border border-[color:var(--np-positive-border)] p-3 text-center">
+                        <p className="text-sm font-semibold np-text-positive">
                           ✓ Comissão paga em {format(new Date(currentPayment.paid_at), "dd/MM/yyyy")}
                         </p>
-                        <p className="text-xs text-emerald-600">{formatCurrency(Number(currentPayment.total_amount))}</p>
+                        <p className="text-xs np-text-positive tabular-nums">{formatCurrency(Number(currentPayment.total_amount))}</p>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1 gap-2" onClick={handlePrint}>
+                        <Button variant="outline" className="flex-1 gap-2 h-11" onClick={handlePrint}>
                           <Printer className="h-4 w-4" /> Recibo
                         </Button>
-                        <Button variant="outline" className="flex-1 gap-2" onClick={handlePDF}>
+                        <Button variant="outline" className="flex-1 gap-2 h-11" onClick={handlePDF}>
                           <FileText className="h-4 w-4" /> PDF
                         </Button>
                       </div>
                       {canPayCommission && (
                         <Button
                           variant="ghost"
-                          className="w-full text-destructive text-xs h-8"
+                          className="w-full np-text-danger text-xs h-11"
                           onClick={() => setReverseConfirmOpen(true)}
                           disabled={isReversing}
                         >
@@ -1131,7 +1139,7 @@ export default function Comissoes() {
                     </div>
                   ) : (
                     <Button
-                      className="w-full gap-2 mt-4"
+                      className="w-full gap-2 mt-4 h-12 text-base"
                       disabled={professionalTotals.totalPagar <= 0 || isPaying || !canPayCommission}
                       onClick={() => setPayConfirmOpen(true)}
                     >
@@ -1140,7 +1148,7 @@ export default function Comissoes() {
                     </Button>
                   )}
 
-                  <button className="w-full text-sm text-primary hover:underline flex items-center justify-center gap-1">
+                  <button className="w-full min-h-[44px] text-sm font-medium text-[color:var(--np-accent-text)] hover:underline flex items-center justify-center gap-1">
                     Solicitar Recalculo
                     <span className="text-muted-foreground">ℹ</span>
                   </button>
@@ -1152,12 +1160,12 @@ export default function Comissoes() {
           /* Show all professionals summary when none selected */
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-3">
-              <Card>
+              <Card className="rounded-2xl overflow-hidden">
                 <CardHeader>
-                  <CardTitle className="text-lg">Selecione um profissional para ver o relatório detalhado</CardTitle>
+                  <CardTitle className="text-base md:text-lg font-semibold">Selecione um profissional para ver o relatório detalhado</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <Table>
+                  <Table className="min-w-[720px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-10">
@@ -1178,10 +1186,10 @@ export default function Comissoes() {
                         return (
                         <TableRow
                           key={item.professional.id}
-                          className={`cursor-pointer hover:bg-muted/50 ${selectedProfs.has(item.professional.id) ? "bg-primary/5" : ""}`}
+                          className={`cursor-pointer hover:bg-muted/50 ${selectedProfs.has(item.professional.id) ? "bg-[color:var(--np-accent-soft)]" : ""}`}
                           onClick={() => setSelectedProfessional(item.professional.id)}
                         >
-                          <TableCell onClick={(e) => e.stopPropagation()}>
+                          <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
                             <Checkbox
                               checked={selectedProfs.has(item.professional.id)}
                               onCheckedChange={() => toggleProf(item.professional.id)}
@@ -1192,7 +1200,7 @@ export default function Comissoes() {
                             <div className="flex items-center gap-3">
                               <Avatar className="h-8 w-8">
                                 <AvatarImage src={item.professional.avatar_url || undefined} />
-                                <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                <AvatarFallback className="text-xs font-semibold bg-[color:var(--np-accent-soft)] text-[color:var(--np-accent-text)]">
                                   {getInitials(item.professional.name)}
                                 </AvatarFallback>
                               </Avatar>
@@ -1200,13 +1208,13 @@ export default function Comissoes() {
                             </div>
                           </TableCell>
                           <TableCell>{item.professional.role || "-"}</TableCell>
-                          <TableCell className="text-right">{item.itemCount}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(item.totalServices)}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(item.totalToPay)}</TableCell>
-                          <TableCell className={`text-right ${adjNet > 0 ? "text-green-700" : adjNet < 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                          <TableCell className="text-right tabular-nums">{item.itemCount}</TableCell>
+                          <TableCell className="text-right tabular-nums whitespace-nowrap">{formatCurrency(item.totalServices)}</TableCell>
+                          <TableCell className="text-right tabular-nums whitespace-nowrap">{formatCurrency(item.totalToPay)}</TableCell>
+                          <TableCell className={`text-right tabular-nums whitespace-nowrap ${adjNet > 0 ? "np-text-positive" : adjNet < 0 ? "np-text-danger" : "text-muted-foreground"}`}>
                             {adjNet === 0 ? "—" : `${adjNet > 0 ? "+" : ""}${formatCurrency(adjNet)}`}
                           </TableCell>
-                          <TableCell className="text-right font-bold text-primary">
+                          <TableCell className={"text-right font-bold tabular-nums whitespace-nowrap text-[color:var(--np-accent-text)]"}>
                             {formatCurrency(item.totalToPay + adjNet)}
                           </TableCell>
                         </TableRow>
@@ -1227,9 +1235,9 @@ export default function Comissoes() {
 
             {/* Summary Card */}
             <div className="lg:col-span-1">
-              <Card>
+              <Card className="rounded-2xl tabular-nums">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Resumo Geral</CardTitle>
+                  <CardTitle className="np-display text-lg">Resumo Geral</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex justify-between text-sm">
@@ -1238,10 +1246,10 @@ export default function Comissoes() {
                       {formatCurrency(professionalCommissions.reduce((sum, c) => sum + c.totalServices, 0))}
                     </span>
                   </div>
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between">
+                  <div className="border-t border-border pt-4">
+                    <div className="flex flex-wrap justify-between items-baseline gap-2">
                       <span className="font-medium">Total a pagar (todos):</span>
-                      <span className="text-xl font-bold text-primary">
+                      <span className="np-num text-xl text-[color:var(--np-accent-text)]">
                         {formatCurrency(professionalCommissions.reduce((sum, c) => sum + c.totalToPay + (adjustmentsByProf.get(c.professional.id) || 0), 0))}
                       </span>
                     </div>
@@ -1249,10 +1257,10 @@ export default function Comissoes() {
                   </div>
 
                   {selectedSummary.count > 0 && (
-                    <div className="border-t pt-4 space-y-2">
+                    <div className="border-t border-border pt-4 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-semibold">Selecionados ({selectedSummary.count})</span>
-                        <button className="text-xs text-muted-foreground hover:underline" onClick={() => setSelectedProfs(new Set())}>limpar</button>
+                        <button className="min-h-[44px] px-2 text-xs text-muted-foreground hover:underline" onClick={() => setSelectedProfs(new Set())}>limpar</button>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Comissão:</span>
@@ -1261,14 +1269,14 @@ export default function Comissoes() {
                       {selectedSummary.totalAdj !== 0 && (
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Ajustes:</span>
-                          <span className={selectedSummary.totalAdj > 0 ? "text-green-700" : "text-destructive"}>
+                          <span className={selectedSummary.totalAdj > 0 ? "np-text-positive" : "np-text-danger"}>
                             {selectedSummary.totalAdj > 0 ? "+" : ""}{formatCurrency(selectedSummary.totalAdj)}
                           </span>
                         </div>
                       )}
-                      <div className="flex justify-between pt-1 border-t">
+                      <div className="flex justify-between pt-1 border-t border-border">
                         <span className="font-semibold">Total selecionados:</span>
-                        <span className="text-lg font-bold text-primary">{formatCurrency(selectedSummary.totalPay)}</span>
+                        <span className="np-num text-lg text-[color:var(--np-accent-text)]">{formatCurrency(selectedSummary.totalPay)}</span>
                       </div>
                     </div>
                   )}

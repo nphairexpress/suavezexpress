@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { glassModal, modalTitle } from "@/components/financeiro/glass";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,15 +33,16 @@ export function OpenCaixaModal({ open, onClose, onConfirm, isLoading }: OpenCaix
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className={`sm:max-w-md ${glassModal}`}>
         <DialogHeader>
-          <DialogTitle>Abrir Caixa</DialogTitle>
+          <DialogTitle className={modalTitle}>Abrir Caixa</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="openingBalance">Valor de Abertura (R$)</Label>
             <Input
               id="openingBalance"
+              className="h-12 text-lg font-semibold tabular-nums"
               type="text"
               placeholder="0,00"
               value={openingBalance}
@@ -79,11 +81,11 @@ export function OpenCaixaModal({ open, onClose, onConfirm, isLoading }: OpenCaix
             />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button variant="outline" className="h-12" onClick={onClose} disabled={isLoading}>
             Cancelar
           </Button>
-          <Button onClick={handleConfirm} disabled={isLoading}>
+          <Button className="h-12" onClick={handleConfirm} disabled={isLoading}>
             {isLoading ? "Abrindo..." : "Abrir Caixa"}
           </Button>
         </DialogFooter>

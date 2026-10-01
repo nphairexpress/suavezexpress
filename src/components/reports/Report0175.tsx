@@ -3,12 +3,14 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Loader2, DollarSign } from "lucide-react";
+import { Download, DollarSign } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { EmptyState } from "@design-system";
 import { exportToExcel } from "./utils/exportExcel";
+import { NUM, ReportLoading, ReportTitle, TOTAL_ROW } from "./ReportKit";
 
 interface Props {
   dateRange: { from: Date; to: Date };
@@ -86,30 +88,31 @@ export function Report0175({ dateRange }: Props) {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+    return <ReportLoading />;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <DollarSign className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">Faturamento de Serviço por Profissional</h3>
-        </div>
-        <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
-          <Download className="h-4 w-4 mr-2" />Exportar Excel
-        </Button>
-      </div>
+      <ReportTitle
+        icon={DollarSign}
+        actions={
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
+            <Download className="h-4 w-4 mr-2" />Exportar Excel
+          </Button>
+        }
+      >
+        Faturamento de Serviço por Profissional
+      </ReportTitle>
 
       {rows.length === 0 ? (
-        <Card><CardContent className="py-8 text-center text-muted-foreground">Nenhum dado encontrado no período</CardContent></Card>
+        <Card><CardContent className="p-0"><EmptyState icon="info" title="Nenhum dado encontrado no período" /></CardContent></Card>
       ) : (
         rows.map(r => (
           <Card key={r.id}>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center justify-between">
+              <CardTitle className="np-display text-lg flex flex-wrap items-center justify-between gap-2">
                 <span>{r.profName}</span>
-                <span className="text-primary">R$ {r.totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                <span className="np-num text-[color:var(--np-accent-text)]">R$ {r.totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -126,14 +129,14 @@ export function Report0175({ dateRange }: Props) {
                     {r.services.map((s, i) => (
                       <TableRow key={i}>
                         <TableCell>{s.name}</TableCell>
-                        <TableCell className="text-right">{s.qty}</TableCell>
-                        <TableCell className="text-right">R$ {s.revenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell className={NUM}>{s.qty}</TableCell>
+                        <TableCell className={NUM}>R$ {s.revenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
                       </TableRow>
                     ))}
-                    <TableRow className="font-bold bg-muted/50">
+                    <TableRow className={TOTAL_ROW}>
                       <TableCell>Subtotal</TableCell>
-                      <TableCell className="text-right">{r.totalQty}</TableCell>
-                      <TableCell className="text-right">R$ {r.totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                      <TableCell className={NUM}>{r.totalQty}</TableCell>
+                      <TableCell className={NUM}>R$ {r.totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -144,10 +147,10 @@ export function Report0175({ dateRange }: Props) {
       )}
 
       {rows.length > 0 && (
-        <Card className="border-primary">
-          <CardContent className="p-4 flex justify-between items-center">
-            <span className="font-bold text-lg">TOTAL GERAL</span>
-            <span className="font-bold text-lg text-primary">
+        <Card style={{ borderColor: "var(--np-accent-border)" }}>
+          <CardContent className="p-4 flex flex-wrap justify-between items-center gap-2">
+            <span className="np-display text-lg">TOTAL GERAL</span>
+            <span className="np-num text-xl text-[color:var(--np-accent-text)]">
               R$ {rows.reduce((s, r) => s + r.totalRevenue, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
             </span>
           </CardContent>

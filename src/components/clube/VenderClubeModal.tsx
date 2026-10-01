@@ -81,13 +81,13 @@ export function VenderClubeModal({ open, onClose }: { open: boolean; onClose: ()
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && !enviando && onClose()}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto bg-card text-foreground border-border">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Crown className="h-5 w-5 text-amber-500" />
+          <DialogTitle className="flex items-center gap-2 font-[family:var(--np-font-display)] font-extrabold tracking-[-0.01em]">
+            <Crown className="h-5 w-5 text-primary" aria-hidden />
             Vender Clube da Escova
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-muted-foreground">
             Assinatura recorrente no cartão de crédito (via Asaas). Não passe na maquininha —
             a maquininha não cria a recorrência.
           </DialogDescription>
@@ -100,12 +100,15 @@ export function VenderClubeModal({ open, onClose }: { open: boolean; onClose: ()
                 key={p.id}
                 type="button"
                 onClick={() => setPlano(p.id)}
-                className={`border rounded-lg p-2.5 text-left transition-colors ${
-                  plano === p.id ? "border-amber-500 bg-amber-50" : "border-border hover:border-amber-300"
+                aria-pressed={plano === p.id}
+                className={`min-h-[56px] border rounded-lg p-2.5 text-left text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  plano === p.id
+                    ? "border-primary bg-[color:var(--np-accent-soft)] ring-1 ring-primary"
+                    : "border-border hover:border-[color:var(--np-accent-border)]"
                 }`}
               >
                 <p className="text-sm font-medium leading-tight">{p.rotulo}</p>
-                <p className="text-base font-bold text-amber-600">{p.valor}/mês</p>
+                <p className="text-base font-bold tabular-nums font-[family:var(--np-font-display)] text-[color:var(--np-accent-text)]">{p.valor}/mês</p>
               </button>
             ))}
           </div>
@@ -131,7 +134,7 @@ export function VenderClubeModal({ open, onClose }: { open: boolean; onClose: ()
             </div>
           </div>
 
-          <div className="border-t pt-3 space-y-3">
+          <div className="border-t border-border pt-3 space-y-3">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               Cartão de crédito da cliente
             </p>
@@ -156,10 +159,10 @@ export function VenderClubeModal({ open, onClose }: { open: boolean; onClose: ()
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={enviando}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={enviando} className="min-h-[44px] border-border text-foreground">
               Cancelar
             </Button>
-            <Button type="submit" disabled={enviando} className="bg-amber-500 hover:bg-amber-600 text-white">
+            <Button type="submit" disabled={enviando} className="min-h-[44px] bg-primary text-primary-foreground font-semibold hover:bg-[color:var(--np-accent-hover)]">
               {enviando && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {enviando ? "Processando…" : "Ativar assinatura"}
             </Button>

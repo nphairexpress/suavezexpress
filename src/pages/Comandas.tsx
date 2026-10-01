@@ -3,14 +3,11 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { GlassCard, NavTabs, RecordsTable, Tag, IconButton, CountBadge, EmptyState, Button as NpButton } from "@design-system";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Loader2, Pencil, Trash2, Printer, Eye, FileSpreadsheet, FileText, AlertTriangle } from "lucide-react";
+import { Loader2, Pencil, Trash2, Printer, FileSpreadsheet, FileText, AlertTriangle, Search } from "lucide-react";
 import { ComandaModal } from "@/components/modals/ComandaModal";
 import { DeleteComandaModal } from "@/components/modals/DeleteComandaModal";
 import { ClientModal } from "@/components/modals/ClientModal";
@@ -464,60 +461,61 @@ export default function Comandas() {
 
   return (
     <AppLayoutNew>
-      <div className="space-y-4">
-        {/* Pending Caixa Warning */}
+      <div className="space-y-5 pt-2">
+        {/* Caixa pendente de dia anterior */}
         {hasPendingCaixa && (
-          <div className="flex items-center gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive">
-            <AlertTriangle className="h-5 w-5 shrink-0" />
+          <div role="alert" className="flex items-start gap-3 rounded-2xl border border-[var(--np-danger-border)] bg-[var(--np-danger-soft)] p-4 text-[var(--np-danger-text)]">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
             <div className="text-sm">
-              <p className="font-medium">Caixa pendente de dia anterior</p>
-              <p className="text-destructive/80">{pendingCaixaMessage} Vá em Financeiro para finalizar.</p>
+              <p className="font-semibold">Caixa pendente de dia anterior</p>
+              <p className="text-foreground/80">{pendingCaixaMessage} Vá em Financeiro para finalizar.</p>
             </div>
           </div>
         )}
 
-        {/* Action Buttons — botão "Abrir Comanda" laranja removido (Cleiton 08/07):
-            usar a faixa verde global "Abrir Comanda" no topo. Evita botão duplicado. */}
-        <div className="flex items-center gap-2">
-          {!userOpenCaixaId && (
-            <Badge variant="destructive" className="gap-1 px-3 py-1.5">
-              <AlertTriangle className="h-3 w-3" />
-              Abra um caixa para criar comandas
-            </Badge>
-          )}
-          {pendingComandas.length > 0 && (
-            <Badge 
-              variant="outline" 
-              className="gap-1 px-3 py-1.5 cursor-pointer border-orange-500 text-orange-600"
-              onClick={() => setActiveTab("pendentes")}
-            >
-              Comandas Pendentes
-              <span className="bg-orange-500 text-white rounded-full px-2 py-0.5 text-xs ml-1">
-                {pendingComandas.length}
-              </span>
-            </Badge>
-          )}
+        {/* Aviso de caixa fechado + atalho para pendentes. O botão "Abrir Comanda" fica na faixa global
+            do topo (Cleiton 08/07); aqui o aviso ganha respiro e vira um cartão, não uma pílula colada na faixa. */}
+        {(!userOpenCaixaId || pendingComandas.length > 0) && (
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            {!userOpenCaixaId && (
+              <div role="status" className="flex min-h-[44px] items-center gap-2.5 rounded-xl border border-[var(--np-danger-border)] bg-[var(--np-danger-soft)] px-4 py-2.5 text-sm font-medium text-[var(--np-danger-text)]">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                Abra um caixa para criar comandas
+              </div>
+            )}
+            {pendingComandas.length > 0 && (
+              <button
+                type="button"
+                className="flex min-h-[44px] items-center gap-2 rounded-xl border border-[var(--np-accent-border)] bg-[var(--np-accent-soft)] px-4 py-2.5 text-sm font-semibold text-[var(--np-accent-text)] transition-transform active:scale-[.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--np-accent)]"
+                onClick={() => setActiveTab("pendentes")}
+              >
+                Comandas Pendentes
+                <CountBadge count={pendingComandas.length} />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Abas */}
+        <div className="max-w-full overflow-x-auto">
+          <NavTabs
+            aria-label="Situação das comandas"
+            value={activeTab}
+            onChange={setActiveTab}
+            tabs={[
+              { id: "abertas", label: "Abertas", count: todayOpenComandas.length },
+              { id: "fechadas", label: "Fechadas", count: closedComandas.length },
+              ...(pendingComandas.length > 0 ? [{ id: "pendentes", label: "Pendentes", count: pendingComandas.length, dot: true }] : []),
+            ]}
+          />
         </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="abertas">Abertas ({todayOpenComandas.length})</TabsTrigger>
-            <TabsTrigger value="fechadas">Fechadas ({closedComandas.length})</TabsTrigger>
-            {pendingComandas.length > 0 && (
-              <TabsTrigger value="pendentes" className="text-orange-600">
-                Pendentes ({pendingComandas.length})
-              </TabsTrigger>
-            )}
-          </TabsList>
-        </Tabs>
-
-        {/* Table Controls */}
-        <div className="flex items-center justify-between">
+        {/* Controles da tabela */}
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Mostrar</span>
             <Select defaultValue="10">
-              <SelectTrigger className="w-20 h-8">
+              <SelectTrigger className="h-11 w-20">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -528,156 +526,172 @@ export default function Comandas() {
             </Select>
             <span className="text-sm text-muted-foreground">por página</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-1">
-              <Printer className="h-4 w-4" />
-              Print
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1">
-              <FileSpreadsheet className="h-4 w-4" />
-              Excel
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1">
-              <FileText className="h-4 w-4" />
-              PDF
-            </Button>
-            <div className="flex items-center">
-              <span className="text-sm text-muted-foreground mr-2">Mês:</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="hidden items-center gap-2 md:flex">
+              <NpButton variant="secondary" size="sm" icon={Printer}>Print</NpButton>
+              <NpButton variant="secondary" size="sm" icon={FileSpreadsheet}>Excel</NpButton>
+              <NpButton variant="secondary" size="sm" icon={FileText}>PDF</NpButton>
+            </div>
+            <label className="flex flex-1 items-center gap-2 sm:flex-none">
+              <span className="text-sm text-muted-foreground">Mês:</span>
               <Input
                 type="month"
-                className="w-40 h-8"
+                className="h-11 w-full sm:w-44"
                 value={mes}
                 max={format(new Date(), "yyyy-MM")}
                 onChange={(e) => { if (e.target.value) setMes(e.target.value); }}
               />
-            </div>
-            <div className="relative">
-              <span className="text-sm text-muted-foreground mr-2">Buscar:</span>
-              <Input 
-                placeholder="" 
-                className="w-48 h-8"
+            </label>
+            <label className="relative flex w-full items-center sm:w-56">
+              <span className="sr-only">Buscar:</span>
+              <Search className="pointer-events-none absolute left-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar cliente ou profissional"
+                className="h-11 w-full pl-9"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </div>
+            </label>
           </div>
         </div>
 
-        {/* Comandas Table */}
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="cursor-pointer hover:bg-muted/50">
-                    Comanda ▼
-                  </TableHead>
-                  <TableHead className="cursor-pointer hover:bg-muted/50">
-                    Cliente ▼
-                  </TableHead>
-                  <TableHead className="cursor-pointer hover:bg-muted/50">
-                    Serviços
-                  </TableHead>
-                  <TableHead className="cursor-pointer hover:bg-muted/50">
-                    Data de abertura ▼
-                  </TableHead>
-                  <TableHead className="cursor-pointer hover:bg-muted/50 text-right">
-                    Valor ▼
-                  </TableHead>
-                  <TableHead className="text-center">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {getDisplayComandas().length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      Nenhuma comanda encontrada
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  getDisplayComandas().map((comanda) => (
-                    <TableRow 
-                      key={comanda.id} 
-                      className={`cursor-pointer hover:bg-muted/50 ${activeTab === "pendentes" ? "bg-orange-50 dark:bg-orange-950/20" : ""}`}
-                      onClick={() => handleOpenComanda(comanda)}
-                    >
-                      <TableCell className="font-medium">
-                        {getComandaNumber(comanda)}
-                      </TableCell>
-                      <TableCell className="uppercase">
-                        {comanda.client?.name || "Cliente não definido"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1 max-w-xs">
-                          {comanda.items && comanda.items.length > 0 ? (
-                            <>
-                              {comanda.items.slice(0, 2).map((item, idx) => (
-                                <Badge key={idx} variant="outline" className="text-xs">
-                                  {item.description}
-                                </Badge>
-                              ))}
-                              {comanda.items.length > 2 && (
-                                <Badge variant="secondary" className="text-xs">
-                                  +{comanda.items.length - 2}
-                                </Badge>
-                              )}
-                            </>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">Sem itens</span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(comanda.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatCurrency(comanda.total)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenComanda(comanda)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {activeTab === "fechadas" && (
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8"
-                              onClick={() => handleOpenComanda(comanda, true)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {canDelete && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => handleDeleteClick(comanda)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary">
-                            <Printer className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        {/* Lista — CELULAR: cartões de vidro */}
+        <div className="space-y-3 md:hidden">
+          {getDisplayComandas().length === 0 ? (
+            <GlassCard padding={0}>
+              <EmptyState icon="ticket" title="Nenhuma comanda encontrada" />
+            </GlassCard>
+          ) : (
+            getDisplayComandas().map((comanda) => (
+              <GlassCard
+                key={comanda.id}
+                padding={16}
+                role="button"
+                tabIndex={0}
+                className="cursor-pointer"
+                onClick={() => handleOpenComanda(comanda)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleOpenComanda(comanda); }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold uppercase text-foreground">{comanda.client?.name || "Cliente não definido"}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {getComandaNumber(comanda)} · {format(new Date(comanda.created_at), "HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                  <span className="np-num whitespace-nowrap text-lg text-foreground">{formatCurrency(comanda.total)}</span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {activeTab === "pendentes" && <Tag label="Pendente" tone="accent" />}
+                  {comanda.items && comanda.items.length > 0 ? (
+                    <>
+                      {comanda.items.slice(0, 2).map((item, idx) => <Tag key={idx} label={item.description} />)}
+                      {comanda.items.length > 2 && <Tag label={`+${comanda.items.length - 2}`} />}
+                    </>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Sem itens</span>
+                  )}
+                </div>
+                <div className="mt-3 flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                  <IconButton icon="eye" label="Ver comanda" onClick={() => handleOpenComanda(comanda)} />
+                  {activeTab === "fechadas" && (
+                    <IconButton icon={Pencil} label="Editar comanda" onClick={() => handleOpenComanda(comanda, true)} />
+                  )}
+                  {canDelete && (
+                    <IconButton icon={Trash2} label="Excluir comanda" className="text-[var(--np-danger-text)]" onClick={() => handleDeleteClick(comanda)} />
+                  )}
+                </div>
+              </GlassCard>
+            ))
+          )}
+        </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
+        {/* Lista — DESKTOP: tabela de registros */}
+        {/* Contorno local: o CSS da biblioteca põe display:flex no <td> da coluna fixa (a célula não acompanha a altura
+            da linha) . Classes Tailwind ficam em @layer e perdem para o CSS sem camada,
+            por isso o ajuste vai num <style> escopado nesta tabela. Correção definitiva: design-system/styles/acervo.css. */}
+        <style>{`.np-comandas-table td.np-records__primary{display:table-cell;vertical-align:middle}`}</style>
+        <RecordsTable<Comanda>
+          className="np-comandas-table hidden md:block"
+          aria-label="Comandas"
+          rows={getDisplayComandas()}
+          getRowId={(c) => c.id}
+          selectable={false}
+          onRowClick={(c) => handleOpenComanda(c)}
+          emptyTitle="Nenhuma comanda encontrada"
+          primary={{
+            header: "Comanda",
+            render: (c) => (
+              <span className="flex flex-col gap-0.5">
+                <span className="font-semibold text-foreground">{getComandaNumber(c).split(" ")[0]}</span>
+                <span className="text-xs tabular-nums text-muted-foreground">{format(new Date(c.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
+                {activeTab === "pendentes" && <Tag label="Pendente" tone="accent" />}
+              </span>
+            ),
+          }}
+          columns={[
+            {
+              key: "cliente",
+              header: "Cliente",
+              sortValue: (c) => c.client?.name || "",
+              render: (c) => <span className="block max-w-[220px] whitespace-normal uppercase">{c.client?.name || "Cliente não definido"}</span>,
+            },
+            {
+              key: "servicos",
+              header: "Serviços",
+              render: (c) => (
+                <div className="flex max-w-[240px] flex-wrap gap-1">
+                  {c.items && c.items.length > 0 ? (
+                    <>
+                      {c.items.slice(0, 2).map((item, idx) => <Tag key={idx} label={item.description.length > 30 ? item.description.slice(0, 29) + "…" : item.description} />)}
+                      {c.items.length > 2 && <Tag label={`+${c.items.length - 2}`} />}
+                    </>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Sem itens</span>
+                  )}
+                </div>
+              ),
+            },
+            {
+              key: "data",
+              header: "Data de abertura",
+              sortValue: (c) => new Date(c.created_at).getTime(),
+              render: (c) => <span className="whitespace-nowrap tabular-nums">{format(new Date(c.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>,
+            },
+            {
+              key: "valor",
+              header: "Valor",
+              align: "right",
+              sortValue: (c) => Number(c.total) || 0,
+              render: (c) => <span className="np-num whitespace-nowrap text-foreground">{formatCurrency(c.total)}</span>,
+            },
+            {
+              key: "acoes",
+              header: "Ações",
+              align: "right",
+              render: (c) => (
+                <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                  <IconButton icon="eye" label="Ver comanda" size="sm" variant="ghost" onClick={() => handleOpenComanda(c)} />
+                  {activeTab === "fechadas" && (
+                    <IconButton icon={Pencil} label="Editar comanda" size="sm" variant="ghost" onClick={() => handleOpenComanda(c, true)} />
+                  )}
+                  {canDelete && (
+                    <IconButton icon={Trash2} label="Excluir comanda" size="sm" variant="ghost" className="text-[var(--np-danger-text)]" onClick={() => handleDeleteClick(c)} />
+                  )}
+                  <IconButton icon={Printer} label="Imprimir" size="sm" variant="ghost" className="text-[var(--np-accent-text)]" />
+                </div>
+              ),
+            },
+          ]}
+        />
+
+        {/* Paginação */}
+        <div className="flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>Mostrando 1 até {Math.min(10, getDisplayComandas().length)} de {getDisplayComandas().length} registros</span>
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" disabled>← Anterior</Button>
-            <Button variant="default" size="sm">1</Button>
-            <Button variant="outline" size="sm">Próximo →</Button>
+            <NpButton variant="ghost" size="sm" disabled>← Anterior</NpButton>
+            <NpButton variant="primary" size="sm">1</NpButton>
+            <NpButton variant="ghost" size="sm">Próximo →</NpButton>
           </div>
         </div>
       </div>
@@ -686,7 +700,7 @@ export default function Comandas() {
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Nova Comanda</DialogTitle>
+            <DialogTitle className="np-display">Nova Comanda</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">

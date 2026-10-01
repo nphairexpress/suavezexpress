@@ -97,7 +97,7 @@ export function TransferAppointmentsModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-orange-500" />
+            <AlertTriangle className="h-5 w-5 text-[var(--np-accent-text)]" />
             Desativar Profissional
           </DialogTitle>
           <DialogDescription>
@@ -113,13 +113,13 @@ export function TransferAppointmentsModal({
             </div>
           ) : pendingAppointments > 0 ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-2 p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
-                <Calendar className="h-5 w-5 text-orange-600" />
+              <div className="flex items-center gap-2 p-3 bg-[var(--np-accent-soft)] rounded-lg border border-[var(--np-accent-border)]">
+                <Calendar className="h-5 w-5 text-[var(--np-accent-text)]" />
                 <div>
-                  <p className="font-medium text-orange-800 dark:text-orange-200">
+                  <p className="font-medium text-[var(--np-accent-text)]">
                     {pendingAppointments} agendamento(s) pendente(s)
                   </p>
-                  <p className="text-sm text-orange-600 dark:text-orange-400">
+                  <p className="text-sm text-[var(--np-accent-text)]">
                     Transfira para outro profissional antes de desativar.
                   </p>
                 </div>
@@ -142,8 +142,8 @@ export function TransferAppointmentsModal({
               </div>
             </div>
           ) : (
-            <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-              <p className="text-green-800 dark:text-green-200">
+            <div className="p-3 bg-[var(--np-positive-soft)] rounded-lg border border-[var(--np-positive-border)]">
+              <p className="text-[var(--np-positive-text)]">
                 Nenhum agendamento pendente. O profissional pode ser desativado diretamente.
               </p>
             </div>

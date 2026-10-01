@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/settings/settingsUi";
+import { Button as NpButton } from "@design-system";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -88,27 +89,27 @@ export function QueueSettingsSection() {
       );
   };
 
-  if (isLoading) return <p>Carregando...</p>;
+  if (isLoading) return <p className="text-muted-foreground">Carregando...</p>;
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader><CardTitle>Fila Digital</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div>
+          <div className="space-y-2">
             <Label>Fator de inflacao da fila (para visitantes)</Label>
             <Input type="number" step="0.1" min="1" max="5" value={inflationFactor} onChange={(e) => setInflationFactor(e.target.value)} />
-            <p className="text-xs text-muted-foreground mt-1">Ex: 1.7 = fila real de 3 mostra 5 para visitantes</p>
+            <p className="text-xs text-muted-foreground">Ex: 1.7 = fila real de 3 mostra 5 para visitantes</p>
           </div>
-          <div>
+          <div className="space-y-2">
             <Label>Validade do credito no-show (dias)</Label>
             <Input type="number" min="1" value={creditDays} onChange={(e) => setCreditDays(e.target.value)} />
           </div>
-          <div>
+          <div className="space-y-2">
             <Label>Opcoes de antecedencia (minutos, separados por virgula)</Label>
             <Input value={notifyOptions} onChange={(e) => setNotifyOptions(e.target.value)} placeholder="20, 40, 60, 90" />
           </div>
-          <div>
+          <div className="space-y-2">
             <Label>E-mail da recepcao (para alertas de leads)</Label>
             <Input type="email" value={receptionEmail} onChange={(e) => setReceptionEmail(e.target.value)} placeholder="recepcao@nphairexpress.com" />
           </div>
@@ -120,13 +121,14 @@ export function QueueSettingsSection() {
           <p className="text-xs text-muted-foreground">
             Fora desse horario a cliente nao consegue pagar a fila. Isso evita venda em dia de porta fechada.
           </p>
-          <div>
+          <div className="space-y-2">
             <Label>Dias em que a fila abre</Label>
-            <div className="flex gap-1 mt-2">
+            <div className="flex flex-wrap gap-2 mt-2">
               {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((nome, dow) => {
                 const ativo = openWeekdays.includes(dow);
                 return (
-                  <Button key={dow} type="button" size="sm" variant={ativo ? "default" : "outline"}
+                  <Button key={dow} type="button" size="sm" variant={ativo ? "default" : "outline"} aria-pressed={ativo}
+                    className="h-11 min-w-[52px]"
                     onClick={() => setOpenWeekdays((prev) => ativo ? prev.filter((d) => d !== dow) : [...prev, dow].sort())}>
                     {nome}
                   </Button>
@@ -134,16 +136,16 @@ export function QueueSettingsSection() {
               })}
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Abre as</Label><Input type="time" value={openTime} onChange={(e) => setOpenTime(e.target.value)} /></div>
-            <div><Label>Fecha as</Label><Input type="time" value={closeTime} onChange={(e) => setCloseTime(e.target.value)} /></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-2"><Label>Abre as</Label><Input type="time" value={openTime} onChange={(e) => setOpenTime(e.target.value)} /></div>
+            <div className="space-y-2"><Label>Fecha as</Label><Input type="time" value={closeTime} onChange={(e) => setCloseTime(e.target.value)} /></div>
           </div>
-          <div>
+          <div className="space-y-2">
             <Label>Datas fechadas (feriado, emenda)</Label>
             <Input value={closedDates} onChange={(e) => setClosedDates(e.target.value)} placeholder="2026-12-25, 2026-12-31" />
-            <p className="text-xs text-muted-foreground mt-1">No formato ANO-MES-DIA, separadas por virgula</p>
+            <p className="text-xs text-muted-foreground">No formato ANO-MES-DIA, separadas por virgula</p>
           </div>
-          <div className="flex items-center justify-between pt-2 border-t">
+          <div className="flex items-center justify-between gap-4 pt-4 border-t border-border">
             <div className="space-y-0.5">
               <Label>Fechar a fila agora</Label>
               <p className="text-xs text-muted-foreground">Trava imediata, independente do horario. Lembre de desligar depois.</p>
@@ -155,26 +157,26 @@ export function QueueSettingsSection() {
       <Card>
         <CardHeader><CardTitle>Cashback</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <div className="space-y-0.5">
               <Label>Cashback ativo</Label>
               <p className="text-xs text-muted-foreground">Quando desligado, a opcao some do fechamento da comanda</p>
             </div>
             <Switch checked={cashbackEnabled} onCheckedChange={setCashbackEnabled} />
           </div>
-          <div>
+          <div className="space-y-2">
             <Label>Porcentagem padrao (%)</Label>
             <Input type="number" step="0.5" min="0" max="50" value={cashbackPercent} onChange={(e) => setCashbackPercent(e.target.value)} disabled={!cashbackEnabled} />
-            <p className="text-xs text-muted-foreground mt-1">Profissional pode sobrescrever no momento do fechamento da comanda</p>
+            <p className="text-xs text-muted-foreground">Profissional pode sobrescrever no momento do fechamento da comanda</p>
           </div>
-          <div>
+          <div className="space-y-2">
             <Label>Validade do credito (dias)</Label>
             <Input type="number" min="1" max="365" value={cashbackValidityDays} onChange={(e) => setCashbackValidityDays(e.target.value)} disabled={!cashbackEnabled} />
           </div>
-          <div>
+          <div className="space-y-2">
             <Label>Compra minima para usar o credito (R$)</Label>
             <Input type="number" step="1" min="0" value={cashbackMinPurchase} onChange={(e) => setCashbackMinPurchase(e.target.value)} disabled={!cashbackEnabled} />
-            <p className="text-xs text-muted-foreground mt-1">Cliente so pode usar o cashback em uma compra futura acima desse valor</p>
+            <p className="text-xs text-muted-foreground">Cliente so pode usar o cashback em uma compra futura acima desse valor</p>
           </div>
         </CardContent>
       </Card>
@@ -186,7 +188,9 @@ export function QueueSettingsSection() {
           </p>
         </CardContent>
       </Card>
-      <Button onClick={handleSave} disabled={isSaving}>{isSaving ? "Salvando..." : "Salvar configuracoes"}</Button>
+      <div className="flex justify-end">
+        <NpButton onClick={handleSave} disabled={isSaving} loading={isSaving} className="w-full sm:w-auto">{isSaving ? "Salvando..." : "Salvar configuracoes"}</NpButton>
+      </div>
     </div>
   );
 }

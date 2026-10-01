@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
     if (!this.state.hasError) return this.props.children;
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
-        <h1 className="text-2xl font-bold">Algo deu errado</h1>
+        <h1 className="np-display text-2xl">Algo deu errado</h1>
         <p className="text-muted-foreground">O erro foi registrado. Recarregue a página para continuar.</p>
         <button
           onClick={() => window.location.reload()}

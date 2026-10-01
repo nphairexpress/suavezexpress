@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Notice, insetClass, toneText } from "@/components/settings/settingsUi";
+import { Button as NpButton } from "@design-system";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/dynamicSupabaseClient";
-import { Webhook, Copy, RefreshCw, Eye, EyeOff, Check, ExternalLink, Loader2, Bot, Download } from "lucide-react";
+import { Webhook, Copy, RefreshCw, Eye, EyeOff, Check, ExternalLink, Loader2, Bot, Download, AlertTriangle } from "lucide-react";
 
 export function WebhookSettingsSection() {
   const { toast } = useToast();
@@ -363,13 +364,15 @@ Lista horários disponíveis de um profissional em uma data específica.
           <div className="space-y-2">
             <Label>URL do Webhook</Label>
             <div className="flex gap-2">
-              <Input value={webhookUrl} readOnly className="font-mono text-xs" />
+              <Input value={webhookUrl} readOnly className="font-mono text-xs min-w-0" />
               <Button
                 variant="outline"
                 size="icon"
+                className="h-11 w-11 shrink-0"
+                aria-label="Copiar URL"
                 onClick={() => copyToClipboard(webhookUrl, "URL")}
               >
-                {copied === "URL" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                {copied === "URL" ? <Check className="h-4 w-4" style={toneText.positive} /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
           </div>
@@ -377,18 +380,19 @@ Lista horários disponíveis de um profissional em uma data específica.
           {/* API Key */}
           <div className="space-y-2">
             <Label>Chave de Autenticação (x-webhook-key)</Label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
+            <div className="flex flex-wrap gap-2">
+              <div className="relative flex-1 min-w-[180px]">
                 <Input
                   value={webhookKey ? (showKey ? webhookKey : "•".repeat(40)) : "Nenhuma chave gerada"}
                   readOnly
-                  className="font-mono text-xs pr-10"
+                  className="font-mono text-xs pr-12"
                 />
                 {webhookKey && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute right-0 top-0 h-full"
+                    className="absolute right-0 top-0 h-full w-11"
+                    aria-label={showKey ? "Ocultar chave" : "Mostrar chave"}
                     onClick={() => setShowKey(!showKey)}
                   >
                     {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -399,32 +403,35 @@ Lista horários disponíveis de um profissional em uma data específica.
                 <Button
                   variant="outline"
                   size="icon"
+                  className="h-11 w-11 shrink-0"
+                  aria-label="Copiar chave"
                   onClick={() => copyToClipboard(webhookKey, "Chave")}
                 >
-                  {copied === "Chave" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  {copied === "Chave" ? <Check className="h-4 w-4" style={toneText.positive} /> : <Copy className="h-4 w-4" />}
                 </Button>
               )}
-              <Button
+              <NpButton
                 onClick={generateKey}
                 disabled={generating}
-                variant={webhookKey ? "outline" : "default"}
-                className="gap-2 whitespace-nowrap"
+                variant={webhookKey ? "secondary" : "primary"}
+                icon={RefreshCw}
+                className={`whitespace-nowrap ${generating ? "[&_svg]:animate-spin" : ""}`}
               >
-                <RefreshCw className={`h-4 w-4 ${generating ? "animate-spin" : ""}`} />
                 {webhookKey ? "Regenerar" : "Gerar Chave"}
-              </Button>
+              </NpButton>
             </div>
             {webhookKey && (
-              <p className="text-xs text-muted-foreground">
-                ⚠️ Regenerar a chave invalidará integrações existentes.
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" style={toneText.accent} />
+                Regenerar a chave invalidará integrações existentes.
               </p>
             )}
           </div>
 
           {/* HTTP Headers */}
-          <div className="rounded-lg bg-muted/50 p-4 space-y-2">
-            <p className="text-sm font-medium">Headers obrigatórios:</p>
-            <div className="font-mono text-xs space-y-1 text-muted-foreground">
+          <div className={`${insetClass} p-4 space-y-2`}>
+            <p className="text-sm font-medium text-foreground">Headers obrigatórios:</p>
+            <div className="font-mono text-xs space-y-1 text-muted-foreground break-all">
               <p>Content-Type: application/json</p>
               <p>x-webhook-key: {"<sua_chave_aqui>"}</p>
             </div>
@@ -442,9 +449,9 @@ Lista horários disponíveis de um profissional em uma data específica.
         </CardHeader>
         <CardContent className="space-y-3">
           {actions.map((a) => (
-            <div key={a.name} className="rounded-lg border p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+            <div key={a.name} className="rounded-xl border border-border p-3 space-y-2 min-w-0">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2 min-w-0">
                   <Badge variant="secondary" className="font-mono text-xs">{a.name}</Badge>
                   <span className="text-sm text-muted-foreground">{a.desc}</span>
                 </div>
@@ -452,13 +459,13 @@ Lista horários disponíveis de um profissional em uma data específica.
                   variant="ghost"
                   size="sm"
                   onClick={() => copyToClipboard(a.example, a.name)}
-                  className="gap-1 text-xs"
+                  className="gap-1 text-xs h-11"
                 >
-                  {copied === a.name ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                  {copied === a.name ? <Check className="h-3 w-3" style={toneText.positive} /> : <Copy className="h-3 w-3" />}
                   Copiar
                 </Button>
               </div>
-              <pre className="text-xs bg-muted rounded p-2 overflow-x-auto">
+              <pre className={`text-xs text-foreground/90 ${insetClass} p-3 overflow-x-auto`}>
                 {a.example}
               </pre>
             </div>
@@ -467,25 +474,16 @@ Lista horários disponíveis de um profissional em uma data específica.
       </Card>
 
       {/* Download Documentation */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <Bot className="h-5 w-5 text-primary mt-0.5" />
-            <div className="flex-1">
-              <h4 className="font-medium text-foreground">Dica: Integrando com GPT Maker</h4>
-              <p className="text-sm text-muted-foreground mt-1 mb-3">
-                No GPT Maker, configure uma "API Action" com o método POST para a URL acima.
-                Adicione o header <code className="text-xs bg-muted px-1 rounded">x-webhook-key</code> com sua chave.
-                Baixe a documentação completa abaixo e envie para a IA configurar automaticamente.
-              </p>
-              <Button onClick={generateDocumentation} className="gap-2">
-                <Download className="h-4 w-4" />
-                Baixar Documentação Completa
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <Notice tone="accent" icon={Bot} title="Dica: Integrando com GPT Maker">
+        <p className="mb-3">
+          No GPT Maker, configure uma "API Action" com o método POST para a URL acima.
+          Adicione o header <code className="text-xs bg-[color:var(--np-surface-inset)] px-1 rounded">x-webhook-key</code> com sua chave.
+          Baixe a documentação completa abaixo e envie para a IA configurar automaticamente.
+        </p>
+        <NpButton icon={Download} onClick={generateDocumentation}>
+          Baixar Documentação Completa
+        </NpButton>
+      </Notice>
     </div>
   );
 }

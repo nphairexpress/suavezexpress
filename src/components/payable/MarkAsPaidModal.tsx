@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { glassModal, modalTitle } from "@/components/financeiro/glass";
 import {
   Dialog,
   DialogContent,
@@ -72,9 +73,9 @@ export function MarkAsPaidModal({ open, onClose, onSubmit, payable, isLoading }:
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className={`max-w-lg ${glassModal}`}>
         <DialogHeader>
-          <DialogTitle>Marcar como paga</DialogTitle>
+          <DialogTitle className={modalTitle}>Marcar como paga</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="rounded-md bg-muted p-3 text-sm">
@@ -122,7 +123,7 @@ export function MarkAsPaidModal({ open, onClose, onSubmit, payable, isLoading }:
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Ex: pago via internet banking" />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-2">
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -252,12 +252,17 @@ function AppRoutes() {
 // profissional ficam ISOLADOS: tema claro fixo + classe np-legacy no <html>, que devolve as
 // variáveis antigas do shadcn (src/index.css), então elas continuam exatamente como eram.
 function isLegacyThemePath(pathname: string) {
+  return pathname === "/setup";
+}
+
+// Fase B (01/10): fila pública, página do Clube e terminal da profissional já estão no design
+// system, sempre no tema escuro (preto + âmbar), independente do interruptor.
+function isFixedDarkPath(pathname: string) {
   return (
     pathname === "/fila" ||
     pathname.startsWith("/fila/") ||
     pathname === "/clube-escova" ||
-    pathname === "/atendimento" ||
-    pathname === "/setup"
+    pathname === "/atendimento"
   );
 }
 
@@ -268,7 +273,7 @@ function ThemeScope({ children }: { children: React.ReactNode }) {
     document.documentElement.classList.toggle("np-legacy", legacy);
   }, [legacy]);
   return (
-    <NpThemeProvider restoreOnUnmount={false} forcedTheme={legacy ? "light" : undefined}>
+    <NpThemeProvider restoreOnUnmount={false} forcedTheme={legacy ? "light" : isFixedDarkPath(pathname) ? "dark" : undefined}>
       {children}
     </NpThemeProvider>
   );

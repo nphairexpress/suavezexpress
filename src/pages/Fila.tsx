@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { Button, Badge, CountBadge, GlassCard, StatCard, EmptyState, PageHeader } from "@design-system";
 import { Plus, Users, Clock, UserCheck, Bell, Crown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQueue } from "@/hooks/useQueue";
@@ -264,117 +262,116 @@ export default function Fila() {
   return (
     <AppLayoutNew>
       <div className="p-4 md:p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Fila de Atendimento</h1>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              className="border-amber-400 text-amber-600 hover:bg-amber-50"
-              onClick={() => setVenderClubeOpen(true)}
-            >
-              <Crown className="h-4 w-4 mr-2" />Vender Clube
-            </Button>
-            <Button onClick={() => setWalkInModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />Adicionar presencial
-            </Button>
-          </div>
-        </div>
+        <PageHeader
+          eyebrow="Recepção"
+          title="Fila de Atendimento"
+          actions={
+            <>
+              <Button variant="secondary" icon={Crown} onClick={() => setVenderClubeOpen(true)}>
+                Vender Clube
+              </Button>
+              <Button icon={Plus} onClick={() => setWalkInModalOpen(true)}>
+                Adicionar presencial
+              </Button>
+            </>
+          }
+        />
 
-        <div className="grid grid-cols-3 gap-4">
-          <Card><CardContent className="pt-4 text-center">
-            <Users className="h-5 w-5 mx-auto text-blue-500 mb-1" />
-            <p className="text-2xl font-bold">{stats.totalInQueue}</p>
-            <p className="text-xs text-muted-foreground">Na fila</p>
-          </CardContent></Card>
-          <Card><CardContent className="pt-4 text-center">
-            <Clock className="h-5 w-5 mx-auto text-orange-500 mb-1" />
-            <p className="text-2xl font-bold">~{stats.estimatedMinutes} min</p>
-            <p className="text-xs text-muted-foreground">Tempo estimado</p>
-          </CardContent></Card>
-          <Card><CardContent className="pt-4 text-center">
-            <UserCheck className="h-5 w-5 mx-auto text-green-500 mb-1" />
-            <p className="text-2xl font-bold">{inServiceEntries.length}</p>
-            <p className="text-xs text-muted-foreground">Em atendimento</p>
-          </CardContent></Card>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+          <StatCard title="Na fila" value={<span className="tabular-nums">{stats.totalInQueue}</span>} icon={Users} accent />
+          <StatCard title="Tempo estimado" value={<span className="tabular-nums">~{stats.estimatedMinutes} min</span>} icon={Clock} />
+          <StatCard title="Em atendimento" value={<span className="tabular-nums">{inServiceEntries.length}</span>} icon={UserCheck} />
         </div>
 
         <Tabs defaultValue="fila">
-          <TabsList>
-            <TabsTrigger value="fila">Fila ({waitingEntries.length})</TabsTrigger>
-            <TabsTrigger value="atendimento">Em atendimento ({inServiceEntries.length})</TabsTrigger>
-            <TabsTrigger value="leads">Leads{pendingLeads.length > 0 && <Badge className="ml-2 bg-red-500">{pendingLeads.length}</Badge>}</TabsTrigger>
+          <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-full border border-border bg-[color:var(--np-tabs-bg)] p-1 sm:w-auto">
+            <TabsTrigger value="fila" className="min-h-[40px] rounded-full px-4 text-[color:var(--np-tabs-text)] hover:text-[color:var(--np-tabs-text-hover)] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Fila ({waitingEntries.length})</TabsTrigger>
+            <TabsTrigger value="atendimento" className="min-h-[40px] rounded-full px-4 text-[color:var(--np-tabs-text)] hover:text-[color:var(--np-tabs-text-hover)] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Em atendimento ({inServiceEntries.length})</TabsTrigger>
+            <TabsTrigger value="leads" className="min-h-[40px] rounded-full px-4 text-[color:var(--np-tabs-text)] hover:text-[color:var(--np-tabs-text-hover)] data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Leads{pendingLeads.length > 0 && <CountBadge count={pendingLeads.length} tone="danger" className="ml-2" />}</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="fila">
+          <TabsContent value="fila" className="mt-4">
             {waitingEntries.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">Fila vazia</p>
-            ) : waitingEntries.map((entry, index) => (
-              <QueueCard key={entry.id} entry={entry}
-                isFirst={index === 0}
-                isLast={index === waitingEntries.length - 1}
-                onCheckIn={() => handleCheckIn(entry)}
-                onAssignProfessional={() => { setSelectedEntry(entry); setAssignModalOpen(true); }}
-                onSkip={() => handleSkip(entry)}
-                onRemove={() => handleRemove(entry)}
-                onNoShow={() => markNoShow(entry.id)}
-                onMoveUp={() => handleMoveUp(index)}
-                onMoveDown={() => handleMoveDown(index)}
-              />
-            ))}
-          </TabsContent>
-
-          <TabsContent value="atendimento">
-            {inServiceEntries.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">Nenhum atendimento em andamento</p>
-            ) : inServiceEntries.map((entry) => {
-              // Fila de verdade: mostra há quanto tempo está "em atendimento"
-              // e cutuca a equipe a dar baixa quando passa do razoável.
-              const inicio = entry.checked_in_at || entry.created_at;
-              const mins = inicio ? Math.max(0, Math.round((Date.now() - new Date(inicio).getTime()) / 60000)) : null;
-              return (
-                <div key={entry.id} className="space-y-1">
-                  {mins !== null && (
-                    <p className={`text-xs px-1 ${mins > 90 ? "text-red-600 font-semibold" : "text-muted-foreground"}`}>
-                      Em atendimento há {mins} min{mins > 90 ? " — já terminou? Finaliza pra fila ficar de verdade" : ""}
-                    </p>
-                  )}
-                  <QueueCard entry={entry}
-                    isFirst={true} isLast={true}
-                    onCheckIn={() => {}} onAssignProfessional={() => {}} onSkip={() => {}} onRemove={() => handleRemove(entry)}
-                    onMoveUp={() => {}} onMoveDown={() => {}}
-                    onComplete={() => {
-                      if (confirm(`Finalizar o atendimento de ${entry.customer_name}?`)) {
-                        complete(entry.id);
-                      }
-                    }}
-                  />
-                </div>
-              );
-            })}
-          </TabsContent>
-
-          <TabsContent value="leads">
-            {pendingLeads.length === 0 && notifiedLeads.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">Nenhum lead</p>
+              <GlassCard><EmptyState icon={Users} title="Fila vazia" /></GlassCard>
             ) : (
-              <div className="space-y-2">
-                {pendingLeads.map((lead) => (
-                  <Card key={lead.id}><CardContent className="flex items-center justify-between py-3">
-                    <div>
-                      <p className="font-medium">{lead.name}</p>
-                      <p className="text-sm text-muted-foreground">{lead.phone} · Quer fila &lt; {lead.max_queue_size}</p>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                {waitingEntries.map((entry, index) => (
+                  <QueueCard key={entry.id} entry={entry}
+                    isFirst={index === 0}
+                    isLast={index === waitingEntries.length - 1}
+                    onCheckIn={() => handleCheckIn(entry)}
+                    onAssignProfessional={() => { setSelectedEntry(entry); setAssignModalOpen(true); }}
+                    onSkip={() => handleSkip(entry)}
+                    onRemove={() => handleRemove(entry)}
+                    onNoShow={() => markNoShow(entry.id)}
+                    onMoveUp={() => handleMoveUp(index)}
+                    onMoveDown={() => handleMoveDown(index)}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="atendimento" className="mt-4">
+            {inServiceEntries.length === 0 ? (
+              <GlassCard><EmptyState icon={UserCheck} title="Nenhum atendimento em andamento" /></GlassCard>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                {inServiceEntries.map((entry) => {
+                  // Fila de verdade: mostra há quanto tempo está "em atendimento"
+                  // e cutuca a equipe a dar baixa quando passa do razoável.
+                  const inicio = entry.checked_in_at || entry.created_at;
+                  const mins = inicio ? Math.max(0, Math.round((Date.now() - new Date(inicio).getTime()) / 60000)) : null;
+                  return (
+                    <div key={entry.id} className="space-y-2">
+                      {mins !== null && (
+                        <p className={`text-xs px-1 tabular-nums ${mins > 90 ? "text-destructive font-semibold" : "text-muted-foreground"}`}>
+                          Em atendimento há {mins} min{mins > 90 ? " — já terminou? Finaliza pra fila ficar de verdade" : ""}
+                        </p>
+                      )}
+                      <QueueCard entry={entry}
+                        isFirst={true} isLast={true}
+                        onCheckIn={() => {}} onAssignProfessional={() => {}} onSkip={() => {}} onRemove={() => handleRemove(entry)}
+                        onMoveUp={() => {}} onMoveDown={() => {}}
+                        onComplete={() => {
+                          if (confirm(`Finalizar o atendimento de ${entry.customer_name}?`)) {
+                            complete(entry.id);
+                          }
+                        }}
+                      />
                     </div>
-                    <Button size="sm" onClick={() => handleNotifyLead(lead)}><Bell className="h-4 w-4 mr-1" />Notificar</Button>
-                  </CardContent></Card>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="leads" className="mt-4">
+            {pendingLeads.length === 0 && notifiedLeads.length === 0 ? (
+              <GlassCard><EmptyState icon={Bell} title="Nenhum lead" /></GlassCard>
+            ) : (
+              <div className="space-y-3">
+                {pendingLeads.map((lead) => (
+                  <GlassCard key={lead.id} padding={16}>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground">{lead.name}</p>
+                        <p className="text-sm text-muted-foreground tabular-nums">{lead.phone} · Quer fila &lt; {lead.max_queue_size}</p>
+                      </div>
+                      <Button icon={Bell} onClick={() => handleNotifyLead(lead)}>Notificar</Button>
+                    </div>
+                  </GlassCard>
                 ))}
                 {notifiedLeads.map((lead) => (
-                  <Card key={lead.id} className="opacity-60"><CardContent className="flex items-center justify-between py-3">
-                    <div>
-                      <p className="font-medium">{lead.name}</p>
-                      <p className="text-sm text-muted-foreground">{lead.phone}</p>
+                  <GlassCard key={lead.id} padding={16} className="opacity-60">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground">{lead.name}</p>
+                        <p className="text-sm text-muted-foreground tabular-nums">{lead.phone}</p>
+                      </div>
+                      <Badge tone="neutral">Notificada</Badge>
                     </div>
-                    <Badge variant="outline">Notificada</Badge>
-                  </CardContent></Card>
+                  </GlassCard>
                 ))}
               </div>
             )}

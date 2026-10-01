@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { Button as DsButton } from "@design-system";
+import { glassModal, modalTitle, txtDanger, txtPositive } from "@/components/financeiro/glass";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowDownCircle, ArrowUpCircle, Loader2 } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { useCaixaMovements, CaixaMovementType, CaixaMovementMethod } from "@/hooks/useCaixaMovements";
 
 interface SangriaSuprimentoModalProps {
@@ -60,42 +61,45 @@ export function SangriaSuprimentoModal({ open, onClose, caixaId, defaultType = "
 
   const isSangria = type === "sangria";
   const Icon = isSangria ? ArrowDownCircle : ArrowUpCircle;
-  const color = isSangria ? "text-red-600" : "text-green-600";
+  const color = isSangria ? txtDanger : txtPositive;
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className={`sm:max-w-md ${glassModal}`}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className={`flex items-center gap-2 ${modalTitle}`}>
             <Icon className={`h-5 w-5 ${color}`} />
             {isSangria ? "Sangria (saída de dinheiro)" : "Suprimento (entrada de dinheiro)"}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              type="button"
-              variant={isSangria ? "default" : "outline"}
-              className={isSangria ? "bg-red-600 hover:bg-red-700" : ""}
+          <div className="grid grid-cols-2 gap-2" role="group" aria-label="Tipo de movimentação">
+            <DsButton
+              size="lg"
+              variant={isSangria ? "danger" : "secondary"}
+              icon={ArrowDownCircle}
+              aria-pressed={isSangria}
               onClick={() => setType("sangria")}
             >
-              <ArrowDownCircle className="mr-2 h-4 w-4" /> Sangria
-            </Button>
-            <Button
-              type="button"
-              variant={!isSangria ? "default" : "outline"}
-              className={!isSangria ? "bg-green-600 hover:bg-green-700" : ""}
+              Sangria
+            </DsButton>
+            <DsButton
+              size="lg"
+              variant={!isSangria ? "success" : "secondary"}
+              icon={ArrowUpCircle}
+              aria-pressed={!isSangria}
               onClick={() => setType("suprimento")}
             >
-              <ArrowUpCircle className="mr-2 h-4 w-4" /> Suprimento
-            </Button>
+              Suprimento
+            </DsButton>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="movAmount">Valor (R$)</Label>
             <Input
               id="movAmount"
+              className="h-12 text-lg font-semibold tabular-nums"
               type="text"
               inputMode="decimal"
               placeholder="0,00"
@@ -108,7 +112,7 @@ export function SangriaSuprimentoModal({ open, onClose, caixaId, defaultType = "
           <div className="space-y-2">
             <Label htmlFor="movMethod">Forma</Label>
             <Select value={method} onValueChange={(v) => setMethod(v as CaixaMovementMethod)}>
-              <SelectTrigger id="movMethod">
+              <SelectTrigger id="movMethod" className="h-11">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -137,16 +141,17 @@ export function SangriaSuprimentoModal({ open, onClose, caixaId, defaultType = "
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isCreating}>Cancelar</Button>
-          <Button
+        <DialogFooter className="gap-2 sm:gap-2">
+          <DsButton size="lg" variant="secondary" onClick={onClose} disabled={isCreating}>Cancelar</DsButton>
+          <DsButton
+            size="lg"
+            variant={isSangria ? "danger" : "success"}
             onClick={handleSubmit}
             disabled={!canSubmit}
-            className={isSangria ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
+            loading={isCreating}
           >
-            {isCreating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isSangria ? "Registrar sangria" : "Registrar suprimento"}
-          </Button>
+          </DsButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

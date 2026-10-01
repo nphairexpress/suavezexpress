@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Badge, GlassCard, EmptyState } from "@design-system";
 import { Plus, Pencil, Trash2, Mail, Send, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
@@ -12,10 +12,10 @@ import { sendEmail } from "@/lib/sendEmail";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const statusLabels: Record<string, { label: string; variant: "default" | "secondary" | "destructive" }> = {
-  draft: { label: "Rascunho", variant: "secondary" },
-  scheduled: { label: "Agendada", variant: "default" },
-  sent: { label: "Enviada", variant: "default" },
+const statusLabels: Record<string, { label: string; tone: "neutral" | "accent" | "positive" }> = {
+  draft: { label: "Rascunho", tone: "neutral" },
+  scheduled: { label: "Agendada", tone: "accent" },
+  sent: { label: "Enviada", tone: "positive" },
 };
 
 export function EmailCampaignsTab() {
@@ -110,31 +110,30 @@ export function EmailCampaignsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <p className="text-muted-foreground">Crie e gerencie campanhas de e-mail para seus clientes.</p>
-        <Button onClick={() => { setEditing(null); setModalOpen(true); }}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground">Crie e gerencie campanhas de e-mail para seus clientes.</p>
+        <Button className="min-h-[48px] w-full shrink-0 sm:min-h-0 sm:w-auto" onClick={() => { setEditing(null); setModalOpen(true); }}>
           <Plus className="h-4 w-4 mr-2" /> Nova Campanha
         </Button>
       </div>
 
       {isLoading ? (
-        <Card className="py-12 text-center text-muted-foreground">Carregando...</Card>
+        <GlassCard className="py-12 text-center text-muted-foreground">Carregando...</GlassCard>
       ) : campaigns.length === 0 ? (
-        <Card className="py-12 text-center text-muted-foreground">
-          <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>Nenhuma campanha de e-mail criada</p>
-        </Card>
+        <GlassCard>
+          <EmptyState icon={Mail} title="Nenhuma campanha de e-mail criada" className="py-8" />
+        </GlassCard>
       ) : (
         <div className="space-y-3">
           {campaigns.map((campaign: any) => {
             const st = statusLabels[campaign.status] || statusLabels.draft;
             return (
               <Card key={campaign.id}>
-                <CardContent className="flex items-center justify-between p-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{campaign.name}</p>
-                      <Badge variant={st.variant}>{st.label}</Badge>
+                <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium text-foreground">{campaign.name}</p>
+                      <Badge tone={st.tone}>{st.label}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Assunto: {campaign.subject}
@@ -142,11 +141,12 @@ export function EmailCampaignsTab() {
                       {campaign.recipients_count > 0 && ` • ${campaign.recipients_count} destinatários`}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     {campaign.status === "draft" && (
                       <Button 
                         size="sm" 
                         variant="default"
+                        className="min-h-[44px] sm:min-h-0"
                         onClick={() => sendCampaignMutation.mutate(campaign)}
                         disabled={sendCampaignMutation.isPending}
                       >
@@ -154,10 +154,10 @@ export function EmailCampaignsTab() {
                         Enviar
                       </Button>
                     )}
-                    <Button size="icon" variant="ghost" onClick={() => { setEditing(campaign); setModalOpen(true); }}>
+                    <Button size="icon" variant="ghost" aria-label="Editar" className="h-11 w-11 rounded-xl sm:h-9 sm:w-9" onClick={() => { setEditing(campaign); setModalOpen(true); }}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(campaign.id)}>
+                    <Button size="icon" variant="ghost" aria-label="Excluir" className="h-11 w-11 rounded-xl text-[color:var(--np-danger-text)] hover:bg-[var(--np-danger-soft)] hover:text-[color:var(--np-danger-text)] sm:h-9 sm:w-9" onClick={() => deleteMutation.mutate(campaign.id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

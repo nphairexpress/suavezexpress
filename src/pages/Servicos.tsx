@@ -16,6 +16,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { brl } from "@design-system";
+
+const GLASS = "rounded-2xl border-[color:var(--np-border-glass)] bg-[color:var(--np-surface-glass)] text-foreground shadow-[var(--np-shadow-glass)] backdrop-blur-xl";
 
 export default function Servicos() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -129,28 +132,28 @@ export default function Servicos() {
   return (
     <AppLayoutNew>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-wrap justify-between items-center gap-3">
           <p className="text-muted-foreground">Gerencie os serviços oferecidos pelo salão</p>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-2" onClick={handleExportPDF}>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" className="h-11 gap-2 border-border bg-transparent hover:bg-[color:var(--np-surface-inset-hover)]" onClick={handleExportPDF}>
               <FileText className="h-4 w-4" />
               PDF
             </Button>
-            <Button variant="outline" size="sm" className="gap-2" onClick={handleExportXLS}>
+            <Button variant="outline" className="h-11 gap-2 border-border bg-transparent hover:bg-[color:var(--np-surface-inset-hover)]" onClick={handleExportXLS}>
               <FileSpreadsheet className="h-4 w-4" />
               XLS
             </Button>
             {isMaster && (
-              <Button variant="outline" className="gap-2" onClick={() => setImportOpen(true)}>
+              <Button variant="outline" className="h-11 gap-2 border-border bg-transparent hover:bg-[color:var(--np-surface-inset-hover)]" onClick={() => setImportOpen(true)}>
                 <Upload className="h-4 w-4" />
                 Importar
               </Button>
             )}
-            <Button className="gap-2" onClick={() => { setSelectedService(null); setModalOpen(true); }}><Plus className="h-4 w-4" />Novo Serviço</Button>
+            <Button className="h-11 gap-2 font-semibold" onClick={() => { setSelectedService(null); setModalOpen(true); }}><Plus className="h-4 w-4" />Novo Serviço</Button>
           </div>
         </div>
         {services.length === 0 ? (
-          <Card className="flex items-center justify-center py-12">
+          <Card className={`${GLASS} flex items-center justify-center py-12`}>
             <div className="text-center text-muted-foreground">
               <p>Nenhum serviço cadastrado</p>
               <Button variant="link" onClick={() => { setSelectedService(null); setModalOpen(true); }}>Adicionar primeiro serviço</Button>
@@ -165,7 +168,7 @@ export default function Servicos() {
                   placeholder="Buscar serviço por nome ou categoria..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="h-11 pl-10"
                 />
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -173,43 +176,43 @@ export default function Servicos() {
                 <Label htmlFor="show-archived" className="cursor-pointer text-sm">Mostrar arquivados</Label>
               </div>
             </div>
-            <Card>
+            <Card className={`${GLASS} overflow-hidden`}>
               <CardContent className="p-0">
-                <div className="flex items-center gap-4 px-4 py-2 border-b bg-muted/50 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <div className="flex items-center gap-4 px-4 py-2.5 border-b border-[color:var(--np-divider)] bg-[color:var(--np-surface-inset)] np-caps">
                   <span className="flex-1">Serviço</span>
-                  <span className="w-16 text-center">Duração</span>
+                  <span className="hidden w-16 text-center sm:block">Duração</span>
                   <span className="w-24 text-right">Preço</span>
-                  <span className="w-16 text-right">Comissão</span>
+                  <span className="hidden w-16 text-right sm:block">Comissão</span>
                   <span className="w-8"></span>
                 </div>
-                <div className="divide-y">
+                <div className="divide-y divide-[color:var(--np-divider)]">
                   {filteredServices.map((service) => (
                       <div
                         key={service.id}
-                        className={`flex items-center gap-4 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer ${!service.is_active ? "opacity-50" : ""}`}
+                        className={`flex min-h-[56px] items-center gap-3 px-4 py-3 hover:bg-[color:var(--np-surface-glass-hover)] transition-colors sm:gap-4 cursor-pointer ${!service.is_active ? "opacity-50" : ""}`}
                         onClick={() => handleEdit(service)}
                       >
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium truncate">{service.name}</span>
-                            {service.category && <Badge variant="outline" className="text-xs shrink-0">{service.category}</Badge>}
-                            {!service.is_active && <Badge variant="secondary" className="text-xs shrink-0 bg-amber-100 text-amber-800">Arquivado</Badge>}
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-medium truncate text-foreground">{service.name}</span>
+                            {service.category && <Badge variant="outline" className="text-xs shrink-0 border-border text-muted-foreground">{service.category}</Badge>}
+                            {!service.is_active && <Badge variant="secondary" className="text-xs shrink-0 border-transparent bg-[color:var(--np-accent-soft)] text-[color:var(--np-accent-text)]">Arquivado</Badge>}
                           </div>
                         </div>
-                        <div className="flex items-center gap-4 shrink-0 text-sm">
-                          <span className="flex items-center gap-1 text-muted-foreground w-16 justify-center">
+                        <div className="flex items-center gap-3 shrink-0 text-sm sm:gap-4">
+                          <span className="hidden items-center gap-1 text-muted-foreground w-16 justify-center sm:flex">
                             <Clock className="h-3.5 w-3.5" />
                             {formatDuration(service.duration_minutes)}
                           </span>
-                          <span className="font-medium w-24 text-right">
-                            R$ {Number(service.price).toFixed(2)}
+                          <span className="np-num w-24 text-right tabular-nums text-foreground">
+                            {brl(Number(service.price))}
                           </span>
-                          <span className="text-muted-foreground w-16 text-right">
+                          <span className="hidden text-muted-foreground w-16 text-right tabular-nums sm:block">
                             {Number(service.commission_percent) || 0}%
                           </span>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" aria-label="Ações" className="h-11 w-11" onClick={(e) => e.stopPropagation()}>
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -218,7 +221,7 @@ export default function Servicos() {
                               {service.is_active ? (
                                 <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(service); }} className="text-destructive">Excluir</DropdownMenuItem>
                               ) : (
-                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); restoreService(service.id); }} className="text-emerald-700">Reativar</DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); restoreService(service.id); }} className="text-[color:var(--np-positive-text)]">Reativar</DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
                           </DropdownMenu>

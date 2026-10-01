@@ -470,7 +470,7 @@ export function ServiceModal({ open, onOpenChange, service, onSubmit, isLoading 
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Lucro Bruto:</span>
-                      <span className={formData.price - totalProductCost >= 0 ? "text-green-600" : "text-destructive"}>
+                      <span className={formData.price - totalProductCost >= 0 ? "text-[var(--np-positive-text)]" : "text-destructive"}>
                         {formatCurrency(formData.price - totalProductCost)}
                       </span>
                     </div>

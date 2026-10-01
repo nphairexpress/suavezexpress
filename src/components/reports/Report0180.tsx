@@ -4,13 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Loader2, ShoppingBag } from "lucide-react";
+import { Download, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { EmptyState } from "@design-system";
 import { exportToExcel } from "./utils/exportExcel";
+import { NUM, ReportLoading, ReportTitle } from "./ReportKit";
 
 interface Props {
   dateRange: { from: Date; to: Date };
@@ -85,39 +87,40 @@ export function Report0180({ dateRange }: Props) {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+    return <ReportLoading />;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ShoppingBag className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">Serviços e Produtos Vendidos</h3>
-        </div>
-        <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
-          <Download className="h-4 w-4 mr-2" />Exportar Excel
-        </Button>
-      </div>
+      <ReportTitle
+        icon={ShoppingBag}
+        actions={
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
+            <Download className="h-4 w-4 mr-2" />Exportar Excel
+          </Button>
+        }
+      >
+        Serviços e Produtos Vendidos
+      </ReportTitle>
 
       {/* Summary cards */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-sm text-muted-foreground">Total Serviços</p>
-            <p className="text-xl font-bold">R$ {totalServices.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+            <p className="np-num mt-1 text-xl text-foreground">R$ {totalServices.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-sm text-muted-foreground">Total Produtos</p>
-            <p className="text-xl font-bold">R$ {totalProducts.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+            <p className="np-num mt-1 text-xl text-foreground">R$ {totalProducts.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-sm text-muted-foreground">Total Geral</p>
-            <p className="text-xl font-bold text-primary">R$ {totalGeral.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+            <p className="np-num mt-1 text-xl text-[color:var(--np-accent-text)]">R$ {totalGeral.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
           </CardContent>
         </Card>
       </div>
@@ -126,7 +129,7 @@ export function Report0180({ dateRange }: Props) {
         <CardHeader><CardTitle className="text-sm text-muted-foreground">{rows.length} item(ns) vendido(s)</CardTitle></CardHeader>
         <CardContent>
           {rows.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Nenhum item vendido no período</div>
+            <EmptyState icon="info" title="Nenhum item vendido no período" />
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -154,9 +157,9 @@ export function Report0180({ dateRange }: Props) {
                         </Badge>
                       </TableCell>
                       <TableCell>{r.profName}</TableCell>
-                      <TableCell className="text-right">{r.quantity}</TableCell>
-                      <TableCell className="text-right">R$ {r.unitPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                      <TableCell className="text-right font-medium">R$ {r.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                      <TableCell className={NUM}>{r.quantity}</TableCell>
+                      <TableCell className={NUM}>R$ {r.unitPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                      <TableCell className={NUM + " font-medium"}>R$ {r.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { display } from "@/components/financeiro/glass";
 import { useSalonPermissions } from "@/hooks/useSalonPermissions";
 import { Navigate } from "react-router-dom";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
@@ -77,10 +78,10 @@ const STATUS_LABEL: Record<AccountPayable["status"], string> = {
 
 function StatusBadge({ status }: { status: AccountPayable["status"] }) {
   const cfg: Record<AccountPayable["status"], string> = {
-    pending: "bg-amber-100 text-amber-700 hover:bg-amber-100",
-    overdue: "bg-red-100 text-red-700 hover:bg-red-100",
-    paid: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100",
-    cancelled: "bg-zinc-100 text-zinc-600 hover:bg-zinc-100",
+    pending: "bg-[var(--np-accent-soft)] text-[color:var(--np-accent-text)] hover:bg-[var(--np-accent-soft)]",
+    overdue: "bg-[var(--np-danger-soft)] text-[color:var(--np-danger-text)] hover:bg-[var(--np-danger-soft)]",
+    paid: "bg-[var(--np-positive-soft)] text-[color:var(--np-positive-text)] hover:bg-[var(--np-positive-soft)]",
+    cancelled: "bg-[var(--np-surface-inset)] text-muted-foreground hover:bg-[var(--np-surface-glass-hover)]",
   };
   return <Badge variant="outline" className={cfg[status]}>{STATUS_LABEL[status]}</Badge>;
 }
@@ -265,27 +266,27 @@ export default function ContasAPagar() {
       <div className="space-y-4 md:space-y-6">
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Contas a Pagar</h1>
+            <h1 className={`${display} text-2xl md:text-3xl font-bold tracking-tight text-foreground`}>Contas a Pagar</h1>
             <p className="text-muted-foreground text-sm">Boletos, faturas e pagamentos a fornecedores.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" disabled={filtered.length === 0}>
+                <Button variant="outline" className="h-11 flex-1 sm:flex-none" disabled={filtered.length === 0}>
                   <Download className="h-4 w-4 mr-2" /> Exportar
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={handleExportPDF}>
-                  <FileText className="h-4 w-4 mr-2 text-red-600" /> PDF
+                  <FileText className="h-4 w-4 mr-2 text-[color:var(--np-danger-text)]" /> PDF
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExportXLS}>
-                  <FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-600" /> Excel (XLSX)
+                  <FileSpreadsheet className="h-4 w-4 mr-2 text-[color:var(--np-positive-text)]" /> Excel (XLSX)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
             {pode("despesas.lancar") && (
-              <Button onClick={() => setCreateOpen(true)}>
+              <Button className="h-11 flex-1 sm:flex-none" onClick={() => setCreateOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" /> Nova conta
               </Button>
             )}
@@ -294,27 +295,27 @@ export default function ContasAPagar() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          <Card className="border-red-200 bg-red-50/50">
+          <Card className="border-[color:var(--np-danger-border)] bg-[var(--np-danger-soft)]">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-wider font-semibold text-red-700">VENCIDAS</p>
-                  <p className="text-xl md:text-2xl font-bold text-red-800 mt-1">{brl(stats.overdue.total)}</p>
-                  <p className="text-xs text-red-600 mt-1">{stats.overdue.count} {stats.overdue.count === 1 ? "conta" : "contas"}</p>
+                  <p className="text-xs uppercase tracking-wider font-semibold text-[color:var(--np-danger-text)]">VENCIDAS</p>
+                  <p className="[font-family:var(--np-font-display)] tabular-nums text-xl md:text-2xl font-bold text-[color:var(--np-danger-text)] mt-1">{brl(stats.overdue.total)}</p>
+                  <p className="text-xs text-[color:var(--np-danger-text)] mt-1">{stats.overdue.count} {stats.overdue.count === 1 ? "conta" : "contas"}</p>
                 </div>
-                <AlertTriangle className="h-9 w-9 text-red-400" />
+                <AlertTriangle className="h-9 w-9 text-[color:var(--np-danger-text)]" />
               </div>
             </CardContent>
           </Card>
-          <Card className="border-amber-200 bg-amber-50/50">
+          <Card className="border-[color:var(--np-accent-border)] bg-[var(--np-accent-soft)]">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-wider font-semibold text-amber-700">VENCEM HOJE</p>
-                  <p className="text-xl md:text-2xl font-bold text-amber-800 mt-1">{brl(stats.todayDue.total)}</p>
-                  <p className="text-xs text-amber-600 mt-1">{stats.todayDue.count} {stats.todayDue.count === 1 ? "conta" : "contas"}</p>
+                  <p className="text-xs uppercase tracking-wider font-semibold text-[color:var(--np-accent-text)]">VENCEM HOJE</p>
+                  <p className="[font-family:var(--np-font-display)] tabular-nums text-xl md:text-2xl font-bold text-[color:var(--np-accent-text)] mt-1">{brl(stats.todayDue.total)}</p>
+                  <p className="text-xs text-[color:var(--np-accent-text)] mt-1">{stats.todayDue.count} {stats.todayDue.count === 1 ? "conta" : "contas"}</p>
                 </div>
-                <Clock className="h-9 w-9 text-amber-400" />
+                <Clock className="h-9 w-9 text-[color:var(--np-accent-text)]" />
               </div>
             </CardContent>
           </Card>
@@ -323,7 +324,7 @@ export default function ContasAPagar() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">A VENCER</p>
-                  <p className="text-xl md:text-2xl font-bold mt-1">{brl(stats.pending.total)}</p>
+                  <p className="[font-family:var(--np-font-display)] tabular-nums text-xl md:text-2xl font-bold mt-1">{brl(stats.pending.total)}</p>
                   <p className="text-xs text-muted-foreground mt-1">{stats.pending.count} {stats.pending.count === 1 ? "conta" : "contas"}</p>
                 </div>
                 <Receipt className="h-9 w-9 text-muted-foreground" />
@@ -335,9 +336,9 @@ export default function ContasAPagar() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">PAGAS NOS ÚLTIMOS 30D</p>
-                  <p className="text-xl md:text-2xl font-bold mt-1">{brl(stats.paid30d.total)}</p>
+                  <p className="[font-family:var(--np-font-display)] tabular-nums text-xl md:text-2xl font-bold mt-1">{brl(stats.paid30d.total)}</p>
                 </div>
-                <CheckCircle2 className="h-9 w-9 text-emerald-400" />
+                <CheckCircle2 className="h-9 w-9 text-[color:var(--np-positive-text)]" />
               </div>
             </CardContent>
           </Card>
@@ -383,8 +384,8 @@ export default function ContasAPagar() {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs text-muted-foreground">Atalhos:</span>
-              <Button variant="secondary" size="sm" onClick={presetThisMonth}>Mês atual</Button>
-              <Button variant="secondary" size="sm" onClick={presetNext30}>Próx. 30 dias</Button>
+              <Button variant="secondary" size="sm" className="h-10" onClick={presetThisMonth}>Mês atual</Button>
+              <Button variant="secondary" size="sm" className="h-10" onClick={presetNext30}>Próx. 30 dias</Button>
               {hasFilters && (
                 <Button variant="ghost" size="sm" onClick={clearAll}>
                   <X className="h-3.5 w-3.5 mr-1" /> Limpar filtros
@@ -454,8 +455,8 @@ function PayablesTable({ items, total, onPay, onEdit, onCancel, onDelete, isLoad
     return (
       <Card>
         <CardContent className="p-8 text-center text-muted-foreground">
-          <Receipt className="h-12 w-12 mx-auto opacity-30" />
-          <p className="mt-3">Nenhuma conta nesse filtro.</p>
+          <Receipt className="h-12 w-12 mx-auto opacity-40" />
+          <p className={`${display} mt-3 font-semibold text-foreground`}>Nenhuma conta nesse filtro.</p>
         </CardContent>
       </Card>
     );
@@ -464,8 +465,8 @@ function PayablesTable({ items, total, onPay, onEdit, onCancel, onDelete, isLoad
   return (
     <Card>
       <CardContent className="p-0 overflow-x-auto">
-        <Table>
-          <TableHeader>
+        <Table className="[&_tr]:border-border">
+          <TableHeader className="[&_th]:text-[11px] [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted-foreground">
             <TableRow>
               <TableHead>Descrição</TableHead>
               <TableHead className="hidden md:table-cell">Fornecedor</TableHead>
@@ -478,7 +479,7 @@ function PayablesTable({ items, total, onPay, onEdit, onCancel, onDelete, isLoad
           </TableHeader>
           <TableBody>
             {items.map((p) => (
-              <TableRow key={p.id} className={p.status === "overdue" ? "bg-red-50/30" : ""}>
+              <TableRow key={p.id} className={p.status === "overdue" ? "bg-[var(--np-danger-soft)]" : ""}>
                 <TableCell>
                   <div className="font-medium text-sm">{p.description}</div>
                   {(p.nf_numero || p.total_parcelas > 1 || p.category) && (
@@ -502,7 +503,7 @@ function PayablesTable({ items, total, onPay, onEdit, onCancel, onDelete, isLoad
                 <TableCell className="hidden sm:table-cell text-sm">
                   {formatDate(p.due_date)}
                   {p.status === "paid" && p.paid_at && (
-                    <div className="text-xs text-emerald-600">Pago {formatDate(p.paid_at)}</div>
+                    <div className="text-xs text-[color:var(--np-positive-text)]">Pago {formatDate(p.paid_at)}</div>
                   )}
                 </TableCell>
                 <TableCell className="text-right font-semibold tabular-nums">
@@ -514,14 +515,14 @@ function PayablesTable({ items, total, onPay, onEdit, onCancel, onDelete, isLoad
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Button variant="ghost" size="icon" className="h-11 w-11">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       {(p.status === "pending" || p.status === "overdue") && (
                         <DropdownMenuItem onClick={() => onPay(p)}>
-                          <CheckCircle2 className="h-4 w-4 mr-2 text-emerald-600" />
+                          <CheckCircle2 className="h-4 w-4 mr-2 text-[color:var(--np-positive-text)]" />
                           Marcar como paga
                         </DropdownMenuItem>
                       )}
@@ -579,7 +580,7 @@ function PayablesTable({ items, total, onPay, onEdit, onCancel, onDelete, isLoad
               <TableCell colSpan={3} className="hidden sm:table-cell font-semibold">Total ({items.length})</TableCell>
               <TableCell className="sm:hidden font-semibold">Total ({items.length})</TableCell>
               <TableCell className="hidden sm:table-cell" />
-              <TableCell className="text-right font-bold tabular-nums">{brl(total)}</TableCell>
+              <TableCell className="[font-family:var(--np-font-display)] text-right font-bold tabular-nums">{brl(total)}</TableCell>
               <TableCell colSpan={2} />
             </TableRow>
           </TableFooter>

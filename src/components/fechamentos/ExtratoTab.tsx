@@ -91,34 +91,34 @@ function asaasStatusBadge(status: string) {
   const s = String(status ?? "").toUpperCase();
   if (s === "RECEIVED" || s === "CONFIRMED" || s === "RECEIVED_IN_CASH") {
     return (
-      <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-100">
+      <Badge className="bg-[var(--np-positive-soft)] text-[color:var(--np-positive-text)] border border-[color:var(--np-positive-border)] hover:bg-[var(--np-positive-soft)]">
         Pago
       </Badge>
     );
   }
   if (s === "PENDING") {
     return (
-      <Badge className="bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-100">
+      <Badge className="bg-[var(--np-accent-soft)] text-[color:var(--np-accent-text)] border border-[color:var(--np-accent-border)] hover:bg-[var(--np-accent-soft)]">
         Pendente
       </Badge>
     );
   }
   if (s === "OVERDUE") {
     return (
-      <Badge className="bg-rose-100 text-rose-800 border border-rose-200 hover:bg-rose-100">
+      <Badge className="bg-[var(--np-danger-soft)] text-[color:var(--np-danger-text)] border border-[color:var(--np-danger-border)] hover:bg-[var(--np-danger-soft)]">
         Vencido
       </Badge>
     );
   }
   if (s === "REFUNDED") {
     return (
-      <Badge className="bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-100">
+      <Badge className="bg-[var(--np-surface-inset)] text-foreground border border-border hover:bg-[var(--np-surface-glass-hover)]">
         Estornado
       </Badge>
     );
   }
   return (
-    <Badge variant="outline" className="text-slate-600">
+    <Badge variant="outline" className="text-muted-foreground">
       {s || "—"}
     </Badge>
   );
@@ -203,9 +203,9 @@ export function ExtratoTab() {
   return (
     <div className="space-y-4">
       {/* Filtros */}
-      <div className="flex flex-col sm:flex-row sm:items-end gap-3 p-4 border rounded-lg bg-white">
+      <div className="flex flex-col sm:flex-row sm:items-end gap-3 p-4 border rounded-lg bg-card">
         <div className="flex-1">
-          <label className="text-xs font-medium text-slate-600 mb-1 block">De</label>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">De</label>
           <Input
             type="date"
             value={from}
@@ -214,7 +214,7 @@ export function ExtratoTab() {
           />
         </div>
         <div className="flex-1">
-          <label className="text-xs font-medium text-slate-600 mb-1 block">Até</label>
+          <label className="text-xs font-medium text-muted-foreground mb-1 block">Até</label>
           <Input
             type="date"
             value={to}
@@ -226,7 +226,7 @@ export function ExtratoTab() {
         <button
           onClick={() => refetch()}
           disabled={isFetching}
-          className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-md border bg-slate-50 hover:bg-slate-100 text-sm font-medium disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-md border bg-[var(--np-surface-inset)] hover:bg-[var(--np-surface-glass-hover)] text-sm font-medium disabled:opacity-50"
         >
           <RefreshCw size={14} className={isFetching ? "animate-spin" : ""} />
           Atualizar
@@ -246,12 +246,12 @@ export function ExtratoTab() {
 
         {/* Error / loading */}
         {error && (
-          <div className="mt-4 p-3 text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded">
+          <div className="mt-4 p-3 text-sm text-[color:var(--np-danger-text)] bg-[var(--np-danger-soft)] border border-[color:var(--np-danger-border)] rounded">
             Erro ao carregar extrato: {String((error as any)?.message ?? error)}
           </div>
         )}
         {isLoading && (
-          <div className="mt-4 p-6 text-center text-slate-500 border rounded">
+          <div className="mt-4 p-6 text-center text-muted-foreground border rounded">
             Carregando transações…
           </div>
         )}
@@ -263,28 +263,28 @@ export function ExtratoTab() {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-xs text-slate-500">Transações</div>
+                    <div className="text-xs text-muted-foreground">Transações</div>
                     <div className="text-2xl font-semibold">{pagbankResumo.count}</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-xs text-slate-500">Bruto</div>
+                    <div className="text-xs text-muted-foreground">Bruto</div>
                     <div className="text-2xl font-semibold">{BRL(pagbankResumo.bruto)}</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-xs text-slate-500">Taxa total</div>
-                    <div className="text-2xl font-semibold text-rose-700">
+                    <div className="text-xs text-muted-foreground">Taxa total</div>
+                    <div className="text-2xl font-semibold text-[color:var(--np-danger-text)]">
                       {BRL(pagbankResumo.taxa)}
                     </div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-xs text-slate-500">Líquido</div>
-                    <div className="text-2xl font-semibold text-emerald-700">
+                    <div className="text-xs text-muted-foreground">Líquido</div>
+                    <div className="text-2xl font-semibold text-[color:var(--np-positive-text)]">
                       {BRL(pagbankResumo.liquido)}
                     </div>
                   </CardContent>
@@ -292,17 +292,17 @@ export function ExtratoTab() {
               </div>
 
               {pagbankSorted.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 border rounded-lg flex flex-col items-center gap-2">
-                  <Inbox className="text-slate-300" size={40} />
+                <div className="p-8 text-center text-muted-foreground border rounded-lg flex flex-col items-center gap-2">
+                  <Inbox className="text-muted-foreground" size={40} />
                   <div className="font-medium">Sem transações PagBank nesse período</div>
                   <div className="text-xs">
                     Tente mudar o intervalo de datas ou aguarde o cron das 7h.
                   </div>
                 </div>
               ) : (
-                <div className="border rounded-lg overflow-x-auto bg-white">
+                <div className="border rounded-lg overflow-x-auto bg-card">
                   <table className="w-full text-sm">
-                    <thead className="bg-slate-50 text-slate-600 text-xs uppercase">
+                    <thead className="bg-[var(--np-surface-inset)] text-muted-foreground text-xs uppercase">
                       <tr>
                         <th className="text-left p-3 font-medium">Data</th>
                         <th className="text-left p-3 font-medium">Hora</th>
@@ -324,24 +324,24 @@ export function ExtratoTab() {
                         return (
                           <tr
                             key={`${t.codigo_transacao ?? t.tid ?? idx}`}
-                            className="border-t hover:bg-slate-50"
+                            className="border-t hover:bg-[var(--np-surface-glass-hover)]"
                           >
                             <td className="p-3">{data}</td>
                             <td className="p-3 tabular-nums">{hora}</td>
                             <td className="p-3 font-medium">
                               {pbBandeiraLabel(t.arranjo_ur)}
                             </td>
-                            <td className="p-3 text-slate-600">{pbTipo(t)}</td>
+                            <td className="p-3 text-muted-foreground">{pbTipo(t)}</td>
                             <td className="p-3 text-right tabular-nums">
                               {BRL(Number(t.valor_total_transacao))}
                             </td>
-                            <td className="p-3 text-right tabular-nums text-rose-700">
+                            <td className="p-3 text-right tabular-nums text-[color:var(--np-danger-text)]">
                               {BRL(Number(t.taxa_intermediacao))}
                             </td>
-                            <td className="p-3 text-right tabular-nums text-emerald-700 font-medium">
+                            <td className="p-3 text-right tabular-nums text-[color:var(--np-positive-text)] font-medium">
                               {BRL(Number(t.valor_liquido_transacao))}
                             </td>
-                            <td className="p-3 text-right text-slate-600">{parcelas}</td>
+                            <td className="p-3 text-right text-muted-foreground">{parcelas}</td>
                           </tr>
                         );
                       })}
@@ -360,36 +360,36 @@ export function ExtratoTab() {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-xs text-slate-500">Cobranças</div>
+                    <div className="text-xs text-muted-foreground">Cobranças</div>
                     <div className="text-2xl font-semibold">{asaasResumo.count}</div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-muted-foreground">
                       Pagas ({asaasResumo.receivedCount})
                     </div>
-                    <div className="text-2xl font-semibold text-emerald-700">
+                    <div className="text-2xl font-semibold text-[color:var(--np-positive-text)]">
                       {BRL(asaasResumo.received)}
                     </div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-muted-foreground">
                       Pendentes ({asaasResumo.pendingCount})
                     </div>
-                    <div className="text-2xl font-semibold text-amber-700">
+                    <div className="text-2xl font-semibold text-[color:var(--np-accent-text)]">
                       {BRL(asaasResumo.pending)}
                     </div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-muted-foreground">
                       Vencidas ({asaasResumo.overdueCount})
                     </div>
-                    <div className="text-2xl font-semibold text-rose-700">
+                    <div className="text-2xl font-semibold text-[color:var(--np-danger-text)]">
                       {BRL(asaasResumo.overdue)}
                     </div>
                   </CardContent>
@@ -397,15 +397,15 @@ export function ExtratoTab() {
               </div>
 
               {asaasSorted.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 border rounded-lg flex flex-col items-center gap-2">
-                  <Inbox className="text-slate-300" size={40} />
+                <div className="p-8 text-center text-muted-foreground border rounded-lg flex flex-col items-center gap-2">
+                  <Inbox className="text-muted-foreground" size={40} />
                   <div className="font-medium">Sem cobranças Asaas nesse período</div>
                   <div className="text-xs">Ajuste o intervalo de datas e tente novamente.</div>
                 </div>
               ) : (
-                <div className="border rounded-lg overflow-x-auto bg-white">
+                <div className="border rounded-lg overflow-x-auto bg-card">
                   <table className="w-full text-sm">
-                    <thead className="bg-slate-50 text-slate-600 text-xs uppercase">
+                    <thead className="bg-[var(--np-surface-inset)] text-muted-foreground text-xs uppercase">
                       <tr>
                         <th className="text-left p-3 font-medium">Data</th>
                         <th className="text-left p-3 font-medium">Cliente / Descrição</th>
@@ -419,18 +419,18 @@ export function ExtratoTab() {
                       {asaasSorted.map((p: any) => {
                         const { data } = asaasDataHora(p);
                         return (
-                          <tr key={p.id} className="border-t hover:bg-slate-50">
+                          <tr key={p.id} className="border-t hover:bg-[var(--np-surface-glass-hover)]">
                             <td className="p-3 whitespace-nowrap">{data}</td>
-                            <td className="p-3 text-slate-700 max-w-xs truncate">
+                            <td className="p-3 text-foreground max-w-xs truncate">
                               {asaasCliente(p)}
                             </td>
-                            <td className="p-3 text-slate-600 whitespace-nowrap">
+                            <td className="p-3 text-muted-foreground whitespace-nowrap">
                               {asaasTipo(p)}
                             </td>
                             <td className="p-3 text-right tabular-nums">
                               {BRL(Number(p.value))}
                             </td>
-                            <td className="p-3 text-right tabular-nums text-emerald-700">
+                            <td className="p-3 text-right tabular-nums text-[color:var(--np-positive-text)]">
                               {BRL(Number(p.netValue ?? p.value))}
                             </td>
                             <td className="p-3 text-center">{asaasStatusBadge(p.status)}</td>

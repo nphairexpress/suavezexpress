@@ -2,7 +2,8 @@ import { useState } from "react";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader, GlassCard, EmptyState, Button as DsButton } from "@design-system";
+import { tableHead } from "@/components/clients/clientsUi";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -204,225 +205,231 @@ export default function Clientes() {
 
   return (
     <AppLayoutNew>
-      <div className="space-y-4">
-        {/* Action buttons row */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Button 
-              className="gap-2 bg-primary hover:bg-primary/90" 
-              onClick={() => { setSelectedClient(null); setModalOpen(true); }}
-            >
-              <Plus className="h-4 w-4" />
-              Adicionar Cliente
-            </Button>
-            {isMaster && (
-              <Button variant="outline" className="gap-2" onClick={() => setImportOpen(true)}>
-                <Upload className="h-4 w-4" />
-                Importar
-              </Button>
-            )}
-            <Button variant="outline" className="gap-2">
-              <Merge className="h-4 w-4" />
-              Unir cadastros duplicados
-            </Button>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" className="gap-2">
-              <Settings className="h-4 w-4" />
-              Anamnese
-            </Button>
-            <Button variant="outline" className="gap-2">
-              <FileText className="h-4 w-4" />
-              Prontuário
-            </Button>
-          </div>
-        </div>
+      <div className="space-y-4 md:space-y-6">
+        <PageHeader
+          eyebrow="Clientes"
+          title="Clientes"
+          description="Cadastro, contato e histórico de quem passa pelo salão."
+          actions={
+            <>
+              <DsButton
+                variant="primary"
+                icon={Plus}
+                className="min-h-[48px] sm:min-h-0"
+                onClick={() => { setSelectedClient(null); setModalOpen(true); }}
+              >
+                Adicionar Cliente
+              </DsButton>
+              {isMaster && (
+                <DsButton variant="secondary" icon={Upload} onClick={() => setImportOpen(true)}>
+                  Importar
+                </DsButton>
+              )}
+              <DsButton variant="secondary" icon={Merge}>
+                Unir cadastros duplicados
+              </DsButton>
+              <DsButton variant="secondary" icon={Settings}>
+                Anamnese
+              </DsButton>
+              <DsButton variant="secondary" icon={FileText}>
+                Prontuário
+              </DsButton>
+            </>
+          }
+        />
 
-        {/* Filters row */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Mostrar</span>
-            <Select value={itemsPerPage} onValueChange={setItemsPerPage}>
-              <SelectTrigger className="w-[70px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="25">25</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-                <SelectItem value="100">100</SelectItem>
-              </SelectContent>
-            </Select>
-            <span className="text-sm text-muted-foreground">por página</span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <Select value={searchField} onValueChange={setSearchField}>
-              <SelectTrigger className="w-[100px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="nome">Nome</SelectItem>
-                <SelectItem value="email">E-mail</SelectItem>
-                <SelectItem value="telefone">Telefone</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="relative">
-              <Input 
-                placeholder="Pesquisar Cliente" 
-                value={searchQuery} 
-                onChange={(e) => setSearchQuery(e.target.value)} 
-                className="w-[200px]"
-              />
+        <GlassCard padding={0} className="overflow-hidden">
+          {/* Filters row */}
+          <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Mostrar</span>
+              <Select value={itemsPerPage} onValueChange={setItemsPerPage}>
+                <SelectTrigger className="h-11 w-[76px] tabular-nums">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">por página</span>
+            </div>
+
+            <div className="flex w-full items-center gap-2 sm:w-auto">
+              <Select value={searchField} onValueChange={setSearchField}>
+                <SelectTrigger className="h-11 w-[112px] shrink-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="nome">Nome</SelectItem>
+                  <SelectItem value="email">E-mail</SelectItem>
+                  <SelectItem value="telefone">Telefone</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="relative min-w-0 flex-1 sm:flex-none">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input 
+                  placeholder="Pesquisar Cliente" 
+                  value={searchQuery} 
+                  onChange={(e) => setSearchQuery(e.target.value)} 
+                  className="h-11 w-full pl-9 sm:w-[240px]"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Table */}
-        <Card>
-          <CardContent className="p-0">
-            {filteredClients.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <p>Não encontramos nenhum resultado.</p>
-                <Button variant="link" onClick={() => { setSelectedClient(null); setModalOpen(true); }}>
+          {/* Table */}
+          {filteredClients.length === 0 ? (
+            <EmptyState
+              icon={Search}
+              title="Não encontramos nenhum resultado."
+              className="py-12"
+              action={
+                <DsButton variant="ghost" onClick={() => { setSelectedClient(null); setModalOpen(true); }}>
                   Adicionar primeiro cliente
-                </Button>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead className="text-primary font-semibold">
-                      Nome ▼
+                </DsButton>
+              }
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border hover:bg-transparent">
+                  <TableHead className={tableHead}>
+                    Nome ▼
+                  </TableHead>
+                  <TableHead className={tableHead}>
+                    Contato ▼
+                  </TableHead>
+                  {canViewCpf && (
+                    <TableHead className={`${tableHead} hidden md:table-cell`}>
+                      Aniversário ▼
                     </TableHead>
-                    <TableHead className="text-primary font-semibold">
-                      Contato ▼
-                    </TableHead>
-                    {canViewCpf && (
-                      <TableHead className="text-primary font-semibold hidden md:table-cell">
-                        Aniversário ▼
-                      </TableHead>
-                    )}
-                    <TableHead className="text-primary font-semibold hidden lg:table-cell">
-                      Gênero ▼
-                    </TableHead>
-                    <TableHead className="text-primary font-semibold hidden xl:table-cell">
-                      Observação ▼
-                    </TableHead>
-                    <TableHead className="text-right">Ação</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedClients.map((client) => (
-                    <TableRow key={client.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => handleEdit(client)}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
-                            {client.avatar_url && (
-                              <AvatarImage src={client.avatar_url} alt={client.name} />
-                            )}
-                            <AvatarFallback className="bg-muted text-muted-foreground text-sm">
-                              {getInitials(client.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium text-primary hover:underline cursor-pointer">
-                            {client.name}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          {client.phone && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <span className="text-muted-foreground">Cel:</span>
-                              <span>{client.phone}</span>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-6 w-6 bg-green-500 hover:bg-green-600 text-white rounded-full"
-                                onClick={() => openWhatsApp(client)}
-                                title="Abrir WhatsApp"
-                              >
-                                <MessageCircle className="h-3 w-3" />
-                              </Button>
-                            </div>
+                  )}
+                  <TableHead className={`${tableHead} hidden lg:table-cell`}>
+                    Gênero ▼
+                  </TableHead>
+                  <TableHead className={`${tableHead} hidden xl:table-cell`}>
+                    Observação ▼
+                  </TableHead>
+                  <TableHead className={`${tableHead} text-right`}>Ação</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedClients.map((client) => (
+                  <TableRow key={client.id} className="cursor-pointer border-border hover:bg-[var(--np-surface-inset)]" onClick={() => handleEdit(client)}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10 shrink-0 ring-2 ring-[color:var(--np-avatar-ring)]">
+                          {client.avatar_url && (
+                            <AvatarImage src={client.avatar_url} alt={client.name} />
                           )}
-                          {client.email && (
-                            <div className="text-sm text-muted-foreground">
-                              <span>E-mail: </span>
-                              <span>{client.email}</span>
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      {canViewCpf && (
-                        <TableCell className="hidden md:table-cell">
-                          {formatBirthday(client.birth_date)}
-                        </TableCell>
-                      )}
-                      <TableCell className="hidden lg:table-cell">
-                        {getGenderLabel(client.gender)}
-                      </TableCell>
-                      <TableCell className="hidden xl:table-cell max-w-[300px]">
-                        <span className="text-sm text-muted-foreground truncate block">
-                          {client.notes}
+                          <AvatarFallback className="bg-[var(--np-surface-inset-hover)] text-sm font-bold text-foreground [font-family:var(--np-font-display)]">
+                            {getInitials(client.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium text-foreground hover:underline cursor-pointer">
+                          {client.name}
                         </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                            onClick={() => handleEdit(client)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          {pode("cliente.excluir") && (
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {client.phone && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="text-muted-foreground">Cel:</span>
+                            <span className="tabular-nums text-foreground">{client.phone}</span>
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="h-8 w-8 bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                              onClick={() => handleDelete(client)}
+                              className="h-9 w-9 shrink-0 rounded-full bg-[var(--np-positive)] text-[color:var(--np-text-on-accent)] hover:bg-[var(--np-positive)] hover:text-[color:var(--np-text-on-accent)] hover:brightness-110"
+                              onClick={() => openWhatsApp(client)}
+                              title="Abrir WhatsApp"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <MessageCircle className="h-4 w-4" />
                             </Button>
-                          )}
-                        </div>
+                          </div>
+                        )}
+                        {client.email && (
+                          <div className="text-sm text-muted-foreground break-all">
+                            <span>E-mail: </span>
+                            <span>{client.email}</span>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    {canViewCpf && (
+                      <TableCell className="hidden md:table-cell text-foreground">
+                        {formatBirthday(client.birth_date)}
                       </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                    )}
+                    <TableCell className="hidden lg:table-cell text-foreground">
+                      {getGenderLabel(client.gender)}
+                    </TableCell>
+                    <TableCell className="hidden xl:table-cell max-w-[300px]">
+                      <span className="text-sm text-muted-foreground truncate block">
+                        {client.notes}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          aria-label="Editar cliente"
+                          className="h-11 w-11 rounded-xl text-muted-foreground hover:bg-[var(--np-surface-inset-hover)] hover:text-foreground sm:h-9 sm:w-9"
+                          onClick={() => handleEdit(client)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {pode("cliente.excluir") && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            aria-label="Excluir cliente"
+                            className="h-11 w-11 rounded-xl bg-[var(--np-danger-soft)] text-[color:var(--np-danger-text)] hover:bg-[var(--np-danger-solid)] hover:text-[color:var(--np-text-on-danger)] sm:h-9 sm:w-9"
+                            onClick={() => handleDelete(client)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>
-            Mostrando {startIndex + 1} a {Math.min(startIndex + parseInt(itemsPerPage), filteredClients.length)} de {filteredClients.length} Registros
-          </span>
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(p => p - 1)}
-            >
-              ← Anterior
-            </Button>
-            <span className="px-2">{currentPage}</span>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              disabled={currentPage >= totalPages}
-              onClick={() => setCurrentPage(p => p + 1)}
-            >
-              Próximo →
-            </Button>
+          {/* Pagination */}
+          <div className="flex flex-col gap-3 border-t border-border p-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between md:px-6">
+            <span className="tabular-nums">
+              Mostrando {startIndex + 1} a {Math.min(startIndex + parseInt(itemsPerPage), filteredClients.length)} de {filteredClients.length} Registros
+            </span>
+            <div className="flex items-center gap-2">
+              <DsButton 
+                variant="secondary" 
+                size="sm"
+                className="min-h-[44px] sm:min-h-0"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => p - 1)}
+              >
+                ← Anterior
+              </DsButton>
+              <span className="grid h-9 min-w-9 place-items-center rounded-full bg-[var(--np-accent-soft)] px-3 font-bold tabular-nums text-[color:var(--np-accent-text)] [font-family:var(--np-font-display)]">{currentPage}</span>
+              <DsButton 
+                variant="secondary" 
+                size="sm"
+                className="min-h-[44px] sm:min-h-0"
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage(p => p + 1)}
+              >
+                Próximo →
+              </DsButton>
+            </div>
           </div>
-        </div>
+        </GlassCard>
       </div>
 
       <ClientModal 

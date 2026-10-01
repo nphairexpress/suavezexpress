@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
+import { PageHeader, EmptyState } from "@design-system";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,7 +81,6 @@ function ProfessionalSidebar({
   professionals,
   selectedId,
   onSelect,
-  onAdd,
   search,
   onSearchChange,
   showInactive,
@@ -91,7 +91,6 @@ function ProfessionalSidebar({
   professionals: Professional[];
   selectedId: string | null;
   onSelect: (p: Professional) => void;
-  onAdd: () => void;
   search: string;
   onSearchChange: (s: string) => void;
   showInactive: boolean;
@@ -100,47 +99,44 @@ function ProfessionalSidebar({
   masterEmail: string | null;
 }) {
   return (
-    <div className="w-64 shrink-0 border-r bg-muted/30 flex flex-col h-full">
+    <div className="bg-card rounded-2xl border border-border flex flex-col overflow-hidden lg:sticky lg:top-0 lg:max-h-[calc(100vh-8rem)]">
       <div className="p-3 space-y-2">
-        <Button onClick={onAdd} className="w-full gap-2" size="sm">
-          <Plus className="h-4 w-4" /> Adicionar Profissional
-        </Button>
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Pesquisar profissional"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-8 h-8 text-sm"
+            className="pl-9 pr-10 h-11 text-sm"
           />
           {search && (
-            <button onClick={() => onSearchChange("")} className="absolute right-2 top-1/2 -translate-y-1/2">
-              <X className="h-3 w-3 text-muted-foreground" />
+            <button onClick={() => onSearchChange("")} className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 grid place-items-center rounded-md text-muted-foreground hover:text-foreground" aria-label="Limpar busca">
+              <X className="h-4 w-4" />
             </button>
           )}
         </div>
-        <div className="text-xs text-muted-foreground text-right">Total: {professionals.length}</div>
+        <div className="text-xs text-muted-foreground text-right tabular-nums">Total: {professionals.length}</div>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto max-h-72 lg:max-h-none border-t border-border">
         {professionals.map((p) => (
           <button
             key={p.id}
             onClick={() => onSelect(p)}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors hover:bg-muted ${
-              selectedId === p.id ? "bg-primary/10 border-l-4 border-primary font-medium" : "border-l-4 border-transparent"
+            className={`w-full min-h-[48px] flex items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors hover:bg-muted/60 border-l-4 ${
+              selectedId === p.id ? "bg-[color:var(--np-accent-soft)] border-[color:var(--np-accent)] font-semibold text-foreground" : "border-transparent text-foreground/90"
             }`}
           >
             <Avatar className="h-8 w-8 shrink-0">
               {p.avatar_url && <AvatarImage src={p.avatar_url} />}
-              <AvatarFallback className="text-xs bg-primary/10 text-primary">
+              <AvatarFallback className="text-xs font-semibold bg-[color:var(--np-accent-soft)] text-[color:var(--np-accent-text)]">
                 {getInitials(p.name)}
               </AvatarFallback>
             </Avatar>
             <span className="truncate uppercase text-xs">{p.nickname || p.name}</span>
             {p.user_id && masterEmail && p.email === masterEmail ? (
-              <Badge variant="outline" className="ml-auto text-[10px] px-1 py-0 shrink-0 border-primary text-primary">MASTER</Badge>
+              <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0 shrink-0 border-[color:var(--np-accent-border)] text-[color:var(--np-accent-text)]">MASTER</Badge>
             ) : p.user_id ? (
-              <Badge variant="outline" className="ml-auto text-[10px] px-1 py-0 shrink-0">ACESSO</Badge>
+              <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0 shrink-0 border-border text-muted-foreground">ACESSO</Badge>
             ) : null}
           </button>
         ))}
@@ -148,7 +144,7 @@ function ProfessionalSidebar({
       {inactiveCount > 0 && (
         <button
           onClick={onToggleInactive}
-          className="p-3 text-xs text-primary hover:underline text-center border-t"
+          className="min-h-[44px] p-3 text-xs font-medium text-[color:var(--np-accent-text)] hover:underline text-center border-t border-border"
         >
           {showInactive ? "Ver ativos" : `Profissionais excluídos (${inactiveCount})`}
         </button>
@@ -482,24 +478,28 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 space-y-2">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold tracking-tight">Profissionais</h1>
-        <div className="flex gap-2">
-          <Button onClick={handleSaveProfile} disabled={isUpdating} className="gap-2">
+    <div className="min-w-0 space-y-3">
+      <div className="bg-card rounded-2xl border border-border p-4 md:p-6 space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="np-caps">Dados pessoais</p>
+          <h2 className="np-display text-xl md:text-2xl truncate">{form.name || professional.name}</h2>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={handleSaveProfile} disabled={isUpdating} className="gap-2 h-11">
             <Save className="h-4 w-4" />
             {isUpdating ? "Salvando..." : "Salvar Alterações"}
           </Button>
           {canDelete && professional.is_active && (
-            <Button variant="destructive" size="sm" className="gap-1" onClick={onRequestDelete}>
+            <Button variant="destructive" className="gap-1 h-11" onClick={onRequestDelete}>
               <Trash2 className="h-4 w-4" />
               Excluir
             </Button>
           )}
           {canDelete && !professional.is_active && (
             <Button
-              size="sm"
-              className="gap-1 bg-green-600 hover:bg-green-700 text-white"
+              variant="outline"
+              className="gap-1 h-11 border-[color:var(--np-positive-border)] bg-[color:var(--np-positive-soft)] np-text-positive hover:bg-[color:var(--np-positive-soft)] hover:opacity-90"
               disabled={isReactivating}
               onClick={() => reactivateProfessional(professional.id)}
             >
@@ -511,9 +511,9 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
       </div>
 
       {/* ===== DADOS PESSOAIS (always visible) ===== */}
-      <div className="grid grid-cols-[auto_1fr_auto] gap-6 items-start">
+      <div className="grid grid-cols-1 gap-6 items-start md:grid-cols-[auto_minmax(0,1fr)] 2xl:grid-cols-[auto_minmax(0,1fr)_auto]">
         {/* Avatar */}
-        <div className="space-y-1">
+        <div className="space-y-1 justify-self-center">
           <AvatarUpload
             currentAvatarUrl={form.avatar_url}
             name={form.name}
@@ -526,7 +526,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
 
         {/* Main fields */}
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Nome conforme documento: <span className="text-muted-foreground">(Obrigatório)</span></Label>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -536,7 +536,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
               <Input value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} placeholder="000.000.000-00" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Nome Social:</Label>
               <Input value={form.nickname} onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
@@ -546,7 +546,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
               <Input value={form.rg} onChange={(e) => setForm({ ...form, rg: e.target.value })} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Cargo: <span className="text-muted-foreground">(Obrigatório)</span></Label>
               <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
@@ -563,7 +563,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
               <Input type="date" value={form.birth_date} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs">Possui alguma especialidade?</Label>
               <Input value={form.specialty} onChange={(e) => setForm({ ...form, specialty: e.target.value })} />
@@ -572,7 +572,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
               <Label className="text-xs">Qual <strong>cor</strong> deverá aparecer na agenda?</Label>
               <div className="flex items-center gap-2">
                 <Input value={form.agenda_color} onChange={(e) => setForm({ ...form, agenda_color: e.target.value })} className="flex-1" />
-                <input type="color" value={form.agenda_color} onChange={(e) => setForm({ ...form, agenda_color: e.target.value })} className="h-9 w-9 rounded border cursor-pointer" />
+                <input type="color" value={form.agenda_color} onChange={(e) => setForm({ ...form, agenda_color: e.target.value })} className="h-11 w-11 shrink-0 rounded-md border border-border bg-transparent cursor-pointer" aria-label="Escolher cor da agenda" />
               </div>
             </div>
           </div>
@@ -583,7 +583,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
         </div>
 
         {/* Right side checkboxes */}
-        <div className="space-y-3 border rounded-lg p-4 w-64">
+        <div className="space-y-3 border border-border rounded-xl p-4 bg-muted/30 w-full md:col-span-2 2xl:col-span-1 2xl:w-64">
           <div className="flex items-center space-x-2">
             <Checkbox
               id="has_schedule"
@@ -606,12 +606,11 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Qual <strong>ordem</strong> na Agenda?</Label>
-            <Input type="number" min={0} value={form.agenda_order} onChange={(e) => setForm({ ...form, agenda_order: Number(e.target.value) })} className="w-20" />
+            <Input type="number" min={0} value={form.agenda_order} onChange={(e) => setForm({ ...form, agenda_order: Number(e.target.value) })} className="w-24 tabular-nums" />
           </div>
           <Button
             variant="default"
-            size="sm"
-            className="w-full mt-2"
+            className="w-full mt-2 h-11"
             onClick={() => {
               const el = document.getElementById("accordion-commissions");
               el?.click();
@@ -622,20 +621,22 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
         </div>
       </div>
 
+      </div>
+
       {/* ===== ACCORDION SECTIONS ===== */}
-      <Accordion type="multiple" className="space-y-2 mt-6">
+      <Accordion type="multiple" className="space-y-3">
         {/* ACESSO */}
-        <AccordionItem value="acesso" className="border rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline">
+        <AccordionItem value="acesso" className="bg-card rounded-2xl border border-border px-4 md:px-6">
+          <AccordionTrigger className="hover:no-underline min-h-[52px] font-semibold text-left">
             <div className="flex items-center gap-2">
-              <KeyRound className="h-4 w-4 text-muted-foreground" />
+              <KeyRound className="h-4 w-4 shrink-0 text-[color:var(--np-accent-text)]" />
               <span>Acesso</span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="space-y-4 pb-4">
             {professional.create_access || professional.user_id ? (
               <div className="space-y-4 max-w-2xl">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs">E-mail de acesso:</Label>
                     <div className="flex items-center gap-2">
@@ -663,14 +664,14 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
                 </div>
 
                 {isMaster && (
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="gap-1" onClick={handleSendResetPassword}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button variant="outline" className="gap-1 h-11" onClick={handleSendResetPassword}>
                       <KeyRound className="h-3.5 w-3.5" /> Trocar Senha
                     </Button>
-                    <Button variant="outline" size="sm" className="gap-1" onClick={() => setSetPasswordOpen(true)}>
+                    <Button variant="outline" className="gap-1 h-11" onClick={() => setSetPasswordOpen(true)}>
                       <KeyRound className="h-3.5 w-3.5" /> Definir nova senha
                     </Button>
-                    <Button variant="destructive" size="sm" className="gap-1" onClick={handleDeleteAccess}>
+                    <Button variant="destructive" className="gap-1 h-11" onClick={handleDeleteAccess}>
                       <Trash2 className="h-3.5 w-3.5" /> Excluir Acesso
                     </Button>
                   </div>
@@ -678,12 +679,12 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
 
                 <p className="text-xs text-muted-foreground">
                   Não encontrou o acesso ideal? Configure os níveis em{" "}
-                  <a href="/configuracoes?tab=usuarios" className="text-primary underline">Configurações → Usuários e Acessos</a>.
+                  <a href="/configuracoes?tab=usuarios" className="font-medium text-[color:var(--np-accent-text)] underline">Configurações → Usuários e Acessos</a>.
                 </p>
 
-                <div className="flex items-center gap-2 p-2.5 bg-accent/50 border border-border rounded-lg w-fit">
-                  <div className="h-2 w-2 rounded-full bg-green-500" />
-                  <span className="text-sm">Este profissional possui acesso ao sistema</span>
+                <div className="flex items-center gap-2 p-2.5 bg-[color:var(--np-positive-soft)] border border-[color:var(--np-positive-border)] rounded-lg w-fit">
+                  <div className="h-2 w-2 rounded-full bg-[color:var(--np-positive)]" />
+                  <span className="text-sm np-text-positive font-medium">Este profissional possui acesso ao sistema</span>
                 </div>
               </div>
             ) : (
@@ -691,7 +692,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
                 <p className="text-sm text-muted-foreground">
                   Este profissional ainda não possui acesso ao sistema. Preencha os dados abaixo para criar o acesso.
                 </p>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs">E-mail para acesso:</Label>
                     <Input
@@ -730,13 +731,12 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Não encontrou o acesso ideal? Configure em{" "}
-                  <a href="/configuracoes/acessos" className="text-primary underline">Configurações → Grupos de Acessos</a>.
+                  <a href="/configuracoes/acessos" className="font-medium text-[color:var(--np-accent-text)] underline">Configurações → Grupos de Acessos</a>.
                 </p>
                 <Button
                   onClick={handleCreateAccess}
                   disabled={isCreatingAccess}
-                  size="sm"
-                  className="gap-2"
+                  className="gap-2 h-11"
                 >
                   {isCreatingAccess ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
                   Criar Acesso ao Sistema
@@ -747,10 +747,10 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
         </AccordionItem>
 
         {/* SERVIÇO E COMISSÃO */}
-        <AccordionItem value="commissions" className="border rounded-lg px-4">
-          <AccordionTrigger id="accordion-commissions" className="hover:no-underline">
+        <AccordionItem value="commissions" className="bg-card rounded-2xl border border-border px-4 md:px-6">
+          <AccordionTrigger id="accordion-commissions" className="hover:no-underline min-h-[52px] font-semibold text-left">
             <div className="flex items-center gap-2">
-              <Scissors className="h-4 w-4 text-muted-foreground" />
+              <Scissors className="h-4 w-4 shrink-0 text-[color:var(--np-accent-text)]" />
               <span>Serviço e Comissão</span>
             </div>
           </AccordionTrigger>
@@ -767,10 +767,10 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
         </AccordionItem>
 
         {/* REGRAS DE CONTRATO E COMISSÃO */}
-        <AccordionItem value="contract-rules" className="border rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline">
+        <AccordionItem value="contract-rules" className="bg-card rounded-2xl border border-border px-4 md:px-6">
+          <AccordionTrigger className="hover:no-underline min-h-[52px] font-semibold text-left">
             <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <FileText className="h-4 w-4 shrink-0 text-[color:var(--np-accent-text)]" />
               <span>Regras de Contrato e Comissão</span>
             </div>
           </AccordionTrigger>
@@ -778,7 +778,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
             <p className="text-sm text-muted-foreground">
               Preencha as informações de contrato e comissão dos seus funcionários.
             </p>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">Tipo de contratação:</Label>
                 <Select value={rulesForm.contract_type} onValueChange={(v) => setRulesForm({ ...rulesForm, contract_type: v })}>
@@ -799,7 +799,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
                 <Input type="date" value={rulesForm.contract_end} onChange={(e) => setRulesForm({ ...rulesForm, contract_end: e.target.value })} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">Repasse de pagamento:</Label>
                 <Select value={rulesForm.payment_frequency} onValueChange={(v) => setRulesForm({ ...rulesForm, payment_frequency: v })}>
@@ -813,24 +813,24 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
               </div>
             </div>
 
-            <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
+            <div className="space-y-4 border border-border rounded-xl p-3 md:p-4 bg-muted/30">
               <p className="text-sm text-center text-muted-foreground">
                 Gostaria de configurar <strong>condições de comissão</strong> especiais para este profissional?
               </p>
 
               {/* Card payment date */}
-              <div className="flex items-center justify-between p-3 border rounded">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between p-3 border border-border rounded-lg">
                 <span className="text-sm">Se o cliente pagou o serviço com <strong>cartão</strong>, seu profissional receberá na:</span>
                 <RadioGroup
                   value={rulesForm.card_payment_date}
                   onValueChange={(v) => setRulesForm({ ...rulesForm, card_payment_date: v })}
-                  className="flex gap-4"
+                  className="flex flex-wrap gap-4"
                 >
-                  <div className="flex items-center space-x-1.5">
+                  <div className="flex items-center space-x-1.5 min-h-[44px]">
                     <RadioGroupItem value="sale_date" id="sale_date" />
                     <Label htmlFor="sale_date" className="text-sm cursor-pointer">Data da venda</Label>
                   </div>
-                  <div className="flex items-center space-x-1.5">
+                  <div className="flex items-center space-x-1.5 min-h-[44px]">
                     <RadioGroupItem value="settlement_date" id="settlement_date" />
                     <Label htmlFor="settlement_date" className="text-sm cursor-pointer">Data do recebimento</Label>
                   </div>
@@ -845,10 +845,10 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
                 { key: "deduct_service_cost" as const, label: "Taxa de custo dos serviços" },
                 { key: "deduct_product_cost" as const, label: "Taxa de produto" },
               ].map(({ key, label }) => (
-                <div key={key} className="flex items-center justify-between p-3 border rounded">
+                <div key={key} className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between p-3 border border-border rounded-lg">
                   <span className="text-sm font-medium">{label}</span>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={rulesForm[key] ? "default" : "secondary"} className="text-xs">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant={rulesForm[key] ? "default" : "secondary"} className={`text-xs ${rulesForm[key] ? "text-primary-foreground" : "text-muted-foreground"}`}>
                       {rulesForm[key] ? "Ativo" : "Inativo"}
                     </Badge>
                     <RadioGroup
@@ -856,11 +856,11 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
                       onValueChange={(v) => setRulesForm({ ...rulesForm, [key]: v === "descontar" })}
                       className="flex gap-3"
                     >
-                      <div className="flex items-center space-x-1.5">
+                      <div className="flex items-center space-x-1.5 min-h-[44px]">
                         <RadioGroupItem value="nao_descontar" id={`${key}_no`} />
                         <Label htmlFor={`${key}_no`} className="text-sm cursor-pointer">Não descontar</Label>
                       </div>
-                      <div className="flex items-center space-x-1.5">
+                      <div className="flex items-center space-x-1.5 min-h-[44px]">
                         <RadioGroupItem value="descontar" id={`${key}_yes`} />
                         <Label htmlFor={`${key}_yes`} className="text-sm cursor-pointer">Descontar</Label>
                       </div>
@@ -871,7 +871,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
             </div>
 
             <div className="flex justify-end">
-              <Button onClick={handleSaveRules} disabled={isSavingRules} className="gap-2">
+              <Button onClick={handleSaveRules} disabled={isSavingRules} className="gap-2 h-11">
                 <Save className="h-4 w-4" />
                 {isSavingRules ? "Salvando..." : "Salvar Regras"}
               </Button>
@@ -880,16 +880,16 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
         </AccordionItem>
 
         {/* HORÁRIO DE TRABALHO */}
-        <AccordionItem value="work-schedule" className="border rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline">
+        <AccordionItem value="work-schedule" className="bg-card rounded-2xl border border-border px-4 md:px-6">
+          <AccordionTrigger className="hover:no-underline min-h-[52px] font-semibold text-left">
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
+              <Clock className="h-4 w-4 shrink-0 text-[color:var(--np-accent-text)]" />
               <span>Horário de Trabalho</span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="space-y-4 pb-4">
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
+            <div className="border border-border rounded-xl overflow-hidden">
+              <Table className="min-w-[640px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Horário de Entrada</TableHead>
@@ -920,7 +920,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
               </Table>
             </div>
             <div className="flex justify-end">
-              <Button onClick={handleSaveSchedule} disabled={isSavingSchedule} className="gap-2">
+              <Button onClick={handleSaveSchedule} disabled={isSavingSchedule} className="gap-2 h-11">
                 <Save className="h-4 w-4" />
                 {isSavingSchedule ? "Salvando..." : "Salvar Horário"}
               </Button>
@@ -929,10 +929,10 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
         </AccordionItem>
 
         {/* RECEBIMENTO DE COMISSÃO */}
-        <AccordionItem value="bank-details" className="border rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline">
+        <AccordionItem value="bank-details" className="bg-card rounded-2xl border border-border px-4 md:px-6">
+          <AccordionTrigger className="hover:no-underline min-h-[52px] font-semibold text-left">
             <div className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
+              <CreditCard className="h-4 w-4 shrink-0 text-[color:var(--np-accent-text)]" />
               <span>Recebimento de Comissão (Dados Bancários)</span>
             </div>
           </AccordionTrigger>
@@ -947,7 +947,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
               <RadioGroup
                 value={bankForm.person_type}
                 onValueChange={(v) => setBankForm({ ...bankForm, person_type: v })}
-                className="flex gap-4"
+                className="flex flex-wrap gap-4"
               >
                 <div className="flex items-center space-x-1.5">
                   <RadioGroupItem value="fisica" id="pf" />
@@ -966,7 +966,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
               <RadioGroup
                 value={bankForm.transfer_type}
                 onValueChange={(v) => setBankForm({ ...bankForm, transfer_type: v })}
-                className="flex gap-4"
+                className="flex flex-wrap gap-4"
               >
                 <div className="flex items-center space-x-1.5">
                   <RadioGroupItem value="ted" id="transfer-ted" />
@@ -981,7 +981,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
 
             {bankForm.transfer_type === "ted" ? (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs">Nome do titular: <span className="text-muted-foreground">(Obrigatório)</span></Label>
                     <Input value={bankForm.account_holder} onChange={(e) => setBankForm({ ...bankForm, account_holder: e.target.value })} />
@@ -992,7 +992,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs">Banco: <span className="text-muted-foreground">(Obrigatório)</span></Label>
                     <Select value={bankForm.bank_name} onValueChange={(v) => setBankForm({ ...bankForm, bank_name: v })}>
@@ -1023,7 +1023,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs">Agência: <span className="text-muted-foreground">(Obrigatório)</span></Label>
                     <Input value={bankForm.agency} onChange={(e) => setBankForm({ ...bankForm, agency: e.target.value })} />
@@ -1039,7 +1039,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
                 </div>
               </>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Chave PIX: <span className="text-muted-foreground">(Obrigatório)</span></Label>
                   <Input
@@ -1062,11 +1062,11 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
               </div>
             )}
 
-            <div className="flex items-center justify-between">
-              <button onClick={() => deleteBankDetails()} className="text-sm text-destructive hover:underline">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <button onClick={() => deleteBankDetails()} className="min-h-[44px] text-sm np-text-danger hover:underline">
                 Remover dados bancários
               </button>
-              <Button onClick={handleSaveBankDetails} disabled={isSavingBank} className="gap-2">
+              <Button onClick={handleSaveBankDetails} disabled={isSavingBank} className="gap-2 h-11">
                 <Save className="h-4 w-4" />
                 {isSavingBank ? "Salvando..." : "Salvar Dados"}
               </Button>
@@ -1075,15 +1075,15 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
         </AccordionItem>
 
         {/* CONTATO PROFISSIONAL */}
-        <AccordionItem value="contact" className="border rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline">
+        <AccordionItem value="contact" className="bg-card rounded-2xl border border-border px-4 md:px-6">
+          <AccordionTrigger className="hover:no-underline min-h-[52px] font-semibold text-left">
             <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-muted-foreground" />
+              <Phone className="h-4 w-4 shrink-0 text-[color:var(--np-accent-text)]" />
               <span>Contato profissional</span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="space-y-4 pb-4">
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">Qual é o <strong>telefone</strong>?</Label>
                 <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
@@ -1101,7 +1101,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
                 <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">Qual é o <strong>Facebook</strong>?</Label>
                 <Input value={form.facebook} onChange={(e) => setForm({ ...form, facebook: e.target.value })} />
@@ -1119,15 +1119,15 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
         </AccordionItem>
 
         {/* ENDEREÇO */}
-        <AccordionItem value="address" className="border rounded-lg px-4">
-          <AccordionTrigger className="hover:no-underline">
+        <AccordionItem value="address" className="bg-card rounded-2xl border border-border px-4 md:px-6">
+          <AccordionTrigger className="hover:no-underline min-h-[52px] font-semibold text-left">
             <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <MapPin className="h-4 w-4 shrink-0 text-[color:var(--np-accent-text)]" />
               <span>Endereço</span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="space-y-4 pb-4">
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">Qual é o <strong>CEP</strong>?</Label>
                 <div className="flex gap-1">
@@ -1151,7 +1151,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
                 <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
               </div>
             </div>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">Qual é o <strong>estado</strong>?</Label>
                 <Select value={form.state} onValueChange={(v) => setForm({ ...form, state: v })}>
@@ -1244,37 +1244,51 @@ export function Profissionais() {
 
   return (
     <AppLayoutNew>
-      <div className="flex h-[calc(100vh-4rem)] -m-6">
-        <ProfessionalSidebar
-          professionals={filtered}
-          selectedId={selectedId}
-          onSelect={(p) => setSelectedId(p.id)}
-          onAdd={() => setModalOpen(true)}
-          search={search}
-          onSearchChange={setSearch}
-          showInactive={showInactive}
-          onToggleInactive={() => setShowInactive(!showInactive)}
-          inactiveCount={inactiveProfessionals.length}
-          masterEmail={masterEmail}
+      <div className="space-y-4 md:space-y-6">
+        <PageHeader
+          eyebrow="Equipe"
+          title="Profissionais"
+          description="Cadastro, acesso, comissão e horários de cada profissional."
+          actions={
+            <Button onClick={() => setModalOpen(true)} className="gap-2 h-11">
+              <Plus className="h-4 w-4" /> Adicionar Profissional
+            </Button>
+          }
         />
 
-        {isLoading ? (
-          <div className="flex-1 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        ) : selectedProfessional ? (
-          <ProfessionalForm professional={selectedProfessional} onRequestDelete={() => setTransferModalOpen(true)} />
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground">
-            <div className="text-center space-y-2">
-              <UserCog className="h-12 w-12 mx-auto opacity-50" />
-              <p>Selecione um profissional ou adicione um novo.</p>
-              <Button onClick={() => setModalOpen(true)} className="gap-2 mt-2">
-                <Plus className="h-4 w-4" /> Adicionar Profissional
-              </Button>
+        <div className="grid gap-4 md:gap-6 lg:grid-cols-[280px_minmax(0,1fr)] items-start">
+          <ProfessionalSidebar
+            professionals={filtered}
+            selectedId={selectedId}
+            onSelect={(p) => setSelectedId(p.id)}
+            search={search}
+            onSearchChange={setSearch}
+            showInactive={showInactive}
+            onToggleInactive={() => setShowInactive(!showInactive)}
+            inactiveCount={inactiveProfessionals.length}
+            masterEmail={masterEmail}
+          />
+
+          {isLoading ? (
+            <div className="bg-card rounded-2xl border border-border flex items-center justify-center min-h-[240px]">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          </div>
-        )}
+          ) : selectedProfessional ? (
+            <ProfessionalForm professional={selectedProfessional} onRequestDelete={() => setTransferModalOpen(true)} />
+          ) : (
+            <div className="bg-card rounded-2xl border border-border">
+              <EmptyState
+                icon={UserCog}
+                title="Selecione um profissional ou adicione um novo."
+                action={
+                  <Button onClick={() => setModalOpen(true)} className="gap-2 h-11">
+                    <Plus className="h-4 w-4" /> Adicionar Profissional
+                  </Button>
+                }
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <ProfessionalModal

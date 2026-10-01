@@ -4,6 +4,8 @@ import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button as DsButton, Badge as DsBadge, EmptyState, GlassCard } from "@design-system";
+import { display } from "@/components/financeiro/glass";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Loader2, CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCaixas, Caixa } from "@/hooks/useCaixas";
@@ -136,34 +138,33 @@ export default function Financeiro() {
         ) : !isHistorico ? (
           // Caixas Abertos Tab
           <>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-semibold">Caixas Abertos</h2>
-                <Badge variant="outline" className="px-3">
+                <h2 className={`${display} text-2xl font-bold tracking-tight text-foreground`}>Caixas Abertos</h2>
+                <DsBadge tone={openCaixas.length > 0 ? "positive" : "neutral"} dot={openCaixas.length > 0}>
                   {openCaixas.length} aberto{openCaixas.length !== 1 ? "s" : ""}
-                </Badge>
+                </DsBadge>
               </div>
-              <Button 
-                className="gap-2" 
+              <DsButton
+                size="lg"
+                icon={Plus}
+                className="w-full sm:w-auto"
                 onClick={() => setOpenCaixaModalOpen(true)}
                 disabled={!!userOpenCaixa || !canOpenCaixa}
                 title={!canOpenCaixa ? "Sem permissão para abrir caixa" : undefined}
               >
-                <Plus className="h-4 w-4" />
                 Abrir Meu Caixa
-              </Button>
+              </DsButton>
             </div>
 
             {openCaixas.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center text-muted-foreground">
-                  Nenhum caixa aberto no momento
-                </CardContent>
-              </Card>
+              <GlassCard radius="xl">
+                <EmptyState icon="wallet" title="Nenhum caixa aberto no momento" />
+              </GlassCard>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {userOpenCaixa && (
-                  <div className="ring-2 ring-primary rounded-lg">
+                  <div className="rounded-[24px] ring-2 ring-[color:var(--np-accent)] shadow-[var(--np-glow-accent)]">
                     <CaixaCard
                       key={userOpenCaixa.id}
                       caixa={userOpenCaixa}
@@ -198,7 +199,7 @@ export default function Financeiro() {
           // Histórico de Caixas Tab
           <>
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Histórico de Caixas</h2>
+              <h2 className={`${display} text-2xl font-bold tracking-tight text-foreground`}>Histórico de Caixas</h2>
             </div>
 
             <div className="space-y-4">
@@ -210,6 +211,7 @@ export default function Financeiro() {
                       <Button
                         variant="outline"
                         size="icon"
+                        className="h-11 w-11"
                         onClick={() => {
                           const newDate = new Date(selectedDate);
                           newDate.setDate(newDate.getDate() - 1);
@@ -227,7 +229,7 @@ export default function Financeiro() {
                           setSelectedDate(newDate);
                         }}
                       >
-                        <SelectTrigger className="w-[70px]">
+                        <SelectTrigger className="h-11 w-[72px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -248,7 +250,7 @@ export default function Financeiro() {
                           setSelectedDate(newDate);
                         }}
                       >
-                        <SelectTrigger className="w-[140px]">
+                        <SelectTrigger className="h-11 w-[130px] capitalize">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -269,7 +271,7 @@ export default function Financeiro() {
                           setSelectedDate(newDate);
                         }}
                       >
-                        <SelectTrigger className="w-[100px]">
+                        <SelectTrigger className="h-11 w-[92px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -287,6 +289,7 @@ export default function Financeiro() {
                       <Button
                         variant="outline"
                         size="icon"
+                        className="h-11 w-11"
                         onClick={() => {
                           const newDate = new Date(selectedDate);
                           newDate.setDate(newDate.getDate() + 1);
@@ -299,13 +302,13 @@ export default function Financeiro() {
 
                     <Button
                       variant="outline"
-                      size="sm"
+                      className="h-11"
                       onClick={() => setSelectedDate(new Date())}
                     >
                       Hoje
                     </Button>
 
-                    <Badge variant="outline" className="ml-auto">
+                    <Badge variant="outline" className="ml-auto border-border text-muted-foreground tabular-nums">
                       {caixasByDate.length} caixa{caixasByDate.length !== 1 ? "s" : ""} encontrado{caixasByDate.length !== 1 ? "s" : ""}
                     </Badge>
                   </div>
@@ -313,18 +316,16 @@ export default function Financeiro() {
               </Card>
 
               {/* Selected Date Display */}
-              <div className="flex items-center gap-2 text-lg font-medium capitalize">
+              <div className={`${display} flex items-center gap-2 text-lg font-semibold capitalize text-foreground`}>
                 <CalendarIcon className="h-5 w-5 text-primary" />
                 {format(selectedDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
               </div>
 
               {/* Caixas List */}
               {caixasByDate.length === 0 ? (
-                <Card>
-                  <CardContent className="py-12 text-center text-muted-foreground">
-                    Nenhum caixa fechado nesta data
-                  </CardContent>
-                </Card>
+                <GlassCard radius="xl">
+                  <EmptyState icon="calendar" title="Nenhum caixa fechado nesta data" />
+                </GlassCard>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {caixasByDate.map((caixa) => (

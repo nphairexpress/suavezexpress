@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { glassModal, modalTitle } from "@/components/financeiro/glass";
 import {
   Dialog,
   DialogContent,
@@ -113,9 +114,9 @@ export function PayableModal({ open, onClose, onSave, payable, isLoading }: Paya
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className={`max-w-2xl max-h-[90vh] overflow-y-auto ${glassModal}`}>
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Editar conta a pagar" : "Nova conta a pagar"}</DialogTitle>
+          <DialogTitle className={modalTitle}>{isEdit ? "Editar conta a pagar" : "Nova conta a pagar"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -207,7 +208,7 @@ export function PayableModal({ open, onClose, onSave, payable, isLoading }: Paya
             <Textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-2">
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

@@ -171,9 +171,9 @@ export function ProfessionalModal({ open, onOpenChange, professional, onSubmit, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="text-primary text-xl">
+          <DialogTitle className="np-display text-xl text-foreground">
             {professional ? "Editar Profissional" : "Novo Profissional"}
           </DialogTitle>
         </DialogHeader>
@@ -188,7 +188,7 @@ export function ProfessionalModal({ open, onOpenChange, professional, onSubmit, 
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">
                 Qual é o <span className="font-semibold">nome completo</span>? <span className="text-destructive">*</span>
@@ -212,7 +212,7 @@ export function ProfessionalModal({ open, onOpenChange, professional, onSubmit, 
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="cpf">
                 Qual é o <span className="font-semibold">CPF</span>?
@@ -246,7 +246,7 @@ export function ProfessionalModal({ open, onOpenChange, professional, onSubmit, 
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="email">
                 Qual é o <span className="font-semibold">e-mail</span>?
@@ -271,7 +271,7 @@ export function ProfessionalModal({ open, onOpenChange, professional, onSubmit, 
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 min-h-[44px]">
               <Checkbox
                 id="can_be_assistant"
                 checked={formData.can_be_assistant}
@@ -282,7 +282,7 @@ export function ProfessionalModal({ open, onOpenChange, professional, onSubmit, 
               </Label>
             </div>
 
-            <div className="bg-muted/50 p-4 rounded-lg">
+            <div className="bg-muted/40 border border-border p-4 rounded-xl">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="has_schedule"
@@ -297,7 +297,7 @@ export function ProfessionalModal({ open, onOpenChange, professional, onSubmit, 
 
             {!hasExistingAccess ? (
               <div className="space-y-4">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 min-h-[44px]">
                   <Checkbox
                     id="create_access"
                     checked={formData.create_access}
@@ -309,7 +309,7 @@ export function ProfessionalModal({ open, onOpenChange, professional, onSubmit, 
                 </div>
 
                 {formData.create_access && (
-                  <div className="ml-6 p-4 border rounded-lg bg-muted/30 space-y-4">
+                  <div className="sm:ml-6 p-4 border border-border rounded-xl bg-muted/30 space-y-4">
                     <p className="text-sm text-muted-foreground">
                       O profissional poderá acessar o sistema com o email e senha definidos abaixo.
                     </p>
@@ -351,7 +351,7 @@ export function ProfessionalModal({ open, onOpenChange, professional, onSubmit, 
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="password">
                           Senha <span className="text-destructive">*</span>
@@ -384,20 +384,20 @@ export function ProfessionalModal({ open, onOpenChange, professional, onSubmit, 
                 )}
               </div>
             ) : (
-              <div className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
-                <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                <span className="text-sm text-green-700 dark:text-green-300">
+              <div className="flex items-center space-x-2 p-3 bg-[color:var(--np-positive-soft)] border border-[color:var(--np-positive-border)] rounded-lg">
+                <div className="h-2 w-2 rounded-full bg-[color:var(--np-positive)]"></div>
+                <span className="text-sm font-medium np-text-positive">
                   Este profissional já possui acesso ao sistema
                 </span>
               </div>
             )}
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="outline" className="h-12 sm:h-11" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" className="h-12 sm:h-11" disabled={isLoading}>
               {isLoading ? "Salvando..." : "Salvar"}
             </Button>
           </DialogFooter>

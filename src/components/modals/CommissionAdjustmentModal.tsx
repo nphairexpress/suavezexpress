@@ -51,9 +51,9 @@ export function CommissionAdjustmentModal({
   const isBonus = type === "bonus";
   const title = isBonus ? "Adicionar Bônus" : "Adicionar Desconto";
   const Icon = isBonus ? Gift : MinusCircle;
-  const iconColor = isBonus ? "text-green-600" : "text-destructive";
+  const iconColor = isBonus ? "text-[var(--np-positive-text)]" : "text-destructive";
   const buttonClass = isBonus
-    ? "bg-green-600 hover:bg-green-700 text-white"
+    ? "bg-[var(--np-positive)] hover:brightness-95 text-[var(--np-black)]"
     : "bg-destructive hover:bg-destructive/90 text-destructive-foreground";
   const parsedAmount = parseFloat(amount.replace(",", "."));
   const canSubmit =

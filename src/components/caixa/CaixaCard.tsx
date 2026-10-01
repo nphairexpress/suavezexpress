@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Eye, Pencil, RotateCcw, Gift, AlertTriangle, ChevronDown, ChevronUp, FileText, Loader2, Printer, X } from "lucide-react";
+import { Eye, Pencil, RotateCcw, ChevronDown, ChevronUp, FileText, Loader2, Printer, X } from "lucide-react";
 import { Caixa } from "@/hooks/useCaixas";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useNavigate } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
+import { GlassCard, Badge as DsBadge, Button as DsButton } from "@design-system";
+import { display, inset, money, txtAccent, txtDanger, txtPositive } from "@/components/financeiro/glass";
 
 interface CaixaCardProps {
   caixa: Caixa;
@@ -111,204 +111,202 @@ export function CaixaCard({
   ];
 
   return (
-    <Card className="overflow-hidden text-sm">
-      <CardContent className="p-0">
-        {/* Avec-style Top: Avatar left + icons right */}
-        <div className="flex items-start gap-3 p-4 pb-0">
-          <Avatar className="h-12 w-12 shrink-0 mt-0.5">
-            <AvatarImage src={caixa.profile?.avatar_url || undefined} />
-            <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0" />
-          {onView && (
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={onView} title="Imprimir">
-              <Printer className="h-3.5 w-3.5" />
-            </Button>
-          )}
-          {showCloseButton && onClose && !caixa.closed_at && (
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-destructive" onClick={onClose} title="Fechar caixa">
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          )}
-        </div>
-
-        {/* Info lines — Avec style */}
-        <div className="px-4 pt-1 pb-3 space-y-0.5 text-xs">
-          <InfoLine bold label="Responsável" value={displayName} />
-          {label && <span className="inline-block text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{label}</span>}
-          <InfoLine label="Abertura" value={format(new Date(caixa.opened_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })} />
-          <InfoLine label="Fechamento" value={caixa.closed_at ? format(new Date(caixa.closed_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR }) : ""} />
-          <InfoLine label="Valor Inicial (Dinheiro)" value={fmt(caixa.opening_balance || 0)} />
-        </div>
-
-        {/* Divider + Two columns: Sangrias & Total em Caixa */}
-        <div className="border-t mx-4" />
-        <div className="grid grid-cols-2 gap-0 px-4 pt-2 pb-3">
-          {/* Left: Sangrias */}
-          <div className="pr-3 border-r">
-            <h6 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Sangr & Supr</h6>
-            <p className="text-[10px] font-medium text-muted-foreground mb-1">Sangrias e Suprimentos</p>
-            <p className="text-[10px] text-muted-foreground italic">Nenhuma movimentação</p>
-          </div>
-
-          {/* Right: Total em Caixa */}
-          <div className="pl-3">
-            <h6 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Total em Caixa</h6>
-            <div className="space-y-0.5 text-xs">
-              {paymentRows.map(({ key, label, value }) => (
-                <div key={key}>
-                  <button
-                    type="button"
-                    className="flex justify-between w-full hover:bg-muted/50 rounded px-0.5 -mx-0.5 transition-colors"
-                    onClick={() => setExpandedMethod(expandedMethod === key ? null : key)}
-                  >
-                    <span className="text-muted-foreground">{label}</span>
-                    <span className={value > 0 ? "font-medium" : ""}>{fmt(value)}</span>
-                  </button>
-                  {/* Expanded: show comandas for this method */}
-                  {expandedMethod === key && (
-                    <div className="ml-2 mt-0.5 mb-1 space-y-0.5 border-l-2 border-primary/30 pl-2">
-                      {loadingComandas ? (
-                        <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                      ) : getMethodComandas(key).length === 0 ? (
-                        <p className="text-[10px] text-muted-foreground italic">Sem comandas</p>
-                      ) : (
-                        getMethodComandas(key).map((cmd: any) => {
-                          const methodAmount = (cmd.payments || [])
-                            .filter((p: any) => p.payment_method === key)
-                            .reduce((s: number, p: any) => s + Number(p.amount), 0);
-                          return (
-                            <button
-                              key={cmd.id}
-                              type="button"
-                              className="flex justify-between w-full text-[10px] hover:text-primary transition-colors"
-                              onClick={() => navigate(`/comandas?comanda=${cmd.id}`)}
-                            >
-                              <span className="truncate mr-1">{(cmd.client as any)?.name || "Avulso"}</span>
-                              <span className="shrink-0 font-medium">{fmt(methodAmount)}</span>
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {/* Valor inicial sub-line */}
-              <div className="flex justify-between pl-3 text-[10px] text-muted-foreground">
-                <span>Valor Inicial (S)</span>
-                <span>{fmt(caixa.opening_balance || 0)}</span>
-              </div>
-
-              {/* TOTAL FATURADO */}
-              <div className="border-t pt-1 mt-1 flex justify-between font-semibold text-xs">
-                <span>TOTAL FATURADO</span>
-                <span>{fmt(totalReceived)}</span>
-              </div>
-
-              {/* Extras */}
-              {totalCredits > 0 && (
-                <div className="flex justify-between text-[10px] text-green-600">
-                  <span>Créditos</span>
-                  <span>{fmt(totalCredits)}</span>
-                </div>
-              )}
-              {totalDebts > 0 && (
-                <div className="flex justify-between text-[10px] text-destructive">
-                  <span>Dívidas</span>
-                  <span>-{fmt(totalDebts)}</span>
-                </div>
-              )}
-
-              {caixa.closed_at && caixa.closing_balance !== null && (
-                <>
-                  <div className="border-t pt-1 mt-1" />
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-muted-foreground">Declarado</span>
-                    <span>{fmt(caixa.closing_balance)}</span>
-                  </div>
-                  <div className="flex justify-between font-semibold text-xs">
-                    <span>TOTAL</span>
-                    <span>{fmt(totalReceived)}</span>
-                  </div>
-                </>
-              )}
-            </div>
+    <GlassCard padding={0} radius="xl" className="overflow-hidden text-sm flex flex-col">
+      {/* Cabeçalho: avatar + responsável + atalhos */}
+      <div className="flex items-start gap-3 p-4 pb-2">
+        <Avatar className="h-12 w-12 shrink-0 ring-2 ring-[color:var(--np-border-glass)]">
+          <AvatarImage src={caixa.profile?.avatar_url || undefined} />
+          <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <p className={`${display} truncate text-base font-bold text-foreground`}>{displayName}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <DsBadge tone={caixa.closed_at ? "neutral" : "positive"} dot live={!caixa.closed_at}>
+              {caixa.closed_at ? "Fechado" : "Aberto"}
+            </DsBadge>
+            {label && <DsBadge tone="accent">{label}</DsBadge>}
           </div>
         </div>
+        {onView && (
+          <Button variant="ghost" size="icon" className="h-11 w-11 shrink-0" onClick={onView} title="Imprimir">
+            <Printer className="h-4 w-4" />
+          </Button>
+        )}
+        {showCloseButton && onClose && !caixa.closed_at && (
+          <Button variant="ghost" size="icon" className={`h-11 w-11 shrink-0 ${txtDanger}`} onClick={onClose} title="Fechar caixa">
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
 
-        {/* Comandas accordion */}
-        <div className="px-4 pb-2">
-          <button
-            type="button"
-            onClick={() => setShowComandas(prev => !prev)}
-            className="flex items-center gap-1.5 w-full text-left text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors py-1"
-          >
-            <FileText className="h-3 w-3" />
-            Comandas
-            <span className="ml-auto">
-              {showComandas ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            </span>
-          </button>
-          {showComandas && (
-            <div className="mt-1 space-y-1 max-h-40 overflow-y-auto">
-              {loadingComandas ? (
-                <Loader2 className="h-3 w-3 animate-spin text-muted-foreground mx-auto my-2" />
-              ) : !linkedComandas || linkedComandas.length === 0 ? (
-                <p className="text-[10px] text-muted-foreground italic py-1">Nenhuma comanda.</p>
-              ) : (
-                linkedComandas.map((cmd: any) => (
-                  <button
-                    key={cmd.id}
-                    type="button"
-                    className="flex justify-between w-full text-[10px] hover:bg-muted/50 rounded px-1 py-0.5 transition-colors"
-                    onClick={() => navigate(`/comandas?comanda=${cmd.id}`)}
-                  >
-                    <span className="truncate mr-2">
-                      #{cmd.comanda_number ? String(cmd.comanda_number).padStart(4, "0") : "—"} {(cmd.client as any)?.name || "Avulso"}
-                    </span>
-                    <span className="shrink-0 font-medium text-primary">{fmt(cmd.total || 0)}</span>
-                  </button>
-                ))
-              )}
+      {/* Informações */}
+      <div className="px-4 pb-3 space-y-0.5 text-xs">
+        <InfoLine label="Responsável" value={displayName} bold />
+        <InfoLine label="Abertura" value={format(new Date(caixa.opened_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })} />
+        <InfoLine label="Fechamento" value={caixa.closed_at ? format(new Date(caixa.closed_at), "dd/MM/yyyy HH:mm:ss", { locale: ptBR }) : ""} />
+        <InfoLine label="Valor Inicial (Dinheiro)" value={fmt(caixa.opening_balance || 0)} />
+      </div>
+
+      {/* Sangrias & Total em Caixa */}
+      <div className="mx-4 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <div className={`${inset} p-3`}>
+          <h6 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Sangr & Supr</h6>
+          <p className="text-xs font-medium text-muted-foreground mb-1">Sangrias e Suprimentos</p>
+          <p className="text-xs text-muted-foreground italic">Nenhuma movimentação</p>
+        </div>
+
+        <div className={`${inset} p-3`}>
+          <h6 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Total em Caixa</h6>
+          <div className="space-y-0.5 text-xs">
+            {paymentRows.map(({ key, label, value }) => (
+              <div key={key}>
+                <button
+                  type="button"
+                  className="flex min-h-[28px] items-center justify-between w-full rounded-md px-1 -mx-1 transition-colors hover:bg-[var(--np-surface-glass-hover)]"
+                  onClick={() => setExpandedMethod(expandedMethod === key ? null : key)}
+                >
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className={`${money} ${value > 0 ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{fmt(value)}</span>
+                </button>
+                {/* Expandido: comandas desta forma */}
+                {expandedMethod === key && (
+                  <div className="ml-2 mt-0.5 mb-1 space-y-0.5 border-l-2 border-[color:var(--np-accent-border)] pl-2">
+                    {loadingComandas ? (
+                      <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                    ) : getMethodComandas(key).length === 0 ? (
+                      <p className="text-[11px] text-muted-foreground italic">Sem comandas</p>
+                    ) : (
+                      getMethodComandas(key).map((cmd: any) => {
+                        const methodAmount = (cmd.payments || [])
+                          .filter((p: any) => p.payment_method === key)
+                          .reduce((s: number, p: any) => s + Number(p.amount), 0);
+                        return (
+                          <button
+                            key={cmd.id}
+                            type="button"
+                            className="flex justify-between w-full text-[11px] text-foreground hover:text-primary transition-colors"
+                            onClick={() => navigate(`/comandas?comanda=${cmd.id}`)}
+                          >
+                            <span className="truncate mr-1">{(cmd.client as any)?.name || "Avulso"}</span>
+                            <span className={`shrink-0 font-medium ${money}`}>{fmt(methodAmount)}</span>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <div className="flex justify-between pl-3 text-[11px] text-muted-foreground">
+              <span>Valor Inicial (S)</span>
+              <span className={money}>{fmt(caixa.opening_balance || 0)}</span>
             </div>
-          )}
-        </div>
 
-        {/* Avec-style Bottom Buttons */}
-        <div className="flex gap-2 px-4 pb-3 pt-1 border-t">
-          {onRecalculate && (
-            <Button size="sm" variant="outline" className="flex-1 text-[10px] h-8 gap-1" onClick={onRecalculate} disabled={isRecalculating}>
-              {isRecalculating ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
-              Recalcular
-            </Button>
-          )}
-          {showReopenButton && onReopen && caixa.closed_at && (
-            <Button size="sm" variant="outline" className="flex-1 text-[10px] h-8 gap-1 border-orange-400 text-orange-600 hover:bg-orange-50" onClick={onReopen}>
-              <RotateCcw className="h-3 w-3" /> Reabrir
-            </Button>
-          )}
-          {showEditButton && onEdit && !caixa.closed_at && (
-            <Button size="sm" variant="outline" className="flex-1 text-[10px] h-8 gap-1" onClick={onEdit}>
-              <Pencil className="h-3 w-3" /> Editar
-            </Button>
-          )}
-          {onView && (
-            <Button size="sm" className="flex-1 text-[10px] h-8 gap-1 bg-blue-600 hover:bg-blue-700 text-white" onClick={onView}>
-              <Eye className="h-3 w-3" /> Detalhes
-            </Button>
-          )}
-          {showCloseButton && onClose && !caixa.closed_at && (
-            <Button size="sm" variant="destructive" className="flex-1 text-[10px] h-8 gap-1" onClick={onClose}>
-              Fechar Caixa
-            </Button>
-          )}
+            <div className="border-t border-border pt-1.5 mt-1.5 flex items-baseline justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">TOTAL FATURADO</span>
+              <span className={`${display} ${money} text-base font-bold text-foreground`}>{fmt(totalReceived)}</span>
+            </div>
+
+            {totalCredits > 0 && (
+              <div className={`flex justify-between text-[11px] ${txtPositive}`}>
+                <span>Créditos</span>
+                <span className={money}>{fmt(totalCredits)}</span>
+              </div>
+            )}
+            {totalDebts > 0 && (
+              <div className={`flex justify-between text-[11px] font-semibold ${txtDanger}`}>
+                <span>Dívidas</span>
+                <span className={money}>-{fmt(totalDebts)}</span>
+              </div>
+            )}
+
+            {caixa.closed_at && caixa.closing_balance !== null && (
+              <>
+                <div className="border-t border-border pt-1 mt-1" />
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-muted-foreground">Declarado</span>
+                  <span className={money}>{fmt(caixa.closing_balance)}</span>
+                </div>
+                <div className="flex justify-between font-semibold text-xs">
+                  <span>TOTAL</span>
+                  <span className={money}>{fmt(totalReceived)}</span>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Comandas (sanfona) */}
+      <div className="px-4 pt-2 pb-2">
+        <button
+          type="button"
+          onClick={() => setShowComandas(prev => !prev)}
+          className="flex min-h-[36px] items-center gap-1.5 w-full text-left text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <FileText className="h-3.5 w-3.5" />
+          Comandas
+          <span className="ml-auto">
+            {showComandas ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </span>
+        </button>
+        {showComandas && (
+          <div className="mt-1 space-y-1 max-h-40 overflow-y-auto">
+            {loadingComandas ? (
+              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground mx-auto my-2" />
+            ) : !linkedComandas || linkedComandas.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground italic py-1">Nenhuma comanda.</p>
+            ) : (
+              linkedComandas.map((cmd: any) => (
+                <button
+                  key={cmd.id}
+                  type="button"
+                  className="flex justify-between w-full text-[11px] text-foreground rounded-md px-1.5 py-1 transition-colors hover:bg-[var(--np-surface-glass-hover)]"
+                  onClick={() => navigate(`/comandas?comanda=${cmd.id}`)}
+                >
+                  <span className="truncate mr-2">
+                    #{cmd.comanda_number ? String(cmd.comanda_number).padStart(4, "0") : "—"} {(cmd.client as any)?.name || "Avulso"}
+                  </span>
+                  <span className={`shrink-0 font-semibold ${txtAccent} ${money}`}>{fmt(cmd.total || 0)}</span>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Ações */}
+      <div className="mt-auto flex flex-wrap gap-2 border-t border-border px-4 py-3">
+        {onRecalculate && (
+          <DsButton size="md" variant="secondary" className="flex-1 min-w-[120px]" icon={RotateCcw} loading={isRecalculating} onClick={onRecalculate} disabled={isRecalculating}>
+            Recalcular
+          </DsButton>
+        )}
+        {showReopenButton && onReopen && caixa.closed_at && (
+          <DsButton size="md" variant="secondary" className="flex-1 min-w-[120px]" icon={RotateCcw} onClick={onReopen}>
+            Reabrir
+          </DsButton>
+        )}
+        {showEditButton && onEdit && !caixa.closed_at && (
+          <DsButton size="md" variant="secondary" className="flex-1 min-w-[120px]" icon={Pencil} onClick={onEdit}>
+            Editar
+          </DsButton>
+        )}
+        {onView && (
+          <DsButton size="md" variant="primary" className="flex-1 min-w-[120px]" icon={Eye} onClick={onView}>
+            Detalhes
+          </DsButton>
+        )}
+        {showCloseButton && onClose && !caixa.closed_at && (
+          <DsButton size="md" variant="danger" className="flex-1 min-w-[120px]" onClick={onClose}>
+            Fechar Caixa
+          </DsButton>
+        )}
+      </div>
+    </GlassCard>
   );
 }
 
@@ -316,7 +314,7 @@ function InfoLine({ label, value, bold }: { label: string; value: string; bold?:
   return (
     <p className="truncate">
       <span className={`${bold ? "font-semibold" : "font-medium"} text-foreground`}>{label}:</span>{" "}
-      <span className="text-muted-foreground">{value || "—"}</span>
+      <span className="text-muted-foreground tabular-nums">{value || "—"}</span>
     </p>
   );
 }

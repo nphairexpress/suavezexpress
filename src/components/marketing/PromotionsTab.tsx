@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Badge, GlassCard, EmptyState } from "@design-system";
 import { Plus, Pencil, Trash2, Tag } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
@@ -46,29 +46,28 @@ export function PromotionsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <p className="text-muted-foreground">Gerencie promoções e descontos para seus serviços e produtos.</p>
-        <Button onClick={() => { setEditing(null); setModalOpen(true); }}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted-foreground">Gerencie promoções e descontos para seus serviços e produtos.</p>
+        <Button className="min-h-[48px] w-full shrink-0 sm:min-h-0 sm:w-auto" onClick={() => { setEditing(null); setModalOpen(true); }}>
           <Plus className="h-4 w-4 mr-2" /> Adicionar
         </Button>
       </div>
 
       {isLoading ? (
-        <Card className="py-12 text-center text-muted-foreground">Carregando...</Card>
+        <GlassCard className="py-12 text-center text-muted-foreground">Carregando...</GlassCard>
       ) : promotions.length === 0 ? (
-        <Card className="py-12 text-center text-muted-foreground">
-          <Tag className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p>Nenhuma promoção cadastrada</p>
-        </Card>
+        <GlassCard>
+          <EmptyState icon={Tag} title="Nenhuma promoção cadastrada" className="py-8" />
+        </GlassCard>
       ) : (
         <div className="space-y-3">
           {promotions.map((promo: any) => (
             <Card key={promo.id}>
-              <CardContent className="flex items-center justify-between p-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">{promo.name}</p>
-                    <Badge variant={promo.is_active ? "default" : "secondary"}>
+              <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium text-foreground">{promo.name}</p>
+                    <Badge tone={promo.is_active ? "positive" : "neutral"} dot={promo.is_active}>
                       {promo.is_active ? "Ativa" : "Inativa"}
                     </Badge>
                   </div>
@@ -79,11 +78,11 @@ export function PromotionsTab() {
                     {promo.end_date && ` até ${format(new Date(promo.end_date), "dd/MM/yyyy", { locale: ptBR })}`}
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <Button size="icon" variant="ghost" onClick={() => { setEditing(promo); setModalOpen(true); }}>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button size="icon" variant="ghost" aria-label="Editar" className="h-11 w-11 rounded-xl sm:h-9 sm:w-9" onClick={() => { setEditing(promo); setModalOpen(true); }}>
                     <Pencil className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(promo.id)}>
+                  <Button size="icon" variant="ghost" aria-label="Excluir" className="h-11 w-11 rounded-xl text-[color:var(--np-danger-text)] hover:bg-[var(--np-danger-soft)] hover:text-[color:var(--np-danger-text)] sm:h-9 sm:w-9" onClick={() => deleteMutation.mutate(promo.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>

@@ -1,7 +1,5 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ChevronUp, ChevronDown, CheckCircle, UserPlus, SkipForward, X, Clock, CreditCard, Banknote, AlertCircle, Crown, UserX } from "lucide-react";
+import { Button, IconButton, Badge, type BadgeTone } from "@design-system";
+import { ChevronUp, ChevronDown, CheckCircle, UserPlus, SkipForward, X, Clock, CreditCard, Banknote, AlertCircle, Crown, UserX, Scissors, UserRound } from "lucide-react";
 import type { QueueEntry } from "@/types/queue";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -20,114 +18,112 @@ interface QueueCardProps {
   onComplete?: () => void;
 }
 
-const statusConfig: Record<string, { label: string; className: string }> = {
-  waiting: { label: "Aguardando", className: "bg-blue-100 text-blue-800" },
-  checked_in: { label: "Presente", className: "bg-green-100 text-green-800" },
-  in_service: { label: "Em atendimento", className: "bg-orange-100 text-orange-800" },
+const statusConfig: Record<string, { label: string; tone: BadgeTone; live?: boolean }> = {
+  waiting: { label: "Aguardando", tone: "neutral" },
+  checked_in: { label: "Presente", tone: "positive" },
+  in_service: { label: "Em atendimento", tone: "accent", live: true },
 };
 
-export function QueueCard({ entry, isFirst, isLast, onCheckIn, onAssignProfessional, onSkip, onRemove, onNoShow, onMoveUp, onMoveDown, onComplete }: QueueCardProps) {
+/*
+ * Cartão da fila no padrão do QueueTicketCard do design system (mesmas classes np-ticket:
+ * SENHA gigante em Montserrat 900). O componente do DS só aceita as ações "Chamar/Pular";
+ * a fila administrativa precisa de "Atender/Pular/Remover/Não atendida/Finalizar", então o
+ * cartão é montado aqui com a mesma estrutura visual.
+ */
+export function QueueCard({ entry, isFirst, isLast, onAssignProfessional, onSkip, onRemove, onNoShow, onMoveUp, onMoveDown, onComplete }: QueueCardProps) {
   const status = statusConfig[entry.status] || statusConfig.waiting;
   const timeInQueue = formatDistanceToNow(new Date(entry.created_at), { locale: ptBR, addSuffix: false });
+  const inService = entry.status === "in_service";
 
   return (
-    <Card className="mb-2">
-      <CardContent className="py-3 space-y-2">
-        {/* Top row: position + info + status */}
-        <div className="flex items-center gap-3">
-          {/* Position controls */}
-          <div className="flex flex-col items-center shrink-0">
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveUp} disabled={isFirst}>
-              <ChevronUp className="h-4 w-4" />
-            </Button>
-            <span className="text-lg font-bold">{entry.position}</span>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onMoveDown} disabled={isLast}>
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </div>
+    <div className={`np-glass-card np-glass-card--lift np-ticket np-ticket--sm ${inService ? "is-called" : ""}`}>
+      <div className="np-ticket__head">
+        <span className="np-caps">Senha · {entry.source === "online" ? "Online" : "Presencial"}</span>
+        <Badge tone={status.tone} dot live={status.live}>{status.label}</Badge>
+      </div>
 
-          {/* Client info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-medium truncate">{entry.customer_name}</span>
-              <Badge variant="outline" className={status.className}>{status.label}</Badge>
-              <Badge variant="outline">{entry.source === "online" ? "Online" : "Presencial"}</Badge>
-              {entry.payment_method === "clube" && (
-                <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-400 font-semibold">
-                  <Crown className="h-3 w-3 mr-1" />
-                  CLUBE — já paga
-                </Badge>
-              )}
-              {entry.source === "online" && entry.payment_status === "confirmed" && (
-                <Badge variant="outline" className="bg-emerald-100 text-emerald-800 border-emerald-300">
-                  {entry.payment_method === "credit_card" ? (
-                    <><CreditCard className="h-3 w-3 mr-1" />Cartão pago</>
-                  ) : (
-                    <><Banknote className="h-3 w-3 mr-1" />PIX pago</>
-                  )}
-                </Badge>
-              )}
-              {entry.source === "online" && entry.payment_status === "pending" && (
-                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
-                  <AlertCircle className="h-3 w-3 mr-1" />Pagamento pendente
-                </Badge>
-              )}
-              {entry.source === "walk_in" && (
-                <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300">
-                  Cobrar no balcão
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-              <span>{entry.service?.name}</span>
-              {entry.service?.price !== undefined && (
-                <span className="font-medium text-foreground">
-                  R$ {entry.service.price.toFixed(2).replace(".", ",")}
-                </span>
-              )}
-              <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{timeInQueue}</span>
-              {entry.professional && <span className="font-medium text-foreground">{entry.professional.name}</span>}
-            </div>
-          </div>
-        </div>
-
-        {/* Action buttons row */}
-        {entry.status !== "in_service" ? (
-          <div className="flex items-center gap-2 pl-10">
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={onAssignProfessional}>
-              <UserPlus className="h-4 w-4 mr-1" />
-              Atender
-            </Button>
-            <Button size="sm" variant="outline" className="text-orange-700 border-orange-300 hover:bg-orange-50" onClick={onSkip}>
-              <SkipForward className="h-4 w-4 mr-1" />
-              Pular
-            </Button>
-            <Button size="sm" variant="outline" className="text-red-700 border-red-300 hover:bg-red-50" onClick={onRemove}>
-              <X className="h-4 w-4 mr-1" />
-              Remover
-            </Button>
-            {onNoShow && (
-              <Button size="sm" variant="outline" className="text-slate-600 border-slate-300 hover:bg-slate-50" onClick={onNoShow}>
-                <UserX className="h-4 w-4 mr-1" />
-                Não atendida
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 pl-10">
-            {onComplete && (
-              <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={onComplete}>
-                <CheckCircle className="h-4 w-4 mr-1" />
-                Finalizar atendimento
-              </Button>
-            )}
-            <Button size="sm" variant="outline" className="text-red-700 border-red-300 hover:bg-red-50" onClick={onRemove}>
-              <X className="h-4 w-4 mr-1" />
-              Remover da fila
-            </Button>
+      <div className="flex items-end justify-between gap-3">
+        <div className="np-num np-ticket__code tabular-nums">{entry.position}</div>
+        {!inService && (
+          <div className="flex gap-2">
+            <IconButton icon={ChevronUp} label="Subir na fila" onClick={onMoveUp} disabled={isFirst} />
+            <IconButton icon={ChevronDown} label="Descer na fila" onClick={onMoveDown} disabled={isLast} />
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className="np-ticket__info">
+        <div className="np-ticket__client truncate">{entry.customer_name}</div>
+        <div className="np-ticket__meta">
+          {entry.service?.name && (
+            <span><Scissors size={14} />{entry.service.name}</span>
+          )}
+          {entry.service?.price !== undefined && (
+            <span className="np-num text-foreground tabular-nums">
+              R$ {entry.service.price.toFixed(2).replace(".", ",")}
+            </span>
+          )}
+          <span><Clock size={14} />{timeInQueue}</span>
+        </div>
+        <div className="np-ticket__meta">
+          {entry.professional ? (
+            <span className="text-foreground font-medium"><UserRound size={14} />{entry.professional.name}</span>
+          ) : (
+            <span><UserRound size={14} />Profissional da vez</span>
+          )}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        {entry.payment_method === "clube" && (
+          <Badge tone="solid"><Crown size={12} />CLUBE — já paga</Badge>
+        )}
+        {entry.source === "online" && entry.payment_status === "confirmed" && (
+          <Badge tone="positive">
+            {entry.payment_method === "credit_card" ? (
+              <><CreditCard size={12} />Cartão pago</>
+            ) : (
+              <><Banknote size={12} />PIX pago</>
+            )}
+          </Badge>
+        )}
+        {entry.source === "online" && entry.payment_status === "pending" && (
+          <Badge tone="danger"><AlertCircle size={12} />Pagamento pendente</Badge>
+        )}
+        {entry.source === "walk_in" && (
+          <Badge tone="neutral">Cobrar no balcão</Badge>
+        )}
+      </div>
+
+      {!inService ? (
+        <div className="flex flex-wrap gap-2">
+          <Button size="lg" icon={UserPlus} onClick={onAssignProfessional} className="flex-1 min-w-[140px]">
+            Atender
+          </Button>
+          <Button variant="secondary" icon={SkipForward} onClick={onSkip}>
+            Pular
+          </Button>
+          <Button variant="ghost" icon={X} onClick={onRemove} className="text-destructive">
+            Remover
+          </Button>
+          {onNoShow && (
+            <Button variant="ghost" icon={UserX} onClick={onNoShow}>
+              Não atendida
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {onComplete && (
+            <Button size="lg" variant="success" icon={CheckCircle} onClick={onComplete} className="flex-1 min-w-[160px]">
+              Finalizar atendimento
+            </Button>
+          )}
+          <Button variant="ghost" icon={X} onClick={onRemove} className="text-destructive">
+            Remover da fila
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

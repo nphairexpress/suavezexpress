@@ -365,7 +365,7 @@ export function ProductModal({ open, onOpenChange, product, onSubmit, isLoading,
               <div className="flex items-center gap-2">
                 <Label className="text-base font-medium">Estoque</Label>
                 {!isEditing && (
-                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium">
+                  <span className="text-xs bg-[var(--np-positive-soft)] text-[var(--np-positive-text)] px-2 py-0.5 rounded font-medium">
                     Entrada Inicial
                   </span>
                 )}

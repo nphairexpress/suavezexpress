@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { glassModal, modalTitle, display, inset, txtAccent } from "@/components/financeiro/glass";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -227,17 +228,16 @@ export function CaixaDetailModal({ open, onClose, caixa }: CaixaDetailModalProps
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-[95vw] lg:max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className={`max-w-[95vw] lg:max-w-3xl max-h-[90vh] overflow-hidden flex flex-col ${glassModal}`}>
         <DialogHeader className="flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <DialogTitle>Detalhes do Caixa — {displayName}</DialogTitle>
+          <div className="flex flex-col gap-3 pr-8 sm:flex-row sm:items-center sm:justify-between">
+            <DialogTitle className={modalTitle}>Detalhes do Caixa — {displayName}</DialogTitle>
             <div className="flex gap-2 flex-wrap">
               {!caixa.closed_at && pode("caixa.sangria_suprimento") && (
                 <>
                   <Button
                     variant="outline"
-                    size="sm"
-                    className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                    className="h-11 gap-1.5 text-[color:var(--np-danger-text)] border-[color:var(--np-danger-border)] hover:bg-[var(--np-danger-soft)] hover:text-[color:var(--np-danger-text)]"
                     onClick={() => openMovementModal("sangria")}
                   >
                     <ArrowDownCircle className="h-4 w-4" />
@@ -245,8 +245,7 @@ export function CaixaDetailModal({ open, onClose, caixa }: CaixaDetailModalProps
                   </Button>
                   <Button
                     variant="outline"
-                    size="sm"
-                    className="gap-1.5 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+                    className="h-11 gap-1.5 text-[color:var(--np-positive-text)] border-[color:var(--np-positive-border)] hover:bg-[var(--np-positive-soft)] hover:text-[color:var(--np-positive-text)]"
                     onClick={() => openMovementModal("suprimento")}
                   >
                     <ArrowUpCircle className="h-4 w-4" />
@@ -254,11 +253,11 @@ export function CaixaDetailModal({ open, onClose, caixa }: CaixaDetailModalProps
                   </Button>
                 </>
               )}
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={handlePrintReport}>
+              <Button variant="outline" className="h-11 gap-1.5" onClick={handlePrintReport}>
                 <Printer className="h-4 w-4" />
                 Imprimir
               </Button>
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={handlePrintReport}>
+              <Button variant="outline" className="h-11 gap-1.5" onClick={handlePrintReport}>
                 <FileText className="h-4 w-4" />
                 PDF
               </Button>
@@ -274,9 +273,9 @@ export function CaixaDetailModal({ open, onClose, caixa }: CaixaDetailModalProps
           </div>
 
           {/* Totals */}
-          <Card>
+          <Card className={inset}>
             <CardContent className="p-4">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+              <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-3 gap-3 text-sm tabular-nums">
                 <div className="flex justify-between"><span className="text-muted-foreground">Abertura:</span><span>{formatCurrency(caixa.opening_balance || 0)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Dinheiro:</span><span>{formatCurrency(caixa.total_cash || 0)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">PIX:</span><span>{formatCurrency(caixa.total_pix || 0)}</span></div>
@@ -284,12 +283,12 @@ export function CaixaDetailModal({ open, onClose, caixa }: CaixaDetailModalProps
                 <div className="flex justify-between"><span className="text-muted-foreground">Débito:</span><span>{formatCurrency(caixa.total_debit_card || 0)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Outros:</span><span>{formatCurrency(caixa.total_other || 0)}</span></div>
               </div>
-              <div className="border-t mt-3 pt-3 flex justify-between font-semibold">
+              <div className="border-t border-border mt-3 pt-3 flex items-baseline justify-between font-semibold">
                 <span>Total Recebido:</span>
-                <span className="text-primary">{formatCurrency(totalReceived)}</span>
+                <span className={`${display} text-lg font-bold tabular-nums ${txtAccent}`}>{formatCurrency(totalReceived)}</span>
               </div>
               {caixa.closing_balance !== null && (
-                <div className="border-t mt-3 pt-3 space-y-1 text-sm">
+                <div className="border-t border-border mt-3 pt-3 space-y-1 text-sm tabular-nums">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Dinheiro esperado:</span>
                     <span>{formatCurrency(expectedCash)}</span>
@@ -301,7 +300,7 @@ export function CaixaDetailModal({ open, onClose, caixa }: CaixaDetailModalProps
                   {cashDiff !== null && (
                     <div className="flex justify-between font-medium">
                       <span>Diferença:</span>
-                      <span className={cashDiff >= 0 ? "text-green-600" : "text-destructive"}>
+                      <span className={cashDiff >= 0 ? "text-[color:var(--np-positive-text)]" : "text-destructive"}>
                         {cashDiff >= 0 ? "+" : ""}{formatCurrency(cashDiff)}
                       </span>
                     </div>
@@ -310,11 +309,11 @@ export function CaixaDetailModal({ open, onClose, caixa }: CaixaDetailModalProps
               )}
               {/* Credits / Debts */}
               {((extras?.totalCredits || 0) > 0 || (extras?.totalDebts || 0) > 0) && (
-                <div className="border-t mt-3 pt-3 space-y-1 text-sm">
+                <div className="border-t border-border mt-3 pt-3 space-y-1 text-sm tabular-nums">
                   {(extras?.totalCredits || 0) > 0 && (
                     <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-green-600"><Gift className="h-3.5 w-3.5" />Créditos gerados:</span>
-                      <span className="text-green-600 font-medium">{formatCurrency(extras!.totalCredits)}</span>
+                      <span className="flex items-center gap-1.5 text-[color:var(--np-positive-text)]"><Gift className="h-3.5 w-3.5" />Créditos gerados:</span>
+                      <span className="text-[color:var(--np-positive-text)] font-medium">{formatCurrency(extras!.totalCredits)}</span>
                     </div>
                   )}
                   {(extras?.totalDebts || 0) > 0 && (
@@ -349,7 +348,7 @@ export function CaixaDetailModal({ open, onClose, caixa }: CaixaDetailModalProps
                   }, {});
 
                   return (
-                    <Card key={cmd.id} className="bg-muted/30">
+                    <Card key={cmd.id} className={inset}>
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
                           <div>
@@ -363,7 +362,7 @@ export function CaixaDetailModal({ open, onClose, caixa }: CaixaDetailModalProps
                             )}
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-primary text-sm">{formatCurrency(cmd.total || 0)}</span>
+                            <span className="font-semibold text-[color:var(--np-accent-text)] text-sm">{formatCurrency(cmd.total || 0)}</span>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -410,12 +409,12 @@ export function CaixaDetailModal({ open, onClose, caixa }: CaixaDetailModalProps
               <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
                 Sangrias & Suprimentos ({movements.length})
                 {totalSangrias > 0 && (
-                  <Badge variant="outline" className="text-red-600 border-red-200">
+                  <Badge variant="outline" className="text-[color:var(--np-danger-text)] border-[color:var(--np-danger-border)]">
                     -{formatCurrency(totalSangrias)}
                   </Badge>
                 )}
                 {totalSuprimentos > 0 && (
-                  <Badge variant="outline" className="text-green-600 border-green-200">
+                  <Badge variant="outline" className="text-[color:var(--np-positive-text)] border-[color:var(--np-positive-border)]">
                     +{formatCurrency(totalSuprimentos)}
                   </Badge>
                 )}
@@ -424,12 +423,12 @@ export function CaixaDetailModal({ open, onClose, caixa }: CaixaDetailModalProps
                 {movements.map((m) => {
                   const isSangria = m.type === "sangria";
                   const Icon = isSangria ? ArrowDownCircle : ArrowUpCircle;
-                  const color = isSangria ? "text-red-600" : "text-green-600";
+                  const color = isSangria ? "text-[color:var(--np-danger-text)]" : "text-[color:var(--np-positive-text)]";
                   const methodLabel: Record<string, string> = {
                     cash: "Dinheiro", pix: "PIX", credit_card: "Crédito", debit_card: "Débito", other: "Outro",
                   };
                   return (
-                    <Card key={m.id} className="bg-muted/30">
+                    <Card key={m.id} className={inset}>
                       <CardContent className="p-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-start gap-2 flex-1 min-w-0">
@@ -459,7 +458,7 @@ export function CaixaDetailModal({ open, onClose, caixa }: CaixaDetailModalProps
 
           {/* Notes */}
           {caixa.notes && (
-            <Card>
+            <Card className={inset}>
               <CardContent className="p-3">
                 <h3 className="text-sm font-semibold mb-1">Observações</h3>
                 <p className="text-sm text-muted-foreground">{caixa.notes}</p>

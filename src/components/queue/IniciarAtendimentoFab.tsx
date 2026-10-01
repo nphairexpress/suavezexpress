@@ -200,9 +200,9 @@ function AbrirComandaDialog({ onOpenChange }: { onOpenChange: (open: boolean) =>
 
   return (
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md rounded-2xl border-[color:var(--np-border-glass)] bg-[color:var(--np-surface-glass-strong)] backdrop-blur-2xl shadow-[var(--np-shadow-modal)] text-foreground">
           <DialogHeader>
-            <DialogTitle>Abrir Comanda</DialogTitle>
+            <DialogTitle className="np-display text-xl">Abrir Comanda</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -224,7 +224,7 @@ function AbrirComandaDialog({ onOpenChange }: { onOpenChange: (open: boolean) =>
                   placeholder="Buscar por nome ou telefone..."
                 />
               ) : (
-                <div className="space-y-2 rounded-md border p-3">
+                <div className="space-y-2 rounded-xl border border-border bg-[color:var(--np-surface-inset)] p-3">
                   <div className="flex items-center gap-2 text-sm font-medium text-primary">
                     <UserPlus className="h-4 w-4" /> Novo cliente
                   </div>
@@ -261,14 +261,14 @@ function AbrirComandaDialog({ onOpenChange }: { onOpenChange: (open: boolean) =>
                     <SelectItem key={p.id} value={p.id}>
                       <span className="flex items-center gap-2">
                         {p.name}
-                        {p.id === suggestedProfId && <Badge variant="secondary" className="text-[10px]">da vez</Badge>}
+                        {p.id === suggestedProfId && <Badge variant="secondary" className="border-transparent bg-primary text-[10px] text-primary-foreground">da vez</Badge>}
                       </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {suggestedProfId && professionalId === suggestedProfId && (
-                <p className="text-xs text-green-600">Sugerimos {activeProfs.find((p: any) => p.id === suggestedProfId)?.name} (livre agora). Pode trocar.</p>
+                <p className="text-xs text-[color:var(--np-positive-text)]">Sugerimos {activeProfs.find((p: any) => p.id === suggestedProfId)?.name} (livre agora). Pode trocar.</p>
               )}
             </div>
 

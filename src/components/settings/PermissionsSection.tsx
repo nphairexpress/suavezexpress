@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/settings/settingsUi";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
@@ -70,11 +70,11 @@ export function PermissionsSection() {
           inclusive no banco de dados. Administrador sempre pode tudo.
         </CardDescription>
       </CardHeader>
-      <CardContent className="overflow-x-auto">
-        <Table>
+      <CardContent className="px-0 sm:px-0">
+        <Table className="min-w-[640px]">
           <TableHeader>
             <TableRow>
-              <TableHead>Ação</TableHead>
+              <TableHead className="pl-5 sm:pl-6">Ação</TableHead>
               {ROLE_COLUMNS.map((c) => (
                 <TableHead key={c.role} className="text-center whitespace-nowrap">{c.label}</TableHead>
               ))}
@@ -86,7 +86,7 @@ export function PermissionsSection() {
               const isSaving = savingKey === key;
               return (
                 <TableRow key={key}>
-                  <TableCell className="font-medium">
+                  <TableCell className="pl-5 sm:pl-6 font-medium text-foreground">
                     {PERMISSION_LABELS[key] ?? key}
                     <div className="text-xs text-muted-foreground font-mono">{key}</div>
                   </TableCell>
@@ -94,13 +94,15 @@ export function PermissionsSection() {
                     const isAdminCol = c.role === "admin";
                     const checked = isAdminCol || !!row?.roles.includes(c.role);
                     return (
-                      <TableCell key={c.role} className="text-center">
+                      <TableCell key={c.role} className="text-center p-0">
+                        <label className="inline-flex h-11 w-11 items-center justify-center cursor-pointer">
                         <Checkbox
                           checked={checked}
                           disabled={isAdminCol || isSaving || !!savingKey}
                           onCheckedChange={(v) => handleToggle(key, c.role, v === true)}
                           aria-label={`${PERMISSION_LABELS[key] ?? key} - ${c.label}`}
                         />
+                        </label>
                       </TableCell>
                     );
                   })}

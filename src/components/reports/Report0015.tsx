@@ -2,9 +2,10 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@design-system";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Loader2, UserCheck } from "lucide-react";
+import { Download, UserCheck } from "lucide-react";
+import { ReportTitle, ReportLoading, NUM, CHART_GRID, CHART_TICK, CHART_TOOLTIP } from "./ReportKit";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
@@ -14,14 +15,14 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from "recharts";
 
-const COLORS = ["hsl(142, 76%, 36%)", "hsl(217, 91%, 50%)", "hsl(38, 92%, 50%)", "hsl(0, 84%, 60%)", "hsl(262, 83%, 58%)"];
+const COLORS = ["var(--np-accent)", "var(--np-positive)", "var(--np-text-secondary)", "var(--np-text-tertiary)", "var(--np-danger)"];
 
 const PROFILES = {
-  vip: { label: "VIP", color: "bg-purple-100 text-purple-800", minSpend: 2000, minVisits: 10 },
-  frequente: { label: "Frequente", color: "bg-green-100 text-green-800", minSpend: 500, minVisits: 5 },
-  regular: { label: "Regular", color: "bg-blue-100 text-blue-800", minSpend: 200, minVisits: 2 },
-  esporadico: { label: "Esporádico", color: "bg-amber-100 text-amber-800", minSpend: 0, minVisits: 1 },
-  inativo: { label: "Inativo", color: "bg-gray-100 text-gray-800", minSpend: 0, minVisits: 0 },
+  vip: { label: "VIP", color: "accent", minSpend: 2000, minVisits: 10 },
+  frequente: { label: "Frequente", color: "positive", minSpend: 500, minVisits: 5 },
+  regular: { label: "Regular", color: "neutral", minSpend: 200, minVisits: 2 },
+  esporadico: { label: "Esporádico", color: "neutral", minSpend: 0, minVisits: 1 },
+  inativo: { label: "Inativo", color: "danger", minSpend: 0, minVisits: 0 },
 };
 
 interface Props {
@@ -107,31 +108,32 @@ export function Report0015({ dateRange }: Props) {
   const isLoading = loadClients || loadComandas;
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+    return <ReportLoading />;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <UserCheck className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">Clientes por Perfil de Compra</h3>
-        </div>
-        <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
-          <Download className="h-4 w-4 mr-2" />Exportar Excel
-        </Button>
-      </div>
+      <ReportTitle
+        icon={UserCheck}
+        actions={
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
+            <Download className="h-4 w-4 mr-2" />Exportar Excel
+          </Button>
+        }
+      >
+        Clientes por Perfil de Compra
+      </ReportTitle>
 
       <Card>
-        <CardHeader><CardTitle className="text-lg">Distribuição de Perfis</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="np-display text-lg">Distribuição de Perfis</CardTitle></CardHeader>
         <CardContent>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
+                <XAxis dataKey="name" tick={CHART_TICK} />
+                <YAxis tick={CHART_TICK} />
+                <Tooltip {...CHART_TOOLTIP} />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                   {chartData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Bar>
@@ -160,13 +162,13 @@ export function Report0015({ dateRange }: Props) {
                   <TableRow key={r.id}>
                     <TableCell className="font-medium">{r.name}</TableCell>
                     <TableCell>
-                      <Badge className={PROFILES[r.profile as keyof typeof PROFILES]?.color}>
+                      <Badge tone={PROFILES[r.profile as keyof typeof PROFILES]?.color} dot>
                         {PROFILES[r.profile as keyof typeof PROFILES]?.label}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">{r.visits}</TableCell>
-                    <TableCell className="text-right">R$ {r.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell>{r.lastVisit ? format(new Date(r.lastVisit), "dd/MM/yyyy") : "—"}</TableCell>
+                    <TableCell className={NUM}>{r.visits}</TableCell>
+                    <TableCell className={NUM}>R$ {r.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="tabular-nums">{r.lastVisit ? format(new Date(r.lastVisit), "dd/MM/yyyy") : "—"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

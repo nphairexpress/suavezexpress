@@ -2,9 +2,10 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Badge, EmptyState } from "@design-system";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Loader2, AlertTriangle } from "lucide-react";
+import { Download, AlertTriangle } from "lucide-react";
+import { ReportTitle, ReportLoading } from "./ReportKit";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
@@ -64,20 +65,22 @@ export function Report0010() {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+    return <ReportLoading />;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-orange-500" />
-          <h3 className="text-lg font-semibold">Clientes com Celulares Duplicados</h3>
-        </div>
-        <Button variant="outline" size="sm" onClick={handleExport} disabled={duplicates.length === 0}>
-          <Download className="h-4 w-4 mr-2" />Exportar Excel
-        </Button>
-      </div>
+      <ReportTitle
+        icon={AlertTriangle}
+        tone="danger"
+        actions={
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={duplicates.length === 0}>
+            <Download className="h-4 w-4 mr-2" />Exportar Excel
+          </Button>
+        }
+      >
+        Clientes com Celulares Duplicados
+      </ReportTitle>
 
       <Card>
         <CardHeader>
@@ -87,7 +90,7 @@ export function Report0010() {
         </CardHeader>
         <CardContent>
           {duplicates.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Nenhum celular duplicado encontrado</div>
+            <EmptyState icon="circle-check" title="Nenhum celular duplicado encontrado" />
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -103,15 +106,15 @@ export function Report0010() {
                 <TableBody>
                   {duplicates.map(group => (
                     group.clients.map((c, i) => (
-                      <TableRow key={c.id} className={i === 0 ? "border-t-2" : ""}>
+                      <TableRow key={c.id} className={i === 0 ? "border-t-2 border-border" : ""}>
                         {i === 0 && (
-                          <TableCell rowSpan={group.count} className="align-top font-mono">
+                          <TableCell rowSpan={group.count} className="align-top font-mono tabular-nums">
                             {group.phone}
                           </TableCell>
                         )}
                         {i === 0 && (
                           <TableCell rowSpan={group.count} className="align-top">
-                            <Badge variant="destructive">{group.count}x</Badge>
+                            <Badge tone="danger" dot>{group.count}x</Badge>
                           </TableCell>
                         )}
                         <TableCell className="font-medium">{c.name}</TableCell>

@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Loader2, Scissors } from "lucide-react";
+import { Download, Scissors } from "lucide-react";
+import { EmptyState } from "@design-system";
+import { ReportTitle, ReportLoading, NUM } from "./ReportKit";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
@@ -81,19 +83,20 @@ export function Report0008({ dateRange }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <Scissors className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">Clientes por Serviço no Período</h3>
-        </div>
-        <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
-          <Download className="h-4 w-4 mr-2" />Exportar Excel
-        </Button>
-      </div>
+      <ReportTitle
+        icon={Scissors}
+        actions={
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
+            <Download className="h-4 w-4 mr-2" />Exportar Excel
+          </Button>
+        }
+      >
+        Clientes por Serviço no Período
+      </ReportTitle>
 
       <div className="flex items-center gap-2">
         <Select value={selectedService} onValueChange={setSelectedService}>
-          <SelectTrigger className="w-[300px]">
+          <SelectTrigger className="h-11 w-full sm:w-[300px]">
             <SelectValue placeholder="Selecione um serviço" />
           </SelectTrigger>
           <SelectContent>
@@ -106,15 +109,15 @@ export function Report0008({ dateRange }: Props) {
       </div>
 
       {selectedService === "all" ? (
-        <Card><CardContent className="py-8 text-center text-muted-foreground">Selecione um serviço para ver os clientes</CardContent></Card>
+        <Card><CardContent className="p-0"><EmptyState icon="scissors" title="Selecione um serviço para ver os clientes" /></CardContent></Card>
       ) : isLoading ? (
-        <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+        <ReportLoading />
       ) : (
         <Card>
           <CardHeader><CardTitle className="text-sm text-muted-foreground">{rows.length} cliente(s) encontrado(s)</CardTitle></CardHeader>
           <CardContent>
             {rows.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">Nenhum cliente encontrado para este serviço no período</div>
+              <EmptyState icon="users" title="Nenhum cliente encontrado para este serviço no período" />
             ) : (
               <div className="overflow-x-auto">
                 <Table>
@@ -125,8 +128,8 @@ export function Report0008({ dateRange }: Props) {
                       <TableHead>Celular</TableHead>
                       <TableHead>Telefone</TableHead>
                       <TableHead>Aniversário</TableHead>
-                      <TableHead className="text-right">Visitas</TableHead>
-                      <TableHead className="text-right">Total Gasto</TableHead>
+                      <TableHead className="text-right tabular-nums">Visitas</TableHead>
+                      <TableHead className="text-right tabular-nums">Total Gasto</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -134,11 +137,11 @@ export function Report0008({ dateRange }: Props) {
                       <TableRow key={i}>
                         <TableCell className="font-medium">{r.name}</TableCell>
                         <TableCell>{r.email || "—"}</TableCell>
-                        <TableCell>{r.phone || "—"}</TableCell>
+                        <TableCell className="tabular-nums">{r.phone || "—"}</TableCell>
                         <TableCell>{r.phone_landline || "—"}</TableCell>
                         <TableCell>{r.birth_date ? format(new Date(r.birth_date), "dd/MM/yyyy") : "—"}</TableCell>
-                        <TableCell className="text-right">{r.visits}</TableCell>
-                        <TableCell className="text-right">R$ {r.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell className={NUM}>{r.visits}</TableCell>
+                        <TableCell className={NUM}>R$ {r.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

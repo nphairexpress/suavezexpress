@@ -259,7 +259,7 @@ export function ImportModal({ open, onOpenChange, title, description, fields, on
         {/* Step 5: Done */}
         {step === "done" && (
           <div className="flex flex-col items-center justify-center py-10 gap-3">
-            <CheckCircle2 className="h-10 w-10 text-green-500" />
+            <CheckCircle2 className="h-10 w-10 text-[var(--np-positive-text)]" />
             <p className="text-sm font-medium">{importResult.success} registros importados com sucesso!</p>
           </div>
         )}

@@ -4,17 +4,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Loader2, UserCog } from "lucide-react";
+import { Download, UserCog } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { EmptyState } from "@design-system";
 import { exportToExcel } from "./utils/exportExcel";
+import { CHART_COLORS, CHART_TOOLTIP, NUM, ReportLoading, ReportTitle, TOTAL_ROW } from "./ReportKit";
 import {
   PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 
-const COLORS = ["hsl(217, 91%, 50%)", "hsl(142, 76%, 36%)", "hsl(38, 92%, 50%)", "hsl(0, 84%, 60%)", "hsl(262, 83%, 58%)", "hsl(199, 89%, 48%)", "hsl(330, 80%, 50%)", "hsl(180, 70%, 40%)"];
+const COLORS = CHART_COLORS;
 
 interface Props {
   dateRange: { from: Date; to: Date };
@@ -82,19 +84,20 @@ export function Report1128({ dateRange }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <UserCog className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">Vendas por Categoria — Profissional</h3>
-        </div>
-        <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
-          <Download className="h-4 w-4 mr-2" />Exportar Excel
-        </Button>
-      </div>
+      <ReportTitle
+        icon={UserCog}
+        actions={
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
+            <Download className="h-4 w-4 mr-2" />Exportar Excel
+          </Button>
+        }
+      >
+        Vendas por Categoria — Profissional
+      </ReportTitle>
 
       <div className="flex items-center gap-2">
         <Select value={selectedProf} onValueChange={setSelectedProf}>
-          <SelectTrigger className="w-[300px]">
+          <SelectTrigger className="h-11 w-full sm:w-[300px]">
             <SelectValue placeholder="Selecione um profissional" />
           </SelectTrigger>
           <SelectContent>
@@ -107,13 +110,13 @@ export function Report1128({ dateRange }: Props) {
       </div>
 
       {selectedProf === "all" ? (
-        <Card><CardContent className="py-8 text-center text-muted-foreground">Selecione um profissional para ver as vendas por categoria</CardContent></Card>
+        <Card><CardContent className="p-0"><EmptyState icon="users" title="Selecione um profissional para ver as vendas por categoria" /></CardContent></Card>
       ) : isLoading ? (
-        <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+        <ReportLoading />
       ) : (
         <>
           <Card>
-            <CardHeader><CardTitle className="text-lg">Distribuição por Categoria</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="np-display text-lg">Distribuição por Categoria</CardTitle></CardHeader>
             <CardContent>
               <div className="h-[300px]">
                 {chartData.length > 0 ? (
@@ -122,8 +125,8 @@ export function Report1128({ dateRange }: Props) {
                       <Pie data={chartData} cx="50%" cy="50%" innerRadius={50} outerRadius={100} paddingAngle={3} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
                         {chartData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Pie>
-                      <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
-                      <Legend />
+                      <Tooltip {...CHART_TOOLTIP} formatter={(value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
+                      <Legend wrapperStyle={{ color: "var(--np-text-secondary)", fontSize: 12 }} />
                     </RechartsPie>
                   </ResponsiveContainer>
                 ) : (
@@ -150,17 +153,17 @@ export function Report1128({ dateRange }: Props) {
                     {rows.map((r, i) => (
                       <TableRow key={i}>
                         <TableCell className="font-medium">{r.category}</TableCell>
-                        <TableCell className="text-right">{r.quantity}</TableCell>
-                        <TableCell className="text-right">R$ {r.revenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                        <TableCell className="text-right">{totalRevenue > 0 ? ((r.revenue / totalRevenue) * 100).toFixed(1) : 0}%</TableCell>
+                        <TableCell className={NUM}>{r.quantity}</TableCell>
+                        <TableCell className={NUM}>R$ {r.revenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell className={NUM}>{totalRevenue > 0 ? ((r.revenue / totalRevenue) * 100).toFixed(1) : 0}%</TableCell>
                       </TableRow>
                     ))}
                     {rows.length > 0 && (
-                      <TableRow className="font-bold bg-muted/50">
+                      <TableRow className={TOTAL_ROW}>
                         <TableCell>TOTAL</TableCell>
-                        <TableCell className="text-right">{rows.reduce((s, r) => s + r.quantity, 0)}</TableCell>
-                        <TableCell className="text-right">R$ {totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                        <TableCell className="text-right">100%</TableCell>
+                        <TableCell className={NUM}>{rows.reduce((s, r) => s + r.quantity, 0)}</TableCell>
+                        <TableCell className={NUM}>R$ {totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell className={NUM}>100%</TableCell>
                       </TableRow>
                     )}
                   </TableBody>

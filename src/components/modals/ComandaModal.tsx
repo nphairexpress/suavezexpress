@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +36,7 @@ import { useCurrentUserPermissions } from "@/hooks/useCurrentUserPermissions";
 import { useSalonPermissions } from "@/hooks/useSalonPermissions";
 import { ComandaServiceProducts } from "@/components/comanda/ComandaServiceProducts";
 import { useClientNetBalance } from "@/hooks/useClientBalance";
+import { NavTabs, DiffField, Receipt as NpReceipt, Badge as NpBadge } from "@design-system";
 
 interface ComandaModalProps {
   comanda: Comanda | null;
@@ -1024,7 +1025,8 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
   .total-row td { font-weight: bold; padding-top: 4px; }
   .footer { text-align: center; margin-top: 10px; font-size: 11px; }
 </style></head><body>
-  <h2>Recibo</h2>
+  <h2>NP HAIR EXPRESS</h2>
+  <div style="text-align:center;font-size:10px;">Comprovante sem valor fiscal</div>
   <div class="divider"></div>
   <div class="info">
     <div><strong>Comanda:</strong> #${comandaNumber}</div>
@@ -1066,7 +1068,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
     </tr>
   </table>` : ""}
   <div class="divider"></div>
-  <div class="footer">Obrigado pela preferência!</div>
+  <div class="footer">Obrigado pela preferência!<br>Beleza pra quem não para!</div>
 </body></html>`;
 
     const printWindow = window.open("", "_blank", "width=350,height=600");
@@ -1298,23 +1300,29 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-sm:w-screen max-sm:h-[100dvh] max-sm:max-w-none max-sm:max-h-none max-sm:rounded-none max-w-[95vw] lg:max-w-6xl max-h-[95vh] overflow-hidden flex flex-col p-0">
         {/* Header responsivo (mobile: título em cima c/ espaço pro X, abas roláveis embaixo) */}
-        <div className="px-4 md:px-6 py-3 border-b bg-background">
+        <div className="px-4 md:px-6 pt-4 pb-2 border-b border-border bg-background">
           {/* Título — no mobile fica em cima, com padding pra não bater no X de fechar */}
           <div className="md:hidden pr-10 mb-2">
-            <span className="text-base font-bold text-primary truncate block">
+            <span className="np-display text-lg text-foreground truncate block">
               Comanda {getComandaNumber()} · {comanda.client?.name || "Cliente"}
             </span>
           </div>
           <div className="flex items-center justify-between gap-4 min-w-0">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0">
-              <TabsList className="bg-transparent h-auto p-0 gap-4 md:gap-6 overflow-x-auto max-w-full">
-                <TabsTrigger value="itens" className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-2 text-sm font-medium text-muted-foreground hover:text-foreground whitespace-nowrap">Itens</TabsTrigger>
-                <TabsTrigger value="pagamento" className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-2 text-sm font-medium text-muted-foreground hover:text-foreground whitespace-nowrap">Pagamento</TabsTrigger>
-                <TabsTrigger value="prontuario" className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-2 text-sm font-medium text-muted-foreground hover:text-foreground whitespace-nowrap">Prontuário</TabsTrigger>
-                <TabsTrigger value="informacoes" className="bg-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-0 pb-2 text-sm font-medium text-muted-foreground hover:text-foreground whitespace-nowrap">Informações</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <span className="hidden md:inline text-lg font-bold text-primary whitespace-nowrap pr-8">
+            <div className="min-w-0 max-w-full overflow-x-auto">
+              <NavTabs
+                variant="underline"
+                aria-label="Seções da comanda"
+                value={activeTab}
+                onChange={setActiveTab}
+                tabs={[
+                  { id: "itens", label: "Itens" },
+                  { id: "pagamento", label: "Pagamento" },
+                  { id: "prontuario", label: "Prontuário" },
+                  { id: "informacoes", label: "Informações" },
+                ]}
+              />
+            </div>
+            <span className="hidden md:inline np-display text-xl text-foreground whitespace-nowrap truncate pr-8">
               Comanda {getComandaNumber()} - {comanda.client?.name || "Cliente"}
             </span>
           </div>
@@ -1325,17 +1333,17 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
             <TabsContent value="itens" className="space-y-4 mt-4">
               {/* Locked Comanda Warning */}
               {isComandaLocked && (
-                <div className="flex items-center gap-3 p-3 rounded-md border border-destructive bg-destructive/10">
-                  <X className="h-5 w-5 text-destructive shrink-0" />
+                <div role="alert" className="flex items-center gap-3 p-3 rounded-xl border border-[var(--np-danger-border)] bg-[var(--np-danger-soft)]">
+                  <X className="h-5 w-5 text-[var(--np-danger-text)] shrink-0" />
                   <div>
-                    <p className="font-medium text-destructive text-sm">Comanda Bloqueada</p>
+                    <p className="font-semibold text-[var(--np-danger-text)] text-sm">Comanda Bloqueada</p>
                     <p className="text-xs text-muted-foreground">Reabra o caixa para editar.</p>
                   </div>
                 </div>
               )}
 
               {/* Client Info + Date + Number — Avec inline style */}
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 py-2 border-b">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 py-2 border-b border-border">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-muted-foreground">Cliente:</span>
                   <span className="font-medium">{comanda.client?.name || "Não definido"}</span>
@@ -1371,14 +1379,14 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                 </div>
                 {/* Debt/Credit inline badge */}
                 {comanda.client_id && clientNetBalance < 0 && (
-                  <Badge variant="destructive" className="text-xs gap-1">
-                    <AlertTriangle className="h-3 w-3" /> Divida {formatCurrency(Math.abs(clientNetBalance))}
-                  </Badge>
+                  <NpBadge tone="danger">
+                    <AlertTriangle className="h-3 w-3" /> Divida <span className="tabular-nums">{formatCurrency(Math.abs(clientNetBalance))}</span>
+                  </NpBadge>
                 )}
                 {comanda.client_id && clientNetBalance > 0 && (
-                  <Badge className="bg-green-600 text-xs gap-1">
-                    <Wallet className="h-3 w-3" /> Credito {formatCurrency(clientNetBalance)}
-                  </Badge>
+                  <NpBadge tone="positive">
+                    <Wallet className="h-3 w-3" /> Credito <span className="tabular-nums">{formatCurrency(clientNetBalance)}</span>
+                  </NpBadge>
                 )}
               </div>
 
@@ -1392,10 +1400,10 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                   editableItems.map((item) => {
                     const nome = item.description?.includes("📦") ? item.description.split(" — ")[0] : item.description;
                     return (
-                    <div key={item.id} className="rounded-lg border p-3 space-y-3">
+                    <div key={item.id} className="rounded-2xl border border-border bg-foreground/[0.04] p-4 space-y-3">
                       <div className="flex items-start justify-between gap-3">
                         <span className="font-medium leading-tight">{nome}</span>
-                        <span className="font-semibold whitespace-nowrap">{formatCurrency(item.total_price)}</span>
+                        <span className="np-num whitespace-nowrap text-foreground">{formatCurrency(item.total_price)}</span>
                       </div>
 
                       {item.isEditing ? (
@@ -1418,7 +1426,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                             </div>
                           </div>
                           <div className="flex gap-2">
-                            <Button className="flex-1 h-11 gap-2" onClick={() => saveItemChanges(item)}><CheckCircle className="h-4 w-4" /> Salvar</Button>
+                            <Button className="flex-1 h-12 gap-2" onClick={() => saveItemChanges(item)}><CheckCircle className="h-4 w-4" /> Salvar</Button>
                             <Button variant="outline" className="h-11" onClick={() => toggleEditItem(item.id)}><X className="h-4 w-4" /></Button>
                           </div>
                         </div>
@@ -1436,7 +1444,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                           <div className="flex items-center justify-between text-sm text-muted-foreground">
                             <span>Qtd {item.quantity} · {formatCurrency(item.unit_price)}{(item.editDiscount || 0) > 0 ? ` · -${item.editDiscount}%` : ""}</span>
                             {item.service_id && (
-                              <Button variant="ghost" size="sm" className="h-8 gap-1 text-muted-foreground"
+                              <Button variant="ghost" size="sm" className="h-11 gap-1 text-muted-foreground"
                                 onClick={() => toggleProductsExpanded(item.id)}>
                                 <Package className="h-4 w-4" /> Produtos
                               </Button>
@@ -1447,7 +1455,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                               <Button variant="outline" className="flex-1 h-11 gap-2" onClick={() => toggleEditItem(item.id)}>
                                 <Pencil className="h-4 w-4" /> Editar
                               </Button>
-                              <Button variant="outline" className="h-11 text-destructive" onClick={() => removeItem(item.id)} disabled={isRemoving}>
+                              <Button variant="outline" className="h-11 w-11 text-[var(--np-danger-text)]" onClick={() => removeItem(item.id)} disabled={isRemoving} aria-label="Remover item">
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
@@ -1537,7 +1545,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                                   <div className="flex items-center gap-2">
                                     <span>{item.description?.includes("📦") ? item.description.split(" — ")[0] : item.description}</span>
                                     {item.description?.includes("📦") && (
-                                      <Badge variant="secondary" className="text-xs whitespace-nowrap bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
+                                      <Badge variant="secondary" className="text-xs whitespace-nowrap border border-[var(--np-accent-border)] bg-[var(--np-accent-soft)] text-[var(--np-accent-text)]">
                                         {item.description.split(" — ")[1]}
                                       </Badge>
                                     )}
@@ -1615,7 +1623,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                                   <div className="text-right">{item.editDiscount || 0}%</div>
                                 )}
                               </TableCell>
-                              <TableCell className="text-right font-medium">
+                              <TableCell className="text-right font-semibold tabular-nums">
                                 {formatCurrency(item.total_price)}
                               </TableCell>
                               <TableCell>
@@ -1625,7 +1633,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                                       <Button 
                                         variant="ghost" 
                                         size="icon" 
-                                        className="h-8 w-8 text-green-600"
+                                        className="h-8 w-8 text-[var(--np-positive-text)]"
                                         onClick={() => saveItemChanges(item)}
                                       >
                                         <CheckCircle className="h-4 w-4" />
@@ -1708,7 +1716,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                   <div className="flex flex-wrap items-center gap-2">
                       <Popover open={productPopoverOpen} onOpenChange={(open) => { setProductPopoverOpen(open); if (open) { loadProducts(); setProductSearch(""); } }}>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" size="sm" className="gap-2">
+                          <Button variant="outline" size="sm" className="gap-2 h-11">
                             <Receipt className="h-4 w-4" />
                             Produto
                           </Button>
@@ -1717,7 +1725,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                           <Command shouldFilter={false}>
                             <div className="p-2">
                               <input
-                                className="w-full px-3 py-2 text-sm border rounded-md outline-none focus:ring-2 focus:ring-primary"
+                                className="w-full h-11 px-3 text-sm border border-input bg-background text-foreground placeholder:text-muted-foreground rounded-md outline-none focus:ring-2 focus:ring-primary"
                                 placeholder="Buscar produto..."
                                 value={productSearch}
                                 onChange={(e) => setProductSearch(e.target.value)}
@@ -1760,7 +1768,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                       </Popover>
                       <Popover open={packagePopoverOpen} onOpenChange={(open) => { setPackagePopoverOpen(open); if (open) loadPackages(); }}>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" size="sm" className="gap-2">
+                          <Button variant="outline" size="sm" className="gap-2 h-11">
                             <Gift className="h-4 w-4" />
                             Pacote
                           </Button>
@@ -1809,66 +1817,52 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                           </Command>
                         </PopoverContent>
                       </Popover>
-                      <Button variant="outline" size="sm">Caixinha</Button>
+                      <Button variant="outline" size="sm" className="h-11">Caixinha</Button>
                     </div>
                 </div>
               )}
             </TabsContent>
 
             <TabsContent value="pagamento" className="space-y-4 mt-4">
-              {/* Avec-style Summary Cards — 5 columns */}
+              {/* Resumo do pagamento — caixa, totais, saldo e diferença */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 md:gap-3">
-                <Card className="border">
-                  <CardContent className="p-3">
-                    <Label className="text-xs text-muted-foreground block mb-1">Caixa Responsável:</Label>
-                    <Select value={selectedCaixaId || ""} onValueChange={(v) => setSelectedCaixaId(v || null)}>
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Selecione um caixa" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableCaixas.map((c) => {
-                          const caixaDate = new Date(c.opened_at);
-                          const sameDay = isSameDay(caixaDate, comandaDate);
-                          const name = c.profile?.full_name || "Usuário";
-                          const dateStr = format(caixaDate, "dd/MM", { locale: ptBR });
-                          return (
-                            <SelectItem key={c.id} value={c.id} disabled={!sameDay}>
-                              {name} ({dateStr}){!sameDay ? " — data diferente" : ""}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </CardContent>
-                </Card>
-                <Card className="border">
-                  <CardContent className="p-3">
-                    <Label className="text-xs text-muted-foreground">Total do Serviço:</Label>
-                    <p className="text-lg font-semibold">{formatCurrency(subtotal)}</p>
-                  </CardContent>
-                </Card>
-                <Card className="border">
-                  <CardContent className="p-3">
-                    <Label className="text-xs text-muted-foreground">Total do Produto:</Label>
-                    <p className="text-lg font-semibold">{formatCurrency(0)}</p>
-                  </CardContent>
-                </Card>
-                <Card className="border">
-                  <CardContent className="p-3">
-                    <Label className="text-xs text-muted-foreground">Saldo do Cliente:</Label>
-                    <p className={`text-lg font-semibold ${clientNetBalance > 0 ? 'text-green-600' : clientNetBalance < 0 ? 'text-destructive' : ''}`}>
-                      {clientNetBalance !== 0 ? formatCurrency(clientNetBalance) : '0'}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card className="border">
-                  <CardContent className="p-3">
-                    <Label className="text-xs text-muted-foreground">Diferença:</Label>
-                    <p className={`text-lg font-semibold ${difference > 0 ? 'text-destructive' : difference < 0 ? 'text-green-600' : ''}`}>
-                      {difference !== 0 ? formatCurrency(-difference) : '0'}
-                    </p>
-                  </CardContent>
-                </Card>
+                <div className="col-span-2 sm:col-span-1 rounded-2xl border border-border bg-foreground/[0.04] p-3">
+                  <Label className="text-xs text-muted-foreground block mb-1">Caixa Responsável:</Label>
+                  <Select value={selectedCaixaId || ""} onValueChange={(v) => setSelectedCaixaId(v || null)}>
+                    <SelectTrigger className="h-11 text-xs">
+                      <SelectValue placeholder="Selecione um caixa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCaixas.map((c) => {
+                        const caixaDate = new Date(c.opened_at);
+                        const sameDay = isSameDay(caixaDate, comandaDate);
+                        const name = c.profile?.full_name || "Usuário";
+                        const dateStr = format(caixaDate, "dd/MM", { locale: ptBR });
+                        return (
+                          <SelectItem key={c.id} value={c.id} disabled={!sameDay}>
+                            {name} ({dateStr}){!sameDay ? " — data diferente" : ""}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="rounded-2xl border border-border bg-foreground/[0.04] p-3">
+                  <Label className="text-xs text-muted-foreground">Total do Serviço:</Label>
+                  <p className="np-num text-lg text-foreground">{formatCurrency(subtotal)}</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-foreground/[0.04] p-3">
+                  <Label className="text-xs text-muted-foreground">Total do Produto:</Label>
+                  <p className="np-num text-lg text-foreground">{formatCurrency(0)}</p>
+                </div>
+                <div className="rounded-2xl border border-border bg-foreground/[0.04] p-3">
+                  <Label className="text-xs text-muted-foreground">Saldo do Cliente:</Label>
+                  <p className={`np-num text-lg ${clientNetBalance > 0 ? 'text-[var(--np-positive-text)]' : clientNetBalance < 0 ? 'text-[var(--np-danger-text)]' : 'text-foreground'}`}>
+                    {clientNetBalance !== 0 ? formatCurrency(clientNetBalance) : '0'}
+                  </p>
+                </div>
+                {/* Diferença: positivo = troco (verde), negativo = falta (vermelho). Mesmo número de antes (−difference). */}
+                <DiffField className="col-span-2 sm:col-span-1" label="Diferença" value={-difference} />
               </div>
 
               {/* Creditos disponiveis do cliente (cashback acumulado) */}
@@ -1942,9 +1936,9 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
 
               {/* Credito da FILA (pagou online e nao foi atendida) */}
               {comanda?.client_id && filaCredits.length > 0 && !isComandaLocked && (
-                <Card className="border-amber-400/60 bg-amber-50">
+                <Card className="border-[var(--np-accent-border)] bg-[var(--np-accent-soft)]">
                   <CardContent className="p-3 space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-[var(--np-accent-text)]">
                       <Gift className="h-4 w-4" />
                       Crédito da fila online (pagou e não foi atendida)
                     </div>
@@ -1986,25 +1980,25 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
               )}
 
               {/* Total a Cobrar — desconto da comanda (cashback aplicado etc) */}
-              <div className="text-center py-2">
+              <div className="text-center py-4 rounded-2xl border border-border bg-foreground/[0.04]">
                 {(Number(comanda?.discount || 0) > 0 || totalJaRecebido > 0) ? (
                   <>
                     <div className="flex justify-center items-baseline gap-3 text-sm text-muted-foreground flex-wrap">
-                      <span>Subtotal: {formatCurrency(subtotal)}</span>
+                      <span className="tabular-nums">Subtotal: {formatCurrency(subtotal)}</span>
                       {Number(comanda?.discount || 0) > 0 && (
-                        <span className="text-green-600">- Desconto cashback: {formatCurrency(Number(comanda?.discount || 0))}</span>
+                        <span className="text-[var(--np-positive-text)] tabular-nums">- Desconto cashback: {formatCurrency(Number(comanda?.discount || 0))}</span>
                       )}
                       {totalJaRecebido > 0 && (
-                        <span className="text-green-600">- Pago online: {formatCurrency(totalJaRecebido)}</span>
+                        <span className="text-[var(--np-positive-text)] tabular-nums">- Pago online: {formatCurrency(totalJaRecebido)}</span>
                       )}
                     </div>
                     <Label className="text-xs text-muted-foreground">Total a Cobrar:</Label>
-                    <p className="text-3xl font-bold text-destructive">{formatCurrency(totalACobrarLiquido)}</p>
+                    <p className="np-num text-4xl text-foreground">{formatCurrency(totalACobrarLiquido)}</p>
                   </>
                 ) : (
                   <>
                     <Label className="text-xs text-muted-foreground">Total a Cobrar:</Label>
-                    <p className="text-3xl font-bold text-destructive">{formatCurrency(subtotal)}</p>
+                    <p className="np-num text-4xl text-foreground">{formatCurrency(subtotal)}</p>
                   </>
                 )}
               </div>
@@ -2050,10 +2044,30 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
 
               </div>
 
+              {/* Comprovante em formato de cupom (só leitura) — comanda fechada */}
+              {comanda?.closed_at && (
+                <div className="flex justify-center">
+                  <NpReceipt
+                    className="w-full max-w-[340px]"
+                    number={getComandaNumber()}
+                    date={format(new Date(comanda.closed_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                    client={comanda.client?.name || "Cliente não informado"}
+                    items={editableItems.map((it) => ({
+                      name: it.description?.includes("📦") ? it.description.split(" — ")[0] : it.description,
+                      pro: professionals.find((p) => p.id === ((it as any).professional_id || comanda.professional_id))?.name,
+                      price: Number(it.total_price) || 0,
+                    }))}
+                    discount={localDiscount}
+                    method={payments.length > 0 ? Array.from(new Set(payments.map((p) => PAYMENT_METHODS.find((pm) => pm.value === p.method)?.label || p.method))).join(" + ") : undefined}
+                    received={payments.length > 0 ? totalPayments : undefined}
+                  />
+                </div>
+              )}
+
               {/* Payment Methods */}
               <Card>
                 <CardContent className="p-4 space-y-4">
-                  <div className="hidden md:flex gap-2 text-sm font-medium text-muted-foreground border-b pb-2">
+                  <div className="hidden md:flex gap-2 text-sm font-medium text-muted-foreground border-b border-border pb-2">
                     <span className="w-8 shrink-0"></span>
                     <span className="w-[140px] shrink-0">Forma de Pagamento</span>
                     <span className="flex-1 min-w-0">Banco/Bandeira</span>
@@ -2064,21 +2078,22 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                   
                   {payments.map((payment, index) => (
                     payment.locked ? (
-                      <div key={payment.id} className="flex items-center gap-2 rounded-md border border-green-500 bg-green-50 px-3 py-2 dark:bg-green-950/30">
-                        <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
-                        <span className="flex-1 text-sm font-medium text-green-800 dark:text-green-300">
+                      <div key={payment.id} className="flex items-center gap-2 rounded-xl border border-[var(--np-positive-border)] bg-[var(--np-positive-soft)] px-3 py-2">
+                        <CheckCircle className="h-5 w-5 text-[var(--np-positive-text)] shrink-0" />
+                        <span className="flex-1 text-sm font-medium text-[var(--np-positive-text)]">
                           Pago online via Asaas · já recebido, não editável
                         </span>
-                        <span className="text-sm font-semibold text-green-800 dark:text-green-300 tabular-nums">
+                        <span className="text-sm font-semibold text-[var(--np-positive-text)] tabular-nums">
                           {formatCurrency(payment.amount)}
                         </span>
                       </div>
                     ) : (
-                    <div key={payment.id} className="flex flex-wrap md:flex-nowrap gap-2 items-center">
+                    <div key={payment.id} className="grid grid-cols-[44px_1fr] md:flex md:flex-nowrap gap-2 items-center rounded-xl border border-border p-2 md:border-0 md:p-0">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 shrink-0 text-destructive"
+                        className="h-11 w-11 md:h-8 md:w-8 shrink-0 text-[var(--np-danger-text)]"
+                        aria-label="Remover forma de pagamento"
                         onClick={() => removePaymentRow(payment.id)}
                       >
                         <Minus className="h-4 w-4" />
@@ -2099,7 +2114,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                           }
                         }}
                       >
-                        <SelectTrigger className="w-[140px] shrink-0">
+                        <SelectTrigger className="h-11 md:h-10 w-full md:w-[140px] shrink-0">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -2112,7 +2127,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                       </Select>
 
                       {/* Bank/Card Brand Selection */}
-                      <div className="flex-1 min-w-0 flex gap-2">
+                      <div className="col-span-2 md:col-auto flex-1 min-w-0 flex gap-2 empty:hidden">
                         {payment.method === 'pix' ? (
                           <Select
                             value={payment.bankAccountId || ""}
@@ -2168,7 +2183,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                             )}
                           </>
                         ) : (
-                          <div className="flex-1" />
+                          <div className="hidden md:block flex-1" />
                         )}
                       </div>
 
@@ -2176,30 +2191,34 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
                         placeholder="Observações"
                         value={payment.info}
                         onChange={(e) => updatePayment(payment.id, 'info', e.target.value)}
-                        className="w-[100px] shrink-0"
+                        className="col-span-2 md:col-auto h-11 md:h-10 w-full md:w-[100px] shrink-0"
                       />
 
+                      <div className="col-span-2 flex gap-2 md:contents">
                       <Input
                         type="number"
                         step="0.01"
                         value={payment.amount || ""}
                         onChange={(e) => updatePayment(payment.id, 'amount', parseFloat(e.target.value) || 0)}
-                        className="w-[100px] shrink-0 text-right"
+                        aria-label="Valor (R$)"
+                        className="h-11 md:h-10 flex-1 md:flex-none md:w-[100px] shrink-0 text-right tabular-nums"
                       />
 
                       <Button
                         variant="outline"
                         size="sm"
-                        className="shrink-0"
+                        className="h-11 md:h-9 px-5 shrink-0 font-semibold"
+                        title="Preencher com a diferença"
                         onClick={() => updatePayment(payment.id, 'amount', Math.max(0, Math.round((difference + payment.amount) * 100) / 100))}
                       >
                         Dif
                       </Button>
+                      </div>
                     </div>
                     )
                   ))}
 
-                  <Button variant="outline" size="sm" className="gap-2" onClick={addPaymentRow}>
+                  <Button variant="outline" size="sm" className="gap-2 h-11 w-full md:w-auto" onClick={addPaymentRow}>
                     <Plus className="h-4 w-4" />
                     Adicionar Forma de Pagamento
                   </Button>
@@ -2225,37 +2244,38 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
           </Tabs>
         </div>
 
-        {/* Avec-style Footer */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t px-4 md:px-6 py-3 flex-shrink-0 bg-background">
+        {/* Rodapé — no celular as ações principais ocupam a largura toda (alvo ≥ 48 px) */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 md:px-6 py-3 flex-shrink-0 bg-background">
           <Button
             variant="outline"
-            className="gap-2 text-sm max-sm:flex-1"
+            className="gap-2 text-sm h-12 md:h-10 max-sm:flex-1"
             onClick={handleSyncComanda}
             disabled={isUpdating}
           >
             <RefreshCw className={`h-4 w-4 ${isUpdating ? "animate-spin" : ""}`} />
             {isUpdating ? "Atualizando..." : "Atualizar Comanda"}
           </Button>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={handlePrintReceipt} title="Imprimir">
+          <div className="flex flex-wrap items-center gap-2 max-sm:w-full">
+            <Button variant="outline" size="icon" className="h-12 w-12 md:h-10 md:w-10" onClick={handlePrintReceipt} title="Imprimir" aria-label="Imprimir">
               <Printer className="h-4 w-4" />
             </Button>
             {canDelete && (
               <Button
                 variant="outline"
                 size="icon"
-                className="text-destructive hover:text-destructive"
+                className="h-12 w-12 md:h-10 md:w-10 text-[var(--np-danger-text)] hover:text-[var(--np-danger-text)]"
                 onClick={() => { if (comanda && onDelete) onDelete(comanda); }}
                 title="Excluir"
+                aria-label="Excluir"
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
             )}
-            <Button variant="outline" onClick={onClose}>Confirmar</Button>
+            <Button variant="outline" className="h-12 md:h-10 max-sm:flex-1" onClick={onClose}>Confirmar</Button>
             {comanda?.closed_at ? pode("comanda.reabrir") && (
               <Button
                 variant="outline"
-                className="gap-2 border-orange-500 text-orange-600 hover:bg-orange-50"
+                className="gap-2 h-12 md:h-10 max-sm:w-full border-[var(--np-accent-border)] text-[var(--np-accent-text)] hover:bg-[var(--np-accent-soft)] hover:text-[var(--np-accent-text)]"
                 onClick={handleReopenComanda}
                 disabled={isReopening}
               >
@@ -2264,7 +2284,7 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
               </Button>
             ) : (
               <Button
-                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="h-12 px-6 max-sm:w-full font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-[0_8px_24px_var(--np-accent-glow)]"
                 onClick={handleFinalizeComanda}
                 disabled={isClosing || !canFinalizeComanda}
                 title={!canFinalizeComanda ? "Você só pode finalizar suas próprias comandas" : undefined}

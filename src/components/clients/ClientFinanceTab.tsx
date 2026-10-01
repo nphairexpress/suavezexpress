@@ -1,7 +1,19 @@
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Badge, EmptyState } from "@design-system";
+import {
+  glassModal,
+  modalTitle,
+  display,
+  txtPositive,
+  txtDanger,
+  boxPositive,
+  boxDanger,
+  btnPositiveOutline,
+  btnDangerOutline,
+  inset,
+  tableHead,
+} from "@/components/clients/clientsUi";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -72,15 +84,17 @@ export function ClientFinanceTab({ clientId, clientName }: ClientFinanceTabProps
     );
   }
 
+  const positive = summary.netBalance >= 0;
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Financeiro de {clientName}</h3>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className={`${display} text-lg`}>Financeiro de {clientName}</h3>
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
             variant="outline"
-            className="gap-2 text-green-700 border-green-300 hover:bg-green-50"
+            className={`min-h-[44px] gap-2 ${btnPositiveOutline}`}
             onClick={() => {
               setAmount("");
               setDescription("");
@@ -93,7 +107,7 @@ export function ClientFinanceTab({ clientId, clientName }: ClientFinanceTabProps
           <Button
             type="button"
             variant="outline"
-            className="gap-2 text-red-700 border-red-300 hover:bg-red-50"
+            className={`min-h-[44px] gap-2 ${btnDangerOutline}`}
             onClick={() => {
               setAmount("");
               setDescription("");
@@ -107,84 +121,77 @@ export function ClientFinanceTab({ clientId, clientName }: ClientFinanceTabProps
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="border-green-200 bg-green-50/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-green-700 mb-1">
-              <TrendingUp className="h-4 w-4" />
-              <Label className="text-xs font-medium text-green-700">Creditos</Label>
-            </div>
-            <p className="text-xl font-bold text-green-700">{formatCurrency(summary.totalCredits)}</p>
-          </CardContent>
-        </Card>
-        <Card className="border-red-200 bg-red-50/50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 text-red-700 mb-1">
-              <TrendingDown className="h-4 w-4" />
-              <Label className="text-xs font-medium text-red-700">Dividas</Label>
-            </div>
-            <p className="text-xl font-bold text-red-700">{formatCurrency(summary.totalDebts)}</p>
-          </CardContent>
-        </Card>
-        <Card className={`${summary.netBalance >= 0 ? "border-green-200 bg-green-50/50" : "border-red-200 bg-red-50/50"}`}>
-          <CardContent className="p-4">
-            <div className={`flex items-center gap-2 mb-1 ${summary.netBalance >= 0 ? "text-green-700" : "text-red-700"}`}>
-              <Wallet className="h-4 w-4" />
-              <Label className={`text-xs font-medium ${summary.netBalance >= 0 ? "text-green-700" : "text-red-700"}`}>Saldo</Label>
-            </div>
-            <p className={`text-xl font-bold ${summary.netBalance >= 0 ? "text-green-700" : "text-red-700"}`}>
-              {formatCurrency(summary.netBalance)}
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+        <div className={`rounded-2xl p-4 ${boxPositive}`}>
+          <div className={`flex items-center gap-2 mb-1 ${txtPositive}`}>
+            <TrendingUp className="h-4 w-4" />
+            <Label className={`text-xs font-medium ${txtPositive}`}>Creditos</Label>
+          </div>
+          <p className={`np-num text-xl ${txtPositive}`}>{formatCurrency(summary.totalCredits)}</p>
+        </div>
+        <div className={`rounded-2xl p-4 ${boxDanger}`}>
+          <div className={`flex items-center gap-2 mb-1 ${txtDanger}`}>
+            <TrendingDown className="h-4 w-4" />
+            <Label className={`text-xs font-medium ${txtDanger}`}>Dividas</Label>
+          </div>
+          <p className={`np-num text-xl ${txtDanger}`}>{formatCurrency(summary.totalDebts)}</p>
+        </div>
+        <div className={`rounded-2xl p-4 ${positive ? boxPositive : boxDanger}`}>
+          <div className={`flex items-center gap-2 mb-1 ${positive ? txtPositive : txtDanger}`}>
+            <Wallet className="h-4 w-4" />
+            <Label className={`text-xs font-medium ${positive ? txtPositive : txtDanger}`}>Saldo</Label>
+          </div>
+          <p className={`np-num text-xl ${positive ? txtPositive : txtDanger}`}>
+            {formatCurrency(summary.netBalance)}
+          </p>
+        </div>
       </div>
 
       {/* History Table */}
       {entries.length === 0 ? (
-        <Card className="flex items-center justify-center py-8">
-          <div className="text-center text-muted-foreground">
-            <Wallet className="h-10 w-10 mx-auto mb-2 opacity-50" />
-            <p>Nenhum registro financeiro encontrado</p>
-          </div>
-        </Card>
+        <div className={inset}>
+          <EmptyState icon={Wallet} title="Nenhum registro financeiro encontrado" className="py-8" />
+        </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Data</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Descricao</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {entries.map((entry) => (
-              <TableRow key={entry.id}>
-                <TableCell>
-                  {format(new Date(entry.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                </TableCell>
-                <TableCell>
-                  {entry.type === "credit" ? (
-                    <Badge className="bg-green-600">Credito</Badge>
-                  ) : (
-                    <Badge variant="destructive">Divida</Badge>
-                  )}
-                </TableCell>
-                <TableCell>{entry.description || "—"}</TableCell>
-                <TableCell className={`text-right font-medium ${entry.type === "credit" ? "text-green-700" : "text-red-700"}`}>
-                  {entry.type === "credit" ? "+" : "-"} {formatCurrency(Number(entry.amount))}
-                </TableCell>
+        <div className={`${inset} overflow-hidden`}>
+          <Table>
+            <TableHeader>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className={tableHead}>Data</TableHead>
+                <TableHead className={tableHead}>Tipo</TableHead>
+                <TableHead className={tableHead}>Descricao</TableHead>
+                <TableHead className={`${tableHead} text-right`}>Valor</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {entries.map((entry) => (
+                <TableRow key={entry.id} className="border-border hover:bg-[var(--np-surface-inset)]">
+                  <TableCell className="tabular-nums whitespace-nowrap">
+                    {format(new Date(entry.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                  </TableCell>
+                  <TableCell>
+                    {entry.type === "credit" ? (
+                      <Badge tone="positive">Credito</Badge>
+                    ) : (
+                      <Badge tone="danger">Divida</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>{entry.description || "—"}</TableCell>
+                  <TableCell className={`text-right font-semibold tabular-nums whitespace-nowrap ${entry.type === "credit" ? txtPositive : txtDanger}`}>
+                    {entry.type === "credit" ? "+" : "-"} {formatCurrency(Number(entry.amount))}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {/* Add Credit Modal */}
       <Dialog open={creditModalOpen} onOpenChange={setCreditModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className={`${glassModal} w-[calc(100%-1.5rem)] rounded-2xl sm:max-w-md`}>
           <DialogHeader>
-            <DialogTitle>Adicionar Credito</DialogTitle>
+            <DialogTitle className={modalTitle}>Adicionar Credito</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -208,14 +215,14 @@ export function ClientFinanceTab({ clientId, clientName }: ClientFinanceTabProps
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setCreditModalOpen(false)}>
               Cancelar
             </Button>
             <Button
               onClick={handleAddCredit}
               disabled={!amount || parseFloat(amount) <= 0 || isAddingCredit}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-[var(--np-positive)] text-[color:var(--np-text-on-accent)] hover:bg-[var(--np-positive)] hover:brightness-110"
             >
               {isAddingCredit ? (
                 <>
@@ -232,9 +239,9 @@ export function ClientFinanceTab({ clientId, clientName }: ClientFinanceTabProps
 
       {/* Add Debt Modal */}
       <Dialog open={debtModalOpen} onOpenChange={setDebtModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className={`${glassModal} w-[calc(100%-1.5rem)] rounded-2xl sm:max-w-md`}>
           <DialogHeader>
-            <DialogTitle>Registrar Divida</DialogTitle>
+            <DialogTitle className={modalTitle}>Registrar Divida</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -258,7 +265,7 @@ export function ClientFinanceTab({ clientId, clientName }: ClientFinanceTabProps
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setDebtModalOpen(false)}>
               Cancelar
             </Button>

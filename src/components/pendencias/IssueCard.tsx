@@ -1,17 +1,14 @@
 // @ts-nocheck
 import { Button } from "@/components/ui/button";
+import { Badge, Icon } from "@design-system";
+import { MessageCircle, CheckCircle2, Ban, UserRound } from "lucide-react";
 import { useResolveIssue } from "@/hooks/useClosureIssues";
 
-const SEVERITY_COLOR: Record<string, string> = {
-  high: "bg-rose-100 text-rose-900 border-rose-200",
-  medium: "bg-amber-100 text-amber-900 border-amber-200",
-  low: "bg-sky-100 text-sky-900 border-sky-200",
-};
-
-const SEVERITY_EMOJI: Record<string, string> = {
-  high: "🔴",
-  medium: "🟡",
-  low: "🔵",
+// Só apresentação: gravidade do dado (high/medium/low) -> visual do PendingCard (alta/media/baixa).
+const SEVERITY_VIEW: Record<string, { cls: "alta" | "media" | "baixa"; label: string; tone: "danger" | "accent" | "neutral"; icon: string }> = {
+  high: { cls: "alta", label: "Gravidade alta", tone: "danger", icon: "octagon-alert" },
+  medium: { cls: "media", label: "Gravidade média", tone: "accent", icon: "triangle-alert" },
+  low: { cls: "baixa", label: "Gravidade baixa", tone: "neutral", icon: "info" },
 };
 
 // Labels humanos pra campos técnicos vindos do detector
@@ -100,13 +97,13 @@ function FieldList({ obj }: { obj: Record<string, any> }) {
   const entries = Object.entries(obj).filter(([, v]) => v !== null && v !== undefined);
   if (entries.length === 0) return null;
   return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs ml-2">
+    <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs ml-2 text-foreground">
       {entries.map(([k, v]) => (
         <>
-          <dt key={`k-${k}`} className="font-medium opacity-70">
+          <dt key={`k-${k}`} className="font-medium text-muted-foreground">
             {FIELD_LABELS[k] ?? k}:
           </dt>
-          <dd key={`v-${k}`} className="font-mono">
+          <dd key={`v-${k}`} className="font-mono tabular-nums break-all">
             {fmtValue(k, v)}
           </dd>
         </>
@@ -125,83 +122,88 @@ export function IssueCard({ issue, onRequestCorrection }: Props) {
   const profName = issue.professionals?.name ?? "—";
   const comandaNum = issue.comandas?.comanda_number ?? null;
   const clientName = issue.comandas?.clients?.name ?? null;
-  const severity = (issue.severity ?? "low") as keyof typeof SEVERITY_COLOR;
+  const severity = (issue.severity ?? "low") as keyof typeof SEVERITY_VIEW;
+  const view = SEVERITY_VIEW[severity] ?? SEVERITY_VIEW.low;
 
   return (
-    <div
-      className={`p-4 rounded border ${
-        SEVERITY_COLOR[severity] ?? SEVERITY_COLOR.low
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <span className="text-xl" aria-hidden="true">
-          {SEVERITY_EMOJI[severity] ?? SEVERITY_EMOJI.low}
-        </span>
-        <div className="flex-1">
-          <div className="text-sm text-slate-600">
+    <div className={`np-glass-card np-pending np-pending--${view.cls}`}>
+      <div className="np-pending__icon" aria-hidden="true">
+        <Icon name={view.icon} size={22} />
+      </div>
+      <div className="np-pending__body">
+        <div className="np-pending__tags">
+          <Badge tone={view.tone} dot>{view.label}</Badge>
+          <span className="np-caption tabular-nums">
             {issue.detected_date}
             {comandaNum != null && ` · Comanda #${comandaNum}`}
             {clientName && ` · ${clientName}`}
-          </div>
-          <div className="font-medium mt-1">{issue.description}</div>
-          {(issue.expected_value != null || issue.actual_value != null) && (
-            <details className="text-xs mt-2 opacity-80">
-              <summary className="cursor-pointer font-medium">Detalhes</summary>
-              <div className="mt-2 space-y-3">
-                {issue.expected_value && (
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-wide opacity-70 mb-1">
-                      Esperado
-                    </div>
-                    <FieldList obj={issue.expected_value} />
-                  </div>
-                )}
-                {issue.actual_value && (
-                  <div>
-                    <div className="text-xs font-semibold uppercase tracking-wide opacity-70 mb-1">
-                      Recebido
-                    </div>
-                    <FieldList obj={issue.actual_value} />
-                  </div>
-                )}
-              </div>
-            </details>
-          )}
-          <div className="text-sm mt-2">
-            Profissional: <strong>{profName}</strong>
-          </div>
+          </span>
         </div>
-      </div>
+        <div className="np-pending__title">{issue.description}</div>
+        {(issue.expected_value != null || issue.actual_value != null) && (
+          <details className="np-pending__desc text-xs">
+            <summary className="cursor-pointer font-medium text-foreground min-h-[32px] flex items-center">Detalhes</summary>
+            <div className="mt-2 space-y-3 rounded-xl border border-border bg-muted/40 p-3">
+              {issue.expected_value && (
+                <div>
+                  <div className="np-caps mb-1">
+                    Esperado
+                  </div>
+                  <FieldList obj={issue.expected_value} />
+                </div>
+              )}
+              {issue.actual_value && (
+                <div>
+                  <div className="np-caps mb-1">
+                    Recebido
+                  </div>
+                  <FieldList obj={issue.actual_value} />
+                </div>
+              )}
+            </div>
+          </details>
+        )}
+        <div className="np-pending__owner">
+          <UserRound className="h-3.5 w-3.5" />
+          Profissional: <strong className="text-foreground">{profName}</strong>
+        </div>
 
-      <div className="flex flex-wrap gap-2 mt-3">
-        <Button
-          size="sm"
-          onClick={onRequestCorrection}
-          disabled={resolve.isPending}
-        >
-          💬 Solicitar correção
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={resolve.isPending}
-          onClick={() =>
-            resolve.mutate({ id: issue.id, action: "marked_resolved" })
-          }
-        >
-          ✅ Marcar resolvido
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          disabled={resolve.isPending}
-          onClick={() => {
-            const reason = window.prompt("Motivo (opcional):") ?? "";
-            resolve.mutate({ id: issue.id, action: "ignored", reason });
-          }}
-        >
-          🚫 Ignorar
-        </Button>
+        <div className="flex flex-wrap gap-2 mt-2">
+          <Button
+            size="sm"
+            className="h-11 gap-1.5"
+            onClick={onRequestCorrection}
+            disabled={resolve.isPending}
+          >
+            <MessageCircle className="h-4 w-4" />
+            Solicitar correção
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-11 gap-1.5"
+            disabled={resolve.isPending}
+            onClick={() =>
+              resolve.mutate({ id: issue.id, action: "marked_resolved" })
+            }
+          >
+            <CheckCircle2 className="h-4 w-4" />
+            Marcar resolvido
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-11 gap-1.5"
+            disabled={resolve.isPending}
+            onClick={() => {
+              const reason = window.prompt("Motivo (opcional):") ?? "";
+              resolve.mutate({ id: issue.id, action: "ignored", reason });
+            }}
+          >
+            <Ban className="h-4 w-4" />
+            Ignorar
+          </Button>
+        </div>
       </div>
     </div>
   );

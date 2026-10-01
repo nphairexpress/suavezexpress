@@ -2,6 +2,8 @@
 import { useState, useMemo, lazy, Suspense } from "react";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
 import { Sensitive } from "@/components/common/SensitiveData";
+import { PageHeader, StatCard, GlassCard, Badge as NpBadge, EmptyState } from "@design-system";
+import { CHART_COLORS, CHART_GRID, CHART_TICK, CHART_TOOLTIP } from "@/components/reports/ReportKit";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,7 +53,7 @@ const PRESET_RANGES = [
   { label: "Esta semana", getValue: () => ({ from: startOfWeek(new Date(), { weekStartsOn: 1 }), to: endOfWeek(new Date(), { weekStartsOn: 1 }) }) },
 ];
 
-const COLORS = ["hsl(217, 91%, 50%)", "hsl(142, 76%, 36%)", "hsl(38, 92%, 50%)", "hsl(0, 84%, 60%)", "hsl(262, 83%, 58%)", "hsl(199, 89%, 48%)"];
+const COLORS = CHART_COLORS;
 
 // Report catalog
 const REPORT_CATEGORIES = [
@@ -59,8 +61,6 @@ const REPORT_CATEGORIES = [
     id: "clientes",
     label: "Clientes",
     icon: Users,
-    color: "text-blue-600",
-    bgColor: "bg-blue-50",
     reports: [
       { id: "0004", label: "Lista de dados cadastrais de clientes", needsDate: false },
       { id: "0008", label: "Clientes que fizeram um serviço específico", needsDate: true },
@@ -73,8 +73,6 @@ const REPORT_CATEGORIES = [
     id: "profissionais",
     label: "Profissionais",
     icon: UserCog,
-    color: "text-purple-600",
-    bgColor: "bg-purple-50",
     reports: [
       { id: "0021", label: "Faturamento e ticket médio por profissional", needsDate: true, hasChart: true },
       { id: "0024", label: "Serviços por profissional", needsDate: true, hasChart: true },
@@ -86,8 +84,6 @@ const REPORT_CATEGORIES = [
     id: "servicos",
     label: "Serviços",
     icon: Scissors,
-    color: "text-green-600",
-    bgColor: "bg-green-50",
     reports: [
       { id: "0033", label: "Tabela de preços dos serviços", needsDate: false },
     ],
@@ -96,8 +92,6 @@ const REPORT_CATEGORIES = [
     id: "financeiro",
     label: "Financeiro",
     icon: DollarSign,
-    color: "text-amber-600",
-    bgColor: "bg-amber-50",
     reports: [
       { id: "0085", label: "Evolução do faturamento mensal", needsDate: false, hasChart: true },
       { id: "0175", label: "Faturamento de serviço por profissional", needsDate: true },
@@ -134,10 +128,10 @@ function ReportSelector({ onSelect }: { onSelect: (reportId: string) => void }) 
   const [searchQuery, setSearchQuery] = useState("");
 
   const allReports = useMemo(() => {
-    const reports: { id: string; label: string; category: string; categoryColor: string; needsDate: boolean; hasChart?: boolean }[] = [];
+    const reports: { id: string; label: string; category: string; categoryIcon: any; needsDate: boolean; hasChart?: boolean }[] = [];
     REPORT_CATEGORIES.forEach(cat => {
       cat.reports.forEach(r => {
-        reports.push({ ...r, category: cat.label, categoryColor: cat.color });
+        reports.push({ ...r, category: cat.label, categoryIcon: cat.icon });
       });
     });
     return reports;
@@ -155,11 +149,12 @@ function ReportSelector({ onSelect }: { onSelect: (reportId: string) => void }) 
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 overflow-x-auto">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant={filterCategory === "todos" ? "default" : "outline"}
             size="sm"
+            className="h-10"
             onClick={() => setFilterCategory("todos")}
           >
             Todos
@@ -169,7 +164,7 @@ function ReportSelector({ onSelect }: { onSelect: (reportId: string) => void }) 
               key={cat.id}
               variant={filterCategory === cat.id ? "default" : "outline"}
               size="sm"
-              className="gap-1 whitespace-nowrap"
+              className="h-10 gap-1 whitespace-nowrap"
               onClick={() => setFilterCategory(cat.id)}
             >
               <cat.icon className="h-3.5 w-3.5" />
@@ -177,77 +172,67 @@ function ReportSelector({ onSelect }: { onSelect: (reportId: string) => void }) 
             </Button>
           ))}
         </div>
-        <div className="relative w-full sm:w-64">
+        <div className="relative w-full lg:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="h-11 pl-9"
           />
         </div>
       </div>
 
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="w-20">Código</TableHead>
-                <TableHead className="w-32">Categoria</TableHead>
-                <TableHead className="w-64">Relatório</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead className="w-20 text-center">Ação</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredReports.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    Nenhum relatório encontrado
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredReports.map(report => (
-                  <TableRow
-                    key={report.id}
-                    className="cursor-pointer hover:bg-primary/5"
-                    onClick={() => onSelect(report.id)}
+      {/* Cartões dos relatórios */}
+      {filteredReports.length === 0 ? (
+        <GlassCard>
+          <EmptyState icon="info" title="Nenhum relatório encontrado" />
+        </GlassCard>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {filteredReports.map(report => (
+            <GlassCard
+              key={report.id}
+              as="article"
+              lift
+              padding={20}
+              role="button"
+              tabIndex={0}
+              aria-label={`Abrir relatório ${report.id}: ${report.label}`}
+              className="flex cursor-pointer flex-col gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--np-focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+              onClick={() => onSelect(report.id)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelect(report.id);
+                }
+              }}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                    style={{ background: "var(--np-accent-soft)", color: "var(--np-accent-text)" }}
                   >
-                    <TableCell>
-                      <Badge variant="outline" className="font-mono text-xs">{report.id}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm font-medium">{report.category}</span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium">{report.label}</span>
-                        {report.hasChart && (
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                            Gráfico
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-xs text-muted-foreground line-clamp-2">
-                        {REPORT_DESCRIPTIONS[report.id] || ""}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Eye className="h-4 w-4 text-primary" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                    <report.categoryIcon className="h-4 w-4" />
+                  </span>
+                  <span className="np-caps truncate">{report.category}</span>
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {report.hasChart && <NpBadge tone="accent">Gráfico</NpBadge>}
+                  <NpBadge tone="neutral" className="font-mono tabular-nums">{report.id}</NpBadge>
+                </div>
+              </div>
+              <h3 className="np-display text-base leading-snug text-foreground">{report.label}</h3>
+              <p className="line-clamp-3 text-xs text-muted-foreground">{REPORT_DESCRIPTIONS[report.id] || ""}</p>
+              <div className="mt-auto flex items-center gap-1.5 pt-1 text-sm font-semibold" style={{ color: "var(--np-accent-text)" }}>
+                <Eye className="h-4 w-4" />
+                Abrir relatório
+              </div>
+            </GlassCard>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -422,14 +407,10 @@ export default function Relatorios() {
     <AppLayoutNew>
       <Sensitive block>
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold">Relatórios</h1>
-          <p className="text-muted-foreground">Análise detalhada do desempenho do salão</p>
-        </div>
+        <PageHeader eyebrow="Gestão" title="Relatórios" description="Análise detalhada do desempenho do salão" />
 
         <Tabs defaultValue="relatorios" className="space-y-6">
-          <TabsList>
+          <TabsList className="h-auto flex-wrap">
             <TabsTrigger value="geral" className="gap-2"><BarChart3 className="h-4 w-4" />Geral</TabsTrigger>
             <TabsTrigger value="relatorios" className="gap-2"><FileText className="h-4 w-4" />Relatórios</TabsTrigger>
             <TabsTrigger value="emails" className="gap-2"><Mail className="h-4 w-4" />E-mails</TabsTrigger>
@@ -441,7 +422,7 @@ export default function Relatorios() {
               <>
                 {/* Back button + date range */}
                 <div className="flex flex-wrap items-center gap-3">
-                  <Button variant="outline" size="sm" onClick={() => setSelectedReport(null)} className="gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setSelectedReport(null)} className="h-10 gap-2">
                     <ArrowLeft className="h-4 w-4" />Voltar
                   </Button>
 
@@ -486,8 +467,8 @@ export default function Relatorios() {
 
                 {/* Report breadcrumb */}
                 {reportInfo && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <reportInfo.category.icon className={cn("h-4 w-4", reportInfo.category.color)} />
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                    <reportInfo.category.icon className="h-4 w-4" style={{ color: "var(--np-accent-text)" }} />
                     <span>{reportInfo.category.label}</span>
                     <span>/</span>
                     <span className="font-medium text-foreground">#{reportInfo.id} — {reportInfo.label}</span>
@@ -555,58 +536,10 @@ export default function Relatorios() {
           <>
             {/* Stats Cards */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">Faturamento Total</p>
-                      <p className="text-2xl font-bold">R$ {stats.totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-                    </div>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <DollarSign className="h-6 w-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">Comandas Fechadas</p>
-                      <p className="text-2xl font-bold">{stats.totalComandas}</p>
-                    </div>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <ShoppingBag className="h-6 w-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">Ticket Médio</p>
-                      <p className="text-2xl font-bold">R$ {stats.avgTicket.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-                    </div>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <TrendingUp className="h-6 w-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground">Novos Clientes</p>
-                      <p className="text-2xl font-bold">{stats.newClients}</p>
-                    </div>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <Users className="h-6 w-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <StatCard title="Faturamento Total" icon={DollarSign} value={`R$ ${stats.totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
+              <StatCard title="Comandas Fechadas" icon={ShoppingBag} value={stats.totalComandas} />
+              <StatCard title="Ticket Médio" icon={TrendingUp} value={`R$ ${stats.avgTicket.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
+              <StatCard title="Novos Clientes" icon={Users} value={stats.newClients} />
             </div>
 
             {/* Charts */}
@@ -614,7 +547,7 @@ export default function Relatorios() {
               {/* Revenue Chart */}
               <Card className="lg:col-span-2">
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <CardTitle className="np-display text-lg flex items-center gap-2">
                     <BarChart3 className="h-5 w-5" />
                     Faturamento por Dia
                   </CardTitle>
@@ -626,15 +559,15 @@ export default function Relatorios() {
                         <AreaChart data={revenueByDay} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                           <defs>
                             <linearGradient id="colorReceita" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                              <stop offset="5%" stopColor="var(--np-accent)" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="var(--np-accent)" stopOpacity={0} />
                             </linearGradient>
                           </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                          <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                          <YAxis axisLine={false} tickLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} tickFormatter={(v) => `R$${v >= 1000 ? `${(v/1000).toFixed(1)}k` : v}`} />
-                          <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} formatter={(value: number) => [`R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, "Receita"]} />
-                          <Area type="monotone" dataKey="receita" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorReceita)" />
+                          <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
+                          <XAxis dataKey="day" axisLine={false} tickLine={false} tick={CHART_TICK} />
+                          <YAxis axisLine={false} tickLine={false} tick={CHART_TICK} tickFormatter={(v) => `R$${v >= 1000 ? `${(v/1000).toFixed(1)}k` : v}`} />
+                          <Tooltip {...CHART_TOOLTIP} formatter={(value: number) => [`R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, "Receita"]} />
+                          <Area type="monotone" dataKey="receita" stroke="var(--np-accent)" strokeWidth={2} fillOpacity={1} fill="url(#colorReceita)" />
                         </AreaChart>
                       </ResponsiveContainer>
                     ) : (
@@ -647,7 +580,7 @@ export default function Relatorios() {
               {/* Payment Methods Pie Chart */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                  <CardTitle className="np-display text-lg flex items-center gap-2">
                     <PieChart className="h-5 w-5" />
                     Formas de Pagamento
                   </CardTitle>
@@ -662,7 +595,7 @@ export default function Relatorios() {
                               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
+                          <Tooltip {...CHART_TOOLTIP} formatter={(value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
                         </RechartsPie>
                       </ResponsiveContainer>
                     ) : (
@@ -676,18 +609,18 @@ export default function Relatorios() {
             {/* Top Services Bar Chart */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-semibold">Top Serviços</CardTitle>
+                <CardTitle className="np-display text-lg">Top Serviços</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
                   {topServices.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={topServices} layout="vertical" margin={{ left: 100 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                        <XAxis type="number" tickFormatter={(v) => `R$${v >= 1000 ? `${(v/1000).toFixed(1)}k` : v}`} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                        <YAxis type="category" dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} width={100} />
-                        <Tooltip formatter={(value: number) => [`R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, "Receita"]} />
-                        <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                        <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} horizontal={false} />
+                        <XAxis type="number" tickFormatter={(v) => `R$${v >= 1000 ? `${(v/1000).toFixed(1)}k` : v}`} tick={CHART_TICK} />
+                        <YAxis type="category" dataKey="name" tick={CHART_TICK} width={100} />
+                        <Tooltip {...CHART_TOOLTIP} formatter={(value: number) => [`R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, "Receita"]} />
+                        <Bar dataKey="revenue" fill="var(--np-accent)" radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
@@ -700,18 +633,18 @@ export default function Relatorios() {
             {/* Appointments summary */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg font-semibold">Resumo de Agendamentos</CardTitle>
+                <CardTitle className="np-display text-lg">Resumo de Agendamentos</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {[
-                    { label: "Total", count: appointments?.length || 0, color: "text-primary" },
-                    { label: "Concluídos", count: appointments?.filter(a => a.status === "completed").length || 0, color: "text-green-600" },
-                    { label: "Cancelados", count: appointments?.filter(a => a.status === "cancelled").length || 0, color: "text-destructive" },
-                    { label: "No-show", count: appointments?.filter(a => a.status === "no_show").length || 0, color: "text-orange-500" },
+                    { label: "Total", count: appointments?.length || 0, color: "var(--np-accent-text)" },
+                    { label: "Concluídos", count: appointments?.filter(a => a.status === "completed").length || 0, color: "var(--np-positive-text)" },
+                    { label: "Cancelados", count: appointments?.filter(a => a.status === "cancelled").length || 0, color: "var(--np-danger-text)" },
+                    { label: "No-show", count: appointments?.filter(a => a.status === "no_show").length || 0, color: "var(--np-accent-text)" },
                   ].map(item => (
-                    <div key={item.label} className="text-center p-4 rounded-lg border">
-                      <p className={cn("text-3xl font-bold", item.color)}>{item.count}</p>
+                    <div key={item.label} className="text-center p-4 rounded-xl border border-border bg-muted/40">
+                      <p className="np-num text-3xl" style={{ color: item.color }}>{item.count}</p>
                       <p className="text-sm text-muted-foreground mt-1">{item.label}</p>
                     </div>
                   ))}

@@ -257,7 +257,7 @@ export function PackageModal({ open, onOpenChange, pkg, onSubmit, isLoading }: P
             {originalPrice > 0 && (
               <div className="flex justify-between text-sm">
                 <span>Desconto:</span>
-                <span className={`font-medium ${discountPercent > 0 ? "text-green-600" : "text-muted-foreground"}`}>
+                <span className={`font-medium ${discountPercent > 0 ? "text-[var(--np-positive-text)]" : "text-muted-foreground"}`}>
                   {discountPercent > 0 ? `${discountPercent.toFixed(1)}%` : "Sem desconto"}
                 </span>
               </div>

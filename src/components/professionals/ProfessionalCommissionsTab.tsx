@@ -123,7 +123,7 @@ export function ProfessionalCommissionsTab({ professionalId, defaultCommission, 
   if (services.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        Nenhum serviço cadastrado. <Link to="/servicos" className="text-primary underline">Cadastre serviços primeiro</Link>.
+        Nenhum serviço cadastrado. <Link to="/servicos" className="font-medium text-[color:var(--np-accent-text)] underline">Cadastre serviços primeiro</Link>.
       </div>
     );
   }
@@ -136,14 +136,14 @@ export function ProfessionalCommissionsTab({ professionalId, defaultCommission, 
         </p>
         <p className="text-sm text-muted-foreground">
           Obs.: Não encontrou a categoria do profissional?{" "}
-          <Link to="/servicos" className="text-primary underline">Clique aqui</Link> para cadastrá-la!
+          <Link to="/servicos" className="font-medium text-[color:var(--np-accent-text)] underline">Clique aqui</Link> para cadastrá-la!
         </p>
       </div>
 
       {/* Package commission per professional */}
       {onPackageCommissionChange && (
-        <div className="border rounded-lg p-4 bg-muted/30">
-          <div className="flex items-center justify-between">
+        <div className="border border-border rounded-xl p-4 bg-muted/30">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-medium text-sm">Comissão sobre venda de Pacotes</p>
               <p className="text-xs text-muted-foreground">Percentual que este profissional recebe ao vender um pacote</p>
@@ -161,7 +161,7 @@ export function ProfessionalCommissionsTab({ professionalId, defaultCommission, 
                     onPackageCommissionChange(localPackageCommission);
                   }
                 }}
-                className="w-20 text-center"
+                className="w-24 h-11 text-center tabular-nums"
               />
               <span className="text-sm text-muted-foreground">%</span>
             </div>
@@ -169,8 +169,8 @@ export function ProfessionalCommissionsTab({ professionalId, defaultCommission, 
         </div>
       )}
 
-      <div className="border rounded-lg">
-        <Table>
+      <div className="border border-border rounded-xl overflow-hidden">
+        <Table className="min-w-[560px]">
           <TableHeader>
             <TableRow>
               <TableHead className="w-12"></TableHead>
@@ -203,7 +203,7 @@ export function ProfessionalCommissionsTab({ professionalId, defaultCommission, 
                       onChange={(e) => 
                         handleCategoryChange(item.category, "commission_percent", parseFloat(e.target.value) || 0)
                       }
-                      className="w-20 text-center"
+                      className="w-20 text-center tabular-nums"
                       disabled={!item.selected}
                     />
                     <span className="text-sm text-muted-foreground">%</span>
@@ -220,7 +220,7 @@ export function ProfessionalCommissionsTab({ professionalId, defaultCommission, 
                       onChange={(e) => 
                         handleCategoryChange(item.category, "assistant_commission_percent", parseFloat(e.target.value) || 0)
                       }
-                      className="w-20 text-center"
+                      className="w-20 text-center tabular-nums"
                       disabled={!item.selected}
                     />
                     <span className="text-sm text-muted-foreground">%</span>
@@ -236,7 +236,7 @@ export function ProfessionalCommissionsTab({ professionalId, defaultCommission, 
                       onChange={(e) => 
                         handleCategoryChange(item.category, "duration_minutes", parseInt(e.target.value) || 0)
                       }
-                      className="w-20 text-center"
+                      className="w-20 text-center tabular-nums"
                       disabled={!item.selected}
                     />
                     <span className="text-sm text-muted-foreground">min</span>
@@ -248,11 +248,11 @@ export function ProfessionalCommissionsTab({ professionalId, defaultCommission, 
         </Table>
       </div>
 
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={() => setHasChanges(false)}>
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button variant="outline" className="h-11" onClick={() => setHasChanges(false)}>
           Cancelar
         </Button>
-        <Button onClick={handleSave} disabled={!hasChanges || isUpserting}>
+        <Button className="h-11" onClick={handleSave} disabled={!hasChanges || isUpserting}>
           {isUpserting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
           Salvar
         </Button>

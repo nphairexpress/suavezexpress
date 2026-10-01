@@ -3,19 +3,20 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Loader2, TrendingUp } from "lucide-react";
+import { Download, TrendingUp } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { exportToExcel } from "./utils/exportExcel";
+import { CHART_COLORS, CHART_GRID, CHART_TICK, CHART_TOOLTIP, NUM, ReportLoading, ReportTitle, TOTAL_ROW } from "./ReportKit";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell,
 } from "recharts";
 
-const COLORS = ["hsl(217, 91%, 50%)", "hsl(142, 76%, 36%)", "hsl(38, 92%, 50%)", "hsl(0, 84%, 60%)", "hsl(262, 83%, 58%)", "hsl(199, 89%, 48%)"];
+const COLORS = CHART_COLORS;
 
 export function Report0085() {
   const { salonId } = useAuth();
@@ -75,38 +76,39 @@ export function Report0085() {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+    return <ReportLoading />;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">Evolução do Faturamento Mensal</h3>
-        </div>
-        <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
-          <Download className="h-4 w-4 mr-2" />Exportar Excel
-        </Button>
-      </div>
+      <ReportTitle
+        icon={TrendingUp}
+        actions={
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
+            <Download className="h-4 w-4 mr-2" />Exportar Excel
+          </Button>
+        }
+      >
+        Evolução do Faturamento Mensal
+      </ReportTitle>
 
       <Card>
-        <CardHeader><CardTitle className="text-lg">Últimos 12 Meses</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="np-display text-lg">Últimos 12 Meses</CardTitle></CardHeader>
         <CardContent>
           <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorFat" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                    <stop offset="5%" stopColor="var(--np-accent)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--np-accent)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} tickFormatter={(v) => `R$${v >= 1000 ? `${(v/1000).toFixed(1)}k` : v}`} />
-                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} formatter={(value: number) => [`R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, "Faturamento"]} />
-                <Area type="monotone" dataKey="faturamento" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorFat)" />
+                <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
+                <XAxis dataKey="name" tick={CHART_TICK} />
+                <YAxis tick={CHART_TICK} tickFormatter={(v) => `R$${v >= 1000 ? `${(v/1000).toFixed(1)}k` : v}`} />
+                <Tooltip {...CHART_TOOLTIP} formatter={(value: number) => [`R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, "Faturamento"]} />
+                <Area type="monotone" dataKey="faturamento" stroke="var(--np-accent)" strokeWidth={2} fillOpacity={1} fill="url(#colorFat)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -129,15 +131,15 @@ export function Report0085() {
                 {rows.map(r => (
                   <TableRow key={r.month}>
                     <TableCell className="font-medium capitalize">{r.monthLabel}</TableCell>
-                    <TableCell className="text-right">{r.count}</TableCell>
-                    <TableCell className="text-right">R$ {r.revenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="text-right">R$ {(r.count > 0 ? r.revenue / r.count : 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className={NUM}>{r.count}</TableCell>
+                    <TableCell className={NUM}>R$ {r.revenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className={NUM}>R$ {(r.count > 0 ? r.revenue / r.count : 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
                   </TableRow>
                 ))}
-                <TableRow className="font-bold bg-muted/50">
+                <TableRow className={TOTAL_ROW}>
                   <TableCell>TOTAL</TableCell>
-                  <TableCell className="text-right">{rows.reduce((s, r) => s + r.count, 0)}</TableCell>
-                  <TableCell className="text-right">R$ {rows.reduce((s, r) => s + r.revenue, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell className={NUM}>{rows.reduce((s, r) => s + r.count, 0)}</TableCell>
+                  <TableCell className={NUM}>R$ {rows.reduce((s, r) => s + r.revenue, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
                   <TableCell></TableCell>
                 </TableRow>
               </TableBody>

@@ -3,18 +3,20 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Loader2, CreditCard } from "lucide-react";
+import { Download, CreditCard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
+import { EmptyState } from "@design-system";
 import { exportToExcel } from "./utils/exportExcel";
+import { CHART_COLORS, CHART_GRID, CHART_TICK, CHART_TICK_SM, CHART_TOOLTIP, NUM, ReportLoading, ReportTitle, TOTAL_ROW } from "./ReportKit";
 import {
   PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from "recharts";
 
-const COLORS = ["hsl(217, 91%, 50%)", "hsl(142, 76%, 36%)", "hsl(38, 92%, 50%)", "hsl(0, 84%, 60%)", "hsl(262, 83%, 58%)", "hsl(199, 89%, 48%)"];
+const COLORS = CHART_COLORS;
 const METHOD_LABELS: Record<string, string> = {
   cash: "Dinheiro",
   pix: "PIX",
@@ -83,24 +85,25 @@ export function Report0281({ dateRange }: Props) {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+    return <ReportLoading />;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">Entradas por Forma de Pagamento</h3>
-        </div>
-        <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
-          <Download className="h-4 w-4 mr-2" />Exportar Excel
-        </Button>
-      </div>
+      <ReportTitle
+        icon={CreditCard}
+        actions={
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
+            <Download className="h-4 w-4 mr-2" />Exportar Excel
+          </Button>
+        }
+      >
+        Entradas por Forma de Pagamento
+      </ReportTitle>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle className="text-lg">Distribuição</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="np-display text-lg">Distribuição</CardTitle></CardHeader>
           <CardContent>
             <div className="h-[300px]">
               {chartData.length > 0 ? (
@@ -109,8 +112,8 @@ export function Report0281({ dateRange }: Props) {
                     <Pie data={chartData} cx="50%" cy="50%" innerRadius={50} outerRadius={100} paddingAngle={3} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
                       {chartData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                     </Pie>
-                    <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
-                    <Legend />
+                    <Tooltip {...CHART_TOOLTIP} formatter={(value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
+                    <Legend wrapperStyle={{ color: "var(--np-text-secondary)", fontSize: 12 }} />
                   </RechartsPie>
                 </ResponsiveContainer>
               ) : (
@@ -121,19 +124,19 @@ export function Report0281({ dateRange }: Props) {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-lg">Bruto vs Líquido</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="np-display text-lg">Bruto vs Líquido</CardTitle></CardHeader>
           <CardContent>
             <div className="h-[300px]">
               {barData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                    <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                    <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} tickFormatter={(v) => `R$${v >= 1000 ? `${(v/1000).toFixed(1)}k` : v}`} />
-                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} formatter={(value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
-                    <Legend />
-                    <Bar dataKey="bruto" name="Bruto" fill="hsl(217, 91%, 50%)" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="liquido" name="Líquido" fill="hsl(142, 76%, 36%)" radius={[4, 4, 0, 0]} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
+                    <XAxis dataKey="name" tick={CHART_TICK_SM} />
+                    <YAxis tick={CHART_TICK} tickFormatter={(v) => `R$${v >= 1000 ? `${(v/1000).toFixed(1)}k` : v}`} />
+                    <Tooltip {...CHART_TOOLTIP} formatter={(value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
+                    <Legend wrapperStyle={{ color: "var(--np-text-secondary)", fontSize: 12 }} />
+                    <Bar dataKey="bruto" name="Bruto" fill="var(--np-accent)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="liquido" name="Líquido" fill="var(--np-positive)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -148,7 +151,7 @@ export function Report0281({ dateRange }: Props) {
         <CardHeader><CardTitle className="text-sm text-muted-foreground">{rows.length} forma(s) de pagamento</CardTitle></CardHeader>
         <CardContent>
           {rows.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Nenhum pagamento no período</div>
+            <EmptyState icon="info" title="Nenhum pagamento no período" />
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -166,20 +169,20 @@ export function Report0281({ dateRange }: Props) {
                   {rows.map((r, i) => (
                     <TableRow key={i}>
                       <TableCell className="font-medium">{r.label}</TableCell>
-                      <TableCell className="text-right">{r.count}</TableCell>
-                      <TableCell className="text-right">R$ {r.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                      <TableCell className="text-right text-destructive">R$ {r.fees.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                      <TableCell className="text-right">R$ {r.net.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                      <TableCell className="text-right">{totalAmount > 0 ? ((r.amount / totalAmount) * 100).toFixed(1) : 0}%</TableCell>
+                      <TableCell className={NUM}>{r.count}</TableCell>
+                      <TableCell className={NUM}>R$ {r.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                      <TableCell className={NUM + " np-text-danger"}>R$ {r.fees.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                      <TableCell className={NUM}>R$ {r.net.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                      <TableCell className={NUM}>{totalAmount > 0 ? ((r.amount / totalAmount) * 100).toFixed(1) : 0}%</TableCell>
                     </TableRow>
                   ))}
-                  <TableRow className="font-bold bg-muted/50">
+                  <TableRow className={TOTAL_ROW}>
                     <TableCell>TOTAL</TableCell>
-                    <TableCell className="text-right">{rows.reduce((s, r) => s + r.count, 0)}</TableCell>
-                    <TableCell className="text-right">R$ {totalAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="text-right text-destructive">R$ {rows.reduce((s, r) => s + r.fees, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="text-right">R$ {rows.reduce((s, r) => s + r.net, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="text-right">100%</TableCell>
+                    <TableCell className={NUM}>{rows.reduce((s, r) => s + r.count, 0)}</TableCell>
+                    <TableCell className={NUM}>R$ {totalAmount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className={NUM + " np-text-danger"}>R$ {rows.reduce((s, r) => s + r.fees, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className={NUM}>R$ {rows.reduce((s, r) => s + r.net, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className={NUM}>100%</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>

@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { glassModal, modalTitle } from "@/components/clients/clientsUi";
 
 interface Props {
   open: boolean;
@@ -75,22 +76,22 @@ export function SmsCampaignModal({ open, onClose, campaign }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className={`${glassModal} w-[calc(100%-1.5rem)] rounded-2xl max-w-md max-h-[95vh] overflow-y-auto`}>
         <DialogHeader>
-          <DialogTitle>{campaign ? "Editar Campanha de SMS" : "Nova Campanha de SMS"}</DialogTitle>
+          <DialogTitle className={`${modalTitle} pr-8`}>{campaign ? "Editar Campanha de SMS" : "Nova Campanha de SMS"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div>
+          <div className="space-y-1.5">
             <Label>Nome da Campanha *</Label>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label>Mensagem *</Label>
             <Textarea rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Escreva a mensagem SMS..." />
             <p className="text-xs text-muted-foreground mt-1">{form.message.length}/160 caracteres</p>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
               <Label>Destinatários</Label>
               <Select value={form.target_type} onValueChange={(v) => setForm({ ...form, target_type: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -101,14 +102,14 @@ export function SmsCampaignModal({ open, onClose, campaign }: Props) {
               </Select>
             </div>
             {form.target_type === "tag" && (
-              <div>
+              <div className="space-y-1.5">
                 <Label>Tag</Label>
                 <Input value={form.target_tag} onChange={(e) => setForm({ ...form, target_tag: e.target.value })} placeholder="Ex: VIP" />
               </div>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
               <Label>Status</Label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -119,14 +120,14 @@ export function SmsCampaignModal({ open, onClose, campaign }: Props) {
               </Select>
             </div>
             {form.status === "scheduled" && (
-              <div>
+              <div className="space-y-1.5">
                 <Label>Data/Hora de Envio</Label>
                 <Input type="datetime-local" value={form.scheduled_at} onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })} />
               </div>
             )}
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={() => mutation.mutate()} disabled={!form.name || !form.message || mutation.isPending}>
             {mutation.isPending ? "Salvando..." : "Salvar"}

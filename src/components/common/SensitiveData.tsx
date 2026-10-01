@@ -110,10 +110,10 @@ export function SensitiveDataProvider({ children }: { children: ReactNode }) {
       {active && (
         <button
           onClick={unlocked ? lock : requestUnlock}
-          className={`fixed bottom-4 right-4 z-[9998] flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold text-white shadow-lg ${
+          className={`fixed bottom-4 right-4 z-[9998] flex items-center gap-2 min-h-[44px] rounded-full px-4 py-2 text-xs font-semibold shadow-lg backdrop-blur-xl transition-colors ${
             unlocked
-              ? "bg-slate-900/90 hover:bg-slate-900"
-              : "bg-amber-600 hover:bg-amber-700"
+              ? "border border-[color:var(--np-border-strong)] bg-[color:var(--np-surface-glass-strong)] text-[color:var(--np-text-primary)] hover:bg-[color:var(--np-surface-glass-hover)]"
+              : "bg-primary text-primary-foreground hover:bg-[color:var(--np-accent-hover)]"
           }`}
           title={
             unlocked
@@ -136,18 +136,18 @@ export function SensitiveDataProvider({ children }: { children: ReactNode }) {
       {/* Prompt de senha */}
       {promptOpen && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
           onClick={() => setPromptOpen(false)}
         >
           <div
-            className="w-full max-w-xs rounded-xl bg-white p-5 shadow-2xl"
+            className="w-full max-w-xs rounded-2xl border border-[color:var(--np-border-glass)] bg-[color:var(--np-surface-glass-strong)] p-5 text-foreground shadow-2xl backdrop-blur-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-1 flex items-center gap-2 text-slate-900">
+            <div className="mb-1 flex items-center gap-2 text-foreground">
               <LockIcon />
-              <h2 className="text-base font-semibold">Dados protegidos</h2>
+              <h2 className="np-display text-base">Dados protegidos</h2>
             </div>
-            <p className="mb-3 text-xs text-slate-500">
+            <p className="mb-3 text-xs text-muted-foreground">
               Digite a senha de visualização para ver comissões e faturamento.
             </p>
             <input
@@ -160,26 +160,26 @@ export function SensitiveDataProvider({ children }: { children: ReactNode }) {
               }}
               onKeyDown={(e) => e.key === "Enter" && confirm()}
               placeholder="Senha de visualização"
-              className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 ${
+              className={`h-11 w-full rounded-lg border bg-[color:var(--np-surface-inset)] px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 ${
                 error
-                  ? "border-red-400 focus:ring-red-200"
-                  : "border-slate-300 focus:ring-slate-200"
+                  ? "border-[color:var(--np-danger-border)] focus:ring-[color:var(--np-danger-glow)]"
+                  : "border-border focus:ring-[color:var(--np-focus-ring)]"
               }`}
             />
             {error && (
-              <p className="mt-1 text-xs text-red-500">Senha incorreta.</p>
+              <p className="mt-1 text-xs np-text-danger">Senha incorreta.</p>
             )}
             <div className="mt-4 flex justify-end gap-2">
               <button
                 onClick={() => setPromptOpen(false)}
-                className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-100"
+                className="min-h-[44px] rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
               >
                 Cancelar
               </button>
               <button
                 onClick={confirm}
                 disabled={checking || !pwd}
-                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                className="min-h-[44px] rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-[color:var(--np-accent-hover)] disabled:opacity-45"
               >
                 {checking ? "..." : "Ver"}
               </button>
@@ -229,7 +229,7 @@ export function Sensitive({
         title="Ver (pede senha)"
         className={`absolute inset-0 z-10 flex items-center justify-center ${
           block ? "" : ""
-        } cursor-pointer text-slate-500 hover:text-slate-800`}
+        } cursor-pointer text-muted-foreground hover:text-foreground`}
       >
         <EyeIcon />
       </button>

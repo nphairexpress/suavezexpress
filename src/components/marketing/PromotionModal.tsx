@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { glassModal, modalTitle } from "@/components/clients/clientsUi";
 
 interface Props {
   open: boolean;
@@ -79,21 +80,21 @@ export function PromotionModal({ open, onClose, promotion }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className={`${glassModal} w-[calc(100%-1.5rem)] rounded-2xl max-w-md max-h-[95vh] overflow-y-auto`}>
         <DialogHeader>
-          <DialogTitle>{promotion ? "Editar Promoção" : "Nova Promoção"}</DialogTitle>
+          <DialogTitle className={`${modalTitle} pr-8`}>{promotion ? "Editar Promoção" : "Nova Promoção"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div>
+          <div className="space-y-1.5">
             <Label>Nome *</Label>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label>Descrição</Label>
             <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
               <Label>Tipo de Desconto</Label>
               <Select value={form.discount_type} onValueChange={(v) => setForm({ ...form, discount_type: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -103,17 +104,17 @@ export function PromotionModal({ open, onClose, promotion }: Props) {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>Valor</Label>
               <Input type="number" value={form.discount_value} onChange={(e) => setForm({ ...form, discount_value: e.target.value })} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
               <Label>Data Início</Label>
               <Input type="date" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>Data Fim</Label>
               <Input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
             </div>
@@ -123,7 +124,7 @@ export function PromotionModal({ open, onClose, promotion }: Props) {
             <Label>Ativa</Label>
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button onClick={() => mutation.mutate()} disabled={!form.name || mutation.isPending}>
             {mutation.isPending ? "Salvando..." : "Salvar"}

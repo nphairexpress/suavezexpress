@@ -2,9 +2,10 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Badge, EmptyState } from "@design-system";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Loader2, Clock } from "lucide-react";
+import { Download, Clock } from "lucide-react";
+import { ReportTitle, ReportLoading, NUM } from "./ReportKit";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
@@ -84,20 +85,21 @@ export function Report0020() {
   const isLoading = loadClients || loadComandas;
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+    return <ReportLoading />;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Clock className="h-5 w-5 text-orange-500" />
-          <h3 className="text-lg font-semibold">Clientes com Retorno Atrasado</h3>
-        </div>
-        <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
-          <Download className="h-4 w-4 mr-2" />Exportar Excel
-        </Button>
-      </div>
+      <ReportTitle
+        icon={Clock}
+        actions={
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
+            <Download className="h-4 w-4 mr-2" />Exportar Excel
+          </Button>
+        }
+      >
+        Clientes com Retorno Atrasado
+      </ReportTitle>
 
       <Card>
         <CardHeader>
@@ -107,9 +109,10 @@ export function Report0020() {
         </CardHeader>
         <CardContent>
           {rows.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhum cliente com retorno atrasado. Verifique se os clientes possuem "dias de retorno" configurados.
-            </div>
+            <EmptyState
+              icon="circle-check"
+              title={'Nenhum cliente com retorno atrasado. Verifique se os clientes possuem "dias de retorno" configurados.'}
+            />
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -127,12 +130,12 @@ export function Report0020() {
                   {rows.map(r => (
                     <TableRow key={r.id}>
                       <TableCell className="font-medium">{r.name}</TableCell>
-                      <TableCell>{r.phone || "—"}</TableCell>
-                      <TableCell>{format(new Date(r.lastVisitDate), "dd/MM/yyyy")}</TableCell>
-                      <TableCell className="text-right">{r.returnDays}</TableCell>
-                      <TableCell className="text-right">{r.daysSince}</TableCell>
+                      <TableCell className="tabular-nums">{r.phone || "—"}</TableCell>
+                      <TableCell className="tabular-nums">{format(new Date(r.lastVisitDate), "dd/MM/yyyy")}</TableCell>
+                      <TableCell className={NUM}>{r.returnDays}</TableCell>
+                      <TableCell className={NUM}>{r.daysSince}</TableCell>
                       <TableCell className="text-right">
-                        <Badge variant={r.delay > 30 ? "destructive" : "outline"} className={r.delay <= 30 ? "bg-amber-100 text-amber-800" : ""}>
+                        <Badge tone={r.delay > 30 ? "danger" : "accent"} dot className="tabular-nums">
                           {r.delay} dias
                         </Badge>
                       </TableCell>

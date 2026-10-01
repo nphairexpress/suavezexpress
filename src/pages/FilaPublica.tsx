@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { GlassCard, Button as NpButton, npAssets } from "@design-system";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Users, Clock, Bell, Crown } from "lucide-react";
+import { Clock, Bell, Crown } from "lucide-react";
 import { usePublicQueue } from "@/hooks/usePublicQueue";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/dynamicSupabaseClient";
@@ -15,6 +15,12 @@ import { supabase } from "@/lib/dynamicSupabaseClient";
 // 1) manda o código pro WhatsApp (Edge Function clube-otp);
 // 2) valida na RPC clube_entrar_fila(celular, otp), que debita o crédito
 //    de forma atômica e devolve o TOKEN opaco de acompanhamento.
+
+// Página PÚBLICA (celular, sem login): tema escuro fixo do design system aplicado aqui mesmo.
+// A rota ainda recebe html.np-legacy do App.tsx; o wrapper redefine os tokens (data-theme="dark"
+// + classe .dark), e os modais repetem isso porque são renderizados fora do wrapper (portal).
+const PUBLIC_SHELL = "dark np-bg np-bg--waves min-h-screen text-foreground [font-family:var(--np-font-body)]";
+const PUBLIC_MODAL = "dark rounded-2xl border-[color:var(--np-border-glass)] bg-[color:var(--np-surface-glass-strong)] text-foreground shadow-[var(--np-shadow-modal)] backdrop-blur-2xl [font-family:var(--np-font-body)]";
 
 type ClubeResposta = {
   ok: boolean;
@@ -181,56 +187,57 @@ export default function FilaPublica() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-zinc-800 flex flex-col items-center justify-center p-4">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-white">NP Hair Express</h1>
-        <p className="text-zinc-400 mt-1">Salão sem agendamento</p>
-      </div>
+    <div data-theme="dark" className={PUBLIC_SHELL}>
+      <div className="mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center gap-6 px-4 py-10">
+        <header className="flex flex-col items-center gap-2 text-center">
+          <img src={npAssets.logo} alt="NP Hair Express" className="h-auto w-56 max-w-full" />
+          <p className="np-caps">Salão sem agendamento</p>
+        </header>
 
-      <Card className="w-full max-w-sm mb-6">
-        <CardContent className="pt-6 text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Users className="h-5 w-5 text-primary" />
-            <span className="text-3xl font-bold">{displayCount}</span>
-            <span className="text-muted-foreground">
+        <GlassCard padding={24} className="text-center">
+          <p className="np-caps">Agora no salão</p>
+          <div className="mt-2 flex items-baseline justify-center gap-3">
+            <span className="np-num text-7xl leading-none tabular-nums text-foreground">{displayCount}</span>
+            <span className="text-left text-sm leading-tight text-muted-foreground">
               {displayCount === 1 ? "pessoa na fila" : "pessoas na fila"}
             </span>
           </div>
           {displayCount > 0 && (
-            <div className="flex items-center justify-center gap-2 text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span>Tempo estimado: ~{displayMinutes} min</span>
+            <div className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-[color:var(--np-surface-inset)] px-4 py-2 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4 text-[color:var(--np-accent-text)]" />
+              <span>Tempo estimado: <strong className="np-num tabular-nums text-foreground">~{displayMinutes} min</strong></span>
             </div>
           )}
           {displayCount === 0 && (
-            <p className="text-green-500 font-medium">Fila vazia! Atendimento imediato.</p>
+            <p className="mt-4 font-medium text-[color:var(--np-positive)]">Fila vazia! Atendimento imediato.</p>
           )}
-        </CardContent>
-      </Card>
+        </GlassCard>
 
-      <div className="w-full max-w-sm space-y-3">
-        <Button className="w-full h-14 text-lg" onClick={() => navigate("/fila/comprar")}>
-          Quero ser atendida
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full h-12 border-amber-500/60 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
-          onClick={() => { resetClube(); setClubeModalOpen(true); }}
-        >
-          <Crown className="h-4 w-4 mr-2" />
-          Sou do Clube da Escova
-        </Button>
-        <Button variant="outline" className="w-full" onClick={() => setLeadModalOpen(true)}>
-          <Bell className="h-4 w-4 mr-2" />
-          Me avisa quando a fila diminuir
-        </Button>
+        <div className="space-y-3">
+          <NpButton size="xl" block onClick={() => navigate("/fila/comprar")}>
+            Quero ser atendida
+          </NpButton>
+          <NpButton
+            variant="secondary"
+            size="lg"
+            block
+            icon={Crown}
+            className="text-[color:var(--np-accent-text)]"
+            onClick={() => { resetClube(); setClubeModalOpen(true); }}
+          >
+            Sou do Clube da Escova
+          </NpButton>
+          <NpButton variant="ghost" size="lg" block icon={Bell} onClick={() => setLeadModalOpen(true)}>
+            Me avisa quando a fila diminuir
+          </NpButton>
+        </div>
       </div>
 
       <Dialog open={clubeModalOpen} onOpenChange={(open) => { setClubeModalOpen(open); if (!open) resetClube(); }}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent data-theme="dark" className={`sm:max-w-sm ${PUBLIC_MODAL}`}>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-amber-500" />
+            <DialogTitle className="np-display flex items-center gap-2 text-xl">
+              <Crown className="h-5 w-5 text-[color:var(--np-accent-text)]" />
               Clube da Escova
             </DialogTitle>
           </DialogHeader>
@@ -243,6 +250,7 @@ export default function FilaPublica() {
               <div>
                 <Label>WhatsApp</Label>
                 <Input
+                  className="h-12"
                   placeholder="(11) 99999-9999"
                   inputMode="numeric"
                   autoComplete="tel"
@@ -261,6 +269,7 @@ export default function FilaPublica() {
               <div>
                 <Label>Código</Label>
                 <Input
+                  className="h-12"
                   placeholder="000000"
                   inputMode="numeric"
                   maxLength={6}
@@ -271,7 +280,7 @@ export default function FilaPublica() {
               </div>
               <button
                 type="button"
-                className="text-xs text-muted-foreground underline"
+                className="min-h-[44px] text-xs text-muted-foreground underline"
                 onClick={handleClubeSendOtp}
                 disabled={clubeLoading}
               >
@@ -280,13 +289,13 @@ export default function FilaPublica() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setClubeModalOpen(false); resetClube(); }} disabled={clubeLoading}>Cancelar</Button>
+            <Button variant="outline" className="h-12 border-border bg-transparent" onClick={() => { setClubeModalOpen(false); resetClube(); }} disabled={clubeLoading}>Cancelar</Button>
             {clubeStep === "phone" ? (
-              <Button onClick={handleClubeSendOtp} disabled={clubeLoading}>
+              <Button className="h-12" onClick={handleClubeSendOtp} disabled={clubeLoading}>
                 {clubeLoading ? "Enviando…" : "Receber código"}
               </Button>
             ) : (
-              <Button onClick={handleClubeSubmit} disabled={clubeLoading}>
+              <Button className="h-12" onClick={handleClubeSubmit} disabled={clubeLoading}>
                 {clubeLoading ? "Verificando…" : "Entrar na fila"}
               </Button>
             )}
@@ -295,24 +304,24 @@ export default function FilaPublica() {
       </Dialog>
 
       <Dialog open={leadModalOpen} onOpenChange={setLeadModalOpen}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent data-theme="dark" className={`sm:max-w-sm ${PUBLIC_MODAL}`}>
           <DialogHeader>
-            <DialogTitle>Receber aviso</DialogTitle>
+            <DialogTitle className="np-display text-xl">Receber aviso</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Nome</Label>
-              <Input placeholder="Seu nome" value={leadName} onChange={(e) => setLeadName(e.target.value)} />
+              <Input className="h-12" placeholder="Seu nome" value={leadName} onChange={(e) => setLeadName(e.target.value)} />
             </div>
             <div>
               <Label>WhatsApp</Label>
-              <Input placeholder="(11) 99999-9999" value={leadPhone} onChange={(e) => setLeadPhone(e.target.value)} />
+              <Input className="h-12" placeholder="(11) 99999-9999" value={leadPhone} onChange={(e) => setLeadPhone(e.target.value)} />
             </div>
             <div>
               <Label>Me avisa quando tiver menos de</Label>
               <Select value={leadMaxQueue} onValueChange={setLeadMaxQueue}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectTrigger className="h-12"><SelectValue /></SelectTrigger>
+                <SelectContent data-theme="dark" className="dark">
                   <SelectItem value="2">2 pessoas</SelectItem>
                   <SelectItem value="3">3 pessoas</SelectItem>
                   <SelectItem value="5">5 pessoas</SelectItem>
@@ -321,8 +330,8 @@ export default function FilaPublica() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setLeadModalOpen(false)}>Cancelar</Button>
-            <Button onClick={handleLeadSubmit}>Quero ser avisada</Button>
+            <Button variant="outline" className="h-12 border-border bg-transparent" onClick={() => setLeadModalOpen(false)}>Cancelar</Button>
+            <Button className="h-12" onClick={handleLeadSubmit}>Quero ser avisada</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

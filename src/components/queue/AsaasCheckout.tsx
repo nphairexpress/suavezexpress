@@ -115,8 +115,8 @@ export function AsaasCheckout({
   if (confirmed) {
     return (
       <div className="flex flex-col items-center gap-4 py-8">
-        <CheckCircle className="h-12 w-12 text-green-500" />
-        <p className="text-lg font-semibold">Pagamento confirmado!</p>
+        <CheckCircle className="h-12 w-12 text-[color:var(--np-positive)]" />
+        <p className="np-display text-xl">Pagamento confirmado!</p>
       </div>
     );
   }
@@ -133,9 +133,9 @@ export function AsaasCheckout({
   // Passo 1: escolher a forma de pagamento
   if (method === "choose") {
     return (
-      <Card>
+      <Card className="rounded-2xl border-[color:var(--np-border-glass)] bg-[color:var(--np-surface-glass)] text-foreground shadow-[var(--np-shadow-glass)] backdrop-blur-xl">
         <CardContent className="flex flex-col items-center gap-4 pt-6">
-          <p className="text-lg font-semibold">{fmt(servicePrice)}</p>
+          <p className="np-num text-3xl tabular-nums">{fmt(servicePrice)}</p>
           <p className="text-sm text-muted-foreground">Como deseja pagar?</p>
 
           <Button className="w-full h-14 text-base" onClick={() => startCheckout("pix")}>
@@ -143,7 +143,7 @@ export function AsaasCheckout({
             PIX
           </Button>
 
-          <Button variant="outline" className="w-full h-14 text-base" onClick={() => startCheckout("card")}>
+          <Button variant="outline" className="w-full h-14 text-base border-border bg-transparent hover:bg-[color:var(--np-surface-inset-hover)]" onClick={() => startCheckout("card")}>
             <CreditCard className="h-5 w-5 mr-3" />
             Cartão de Crédito
           </Button>
@@ -164,16 +164,16 @@ export function AsaasCheckout({
     }
 
     return (
-      <Card>
+      <Card className="rounded-2xl border-[color:var(--np-border-glass)] bg-[color:var(--np-surface-glass)] text-foreground shadow-[var(--np-shadow-glass)] backdrop-blur-xl">
         <CardContent className="flex flex-col items-center gap-4 pt-6">
-          <p className="text-lg font-semibold">{fmt(servicePrice)}</p>
+          <p className="np-num text-3xl tabular-nums">{fmt(servicePrice)}</p>
           <p className="text-sm text-muted-foreground">Escaneie o QR Code ou copie o código PIX</p>
           <img
             src={`data:image/png;base64,${checkout.pix_qr_code.encodedImage}`}
             alt="QR Code PIX"
-            className="w-56 h-56"
+            className="w-56 h-56 rounded-xl bg-[color:var(--np-white)] p-2"
           />
-          <Button variant="outline" onClick={handleCopyPix} className="w-full">
+          <Button variant="outline" onClick={handleCopyPix} className="w-full h-12 border-border bg-transparent hover:bg-[color:var(--np-surface-inset-hover)]">
             {copied ? <CheckCircle className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
             {copied ? "Copiado!" : "Copiar código PIX"}
           </Button>
@@ -202,9 +202,9 @@ export function AsaasCheckout({
     }
 
     return (
-      <Card>
+      <Card className="rounded-2xl border-[color:var(--np-border-glass)] bg-[color:var(--np-surface-glass)] text-foreground shadow-[var(--np-shadow-glass)] backdrop-blur-xl">
         <CardContent className="flex flex-col items-center gap-4 pt-6">
-          <p className="text-lg font-semibold">{fmt(servicePrice)}</p>
+          <p className="np-num text-3xl tabular-nums">{fmt(servicePrice)}</p>
           <p className="text-sm text-muted-foreground text-center">
             Você vai pagar na página segura do Asaas. Assim que o pagamento
             confirmar, sua vaga na fila é criada automaticamente.

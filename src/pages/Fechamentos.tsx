@@ -1,5 +1,7 @@
 // @ts-nocheck
 import { useState } from "react";
+import { EmptyState, GlassCard, Skeleton } from "@design-system";
+import { display } from "@/components/financeiro/glass";
 import { BarChart3 } from "lucide-react";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,13 +24,13 @@ export default function Fechamentos() {
 
   return (
     <AppLayoutNew>
-      <div className="container max-w-5xl mx-auto p-4 md:p-6 space-y-6">
+      <div className="max-w-5xl space-y-6">
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-start gap-3">
-            <BarChart3 className="h-8 w-8 text-primary shrink-0 mt-1" />
+            <BarChart3 className="h-8 w-8 text-[color:var(--np-accent-text)] shrink-0 mt-1" />
             <div>
-              <h1 className="text-2xl font-bold">Fechamentos</h1>
-              <p className="text-slate-500 text-sm">
+              <h1 className={`${display} text-2xl md:text-3xl font-bold tracking-tight text-foreground`}>Fechamentos</h1>
+              <p className="text-muted-foreground text-sm">
                 Relatórios diários consolidados (PagBank + comandas + pendências)
               </p>
             </div>
@@ -37,33 +39,42 @@ export default function Fechamentos() {
         </header>
 
         <Tabs defaultValue="diarios" className="space-y-4">
-          <TabsList className="grid grid-cols-2 w-full sm:w-[420px]">
+          <TabsList className="grid h-12 grid-cols-2 w-full sm:w-[420px]">
             <TabsTrigger value="diarios">Relatórios diários</TabsTrigger>
             <TabsTrigger value="extrato">Extrato bancário</TabsTrigger>
           </TabsList>
 
           <TabsContent value="diarios" className="space-y-2">
             {isLoading && (
-              <div className="p-6 text-center text-slate-500 border rounded">
-                Carregando…
-              </div>
+              <GlassCard radius="xl" padding={20} aria-label="Carregando…">
+                <Skeleton lines={4} />
+              </GlassCard>
             )}
 
             {error && (
-              <div className="p-4 text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded">
+              <div className="p-4 text-sm text-[color:var(--np-danger-text)] bg-[var(--np-danger-soft)] border border-[color:var(--np-danger-border)] rounded-xl">
                 Erro ao carregar fechamentos:{" "}
                 {String((error as any)?.message ?? error)}
               </div>
             )}
 
             {!isLoading && !error && (reports?.length ?? 0) === 0 && (
-              <div className="p-6 text-center text-slate-500 border rounded">
-                Nenhum fechamento gerado ainda. Use "Gerar Mensal" ou aguarde o
-                cron das 7h.
-              </div>
+              <GlassCard radius="xl">
+                <EmptyState
+                  icon="calendar"
+                  title="Nenhum fechamento gerado ainda."
+                  description={'Use "Gerar Mensal" ou aguarde o cron das 7h.'}
+                />
+              </GlassCard>
             )}
 
-            <div className="space-y-2">
+            {(reports?.length ?? 0) > 0 && (
+            <GlassCard radius="xl" padding={0} className="overflow-hidden">
+              <div className="hidden sm:flex items-center justify-between border-b border-border px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span>Dia · atendimentos · ticket médio</span>
+                <span>Faturamento</span>
+              </div>
+              <div className="divide-y divide-border">
               {reports?.map((r: any) => (
                 <DailyReportRow
                   key={r.id}
@@ -75,7 +86,9 @@ export default function Fechamentos() {
                   }
                 />
               ))}
-            </div>
+              </div>
+            </GlassCard>
+            )}
           </TabsContent>
 
           <TabsContent value="extrato">

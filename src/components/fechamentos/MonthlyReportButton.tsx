@@ -99,7 +99,7 @@ export function MonthlyReportButton({
               <select
                 value={month}
                 onChange={(e) => setMonth(Number(e.target.value))}
-                className="border rounded p-2 w-full bg-white"
+                className="border rounded p-2 w-full bg-card"
               >
                 {MONTHS_PT.map((label, idx) => (
                   <option key={idx + 1} value={idx + 1}>
@@ -128,7 +128,7 @@ export function MonthlyReportButton({
               <select
                 value={profId}
                 onChange={(e) => setProfId(e.target.value)}
-                className="border rounded p-2 w-full bg-white"
+                className="border rounded p-2 w-full bg-card"
               >
                 <option value="all">Todos</option>
                 {professionals.map((p: any) => (
@@ -140,7 +140,7 @@ export function MonthlyReportButton({
             </div>
 
             {error && (
-              <div className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded p-2">
+              <div className="text-sm text-[color:var(--np-danger-text)] bg-[var(--np-danger-soft)] border border-[color:var(--np-danger-border)] rounded p-2">
                 {error}
               </div>
             )}

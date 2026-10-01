@@ -3,13 +3,15 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Loader2, Coins } from "lucide-react";
+import { Download, Coins } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { EmptyState } from "@design-system";
 import { exportToExcel } from "./utils/exportExcel";
+import { NUM, ReportLoading, ReportTitle, TOTAL_ROW } from "./ReportKit";
 
 interface Props {
   dateRange: { from: Date; to: Date };
@@ -100,29 +102,30 @@ export function Report0028({ dateRange }: Props) {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+    return <ReportLoading />;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Coins className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">Comissões Pagas no Período</h3>
-        </div>
-        <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
-          <Download className="h-4 w-4 mr-2" />Exportar Excel
-        </Button>
-      </div>
+      <ReportTitle
+        icon={Coins}
+        actions={
+          <Button variant="outline" size="sm" onClick={handleExport} disabled={rows.length === 0}>
+            <Download className="h-4 w-4 mr-2" />Exportar Excel
+          </Button>
+        }
+      >
+        Comissões Pagas no Período
+      </ReportTitle>
 
       {/* Summary */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {rows.map(r => (
           <Card key={r.id}>
             <CardContent className="p-4">
-              <p className="font-medium">{r.profName}</p>
-              <p className="text-sm text-muted-foreground">Faturamento: R$ {r.totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
-              <p className="text-lg font-bold text-primary">Comissão: R$ {r.totalCommission.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+              <p className="np-display text-base">{r.profName}</p>
+              <p className="text-sm tabular-nums text-muted-foreground">Faturamento: R$ {r.totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+              <p className="np-num mt-1 text-lg text-[color:var(--np-accent-text)]">Comissão: R$ {r.totalCommission.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
             </CardContent>
           </Card>
         ))}
@@ -131,13 +134,13 @@ export function Report0028({ dateRange }: Props) {
       {/* Detail table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm text-muted-foreground">
+          <CardTitle className="text-sm tabular-nums text-muted-foreground">
             Total de comissões: R$ {rows.reduce((s, r) => s + r.totalCommission, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {rows.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">Nenhuma comissão encontrada no período</div>
+            <EmptyState icon="info" title="Nenhuma comissão encontrada no período" />
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -160,17 +163,17 @@ export function Report0028({ dateRange }: Props) {
                         <TableCell>{item.date ? format(new Date(item.date), "dd/MM/yyyy") : "—"}</TableCell>
                         <TableCell>{item.description}</TableCell>
                         <TableCell>{item.type}</TableCell>
-                        <TableCell className="text-right">R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
-                        <TableCell className="text-right">{item.commissionPercent}%</TableCell>
-                        <TableCell className="text-right font-medium">R$ {item.commission.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell className={NUM}>R$ {item.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                        <TableCell className={NUM}>{item.commissionPercent}%</TableCell>
+                        <TableCell className={NUM + " font-medium"}>R$ {item.commission.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
                       </TableRow>
                     ))
                   )}
-                  <TableRow className="font-bold bg-muted/50">
+                  <TableRow className={TOTAL_ROW}>
                     <TableCell colSpan={4}>TOTAL</TableCell>
-                    <TableCell className="text-right">R$ {rows.reduce((s, r) => s + r.totalRevenue, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className={NUM}>R$ {rows.reduce((s, r) => s + r.totalRevenue, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell></TableCell>
-                    <TableCell className="text-right">R$ {rows.reduce((s, r) => s + r.totalCommission, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className={NUM}>R$ {rows.reduce((s, r) => s + r.totalCommission, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>

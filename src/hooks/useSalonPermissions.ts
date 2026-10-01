@@ -122,7 +122,10 @@ export function useSalonPermissions() {
     pode,
     rows,
     available,
-    isLoading: query.isLoading,
+    // isPending (e não isLoading): enquanto o salonId não chegou a query fica desligada e
+    // isLoading vinha false, então pode() caía na regra antiga e as telas com
+    // <Navigate> (Financeiro, Contas a Pagar, Comissões) expulsavam a recepção de vez em quando.
+    isLoading: query.isPending,
     updateRoles,
   };
 }

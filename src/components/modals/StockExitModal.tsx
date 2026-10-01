@@ -188,7 +188,7 @@ export function StockExitModal({ open, onOpenChange, products }: StockExitModalP
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Minus className="h-5 w-5 text-red-600" />
+            <Minus className="h-5 w-5 text-[var(--np-danger-text)]" />
             Saída Manual de Estoque
           </DialogTitle>
         </DialogHeader>
@@ -297,7 +297,7 @@ export function StockExitModal({ open, onOpenChange, products }: StockExitModalP
               )}
 
               {stockCalc.valid && (
-                <div className="rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900 p-3 text-sm">
+                <div className="rounded-lg bg-[var(--np-accent-soft)] border border-[var(--np-accent-border)] p-3 text-sm">
                   <div className="flex justify-between">
                     <span>Novo estoque:</span>
                     <span className="font-medium">{stockCalc.newStock} unidade(s)</span>

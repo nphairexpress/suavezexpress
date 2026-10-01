@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Notice, insetClass, toneText } from "@/components/settings/settingsUi";
+import { Button as NpButton } from "@design-system";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/dynamicSupabaseClient";
-import { Copy, RefreshCw, Eye, EyeOff, Check, Loader2, Globe, Download, ShieldCheck } from "lucide-react";
+import { Copy, RefreshCw, Eye, EyeOff, Check, Loader2, Globe, Download, ShieldCheck, AlertTriangle } from "lucide-react";
 
 export function ApiGatewaySettingsSection() {
   const { toast } = useToast();
@@ -272,49 +273,48 @@ curl -X POST "${baseUrl}/clients" \\
           <div className="space-y-2">
             <Label>URL Base da API</Label>
             <div className="flex gap-2">
-              <Input value={baseUrl} readOnly className="font-mono text-xs" />
-              <Button variant="outline" size="icon" onClick={() => copyToClipboard(baseUrl, "URL")}>
-                {copied === "URL" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+              <Input value={baseUrl} readOnly className="font-mono text-xs min-w-0" />
+              <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label="Copiar URL" onClick={() => copyToClipboard(baseUrl, "URL")}>
+                {copied === "URL" ? <Check className="h-4 w-4" style={toneText.positive} /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
           </div>
 
           <div className="space-y-2">
             <Label>Chave da API (x-api-key)</Label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
+            <div className="flex flex-wrap gap-2">
+              <div className="relative flex-1 min-w-[180px]">
                 <Input
                   value={apiKey ? (showKey ? apiKey : "•".repeat(40)) : "Nenhuma chave gerada"}
                   readOnly
-                  className="font-mono text-xs pr-10"
+                  className="font-mono text-xs pr-12"
                 />
                 {apiKey && (
-                  <Button variant="ghost" size="icon" className="absolute right-0 top-0 h-full" onClick={() => setShowKey(!showKey)}>
+                  <Button variant="ghost" size="icon" className="absolute right-0 top-0 h-full w-11" aria-label={showKey ? "Ocultar chave" : "Mostrar chave"} onClick={() => setShowKey(!showKey)}>
                     {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 )}
               </div>
               {apiKey && (
-                <Button variant="outline" size="icon" onClick={() => copyToClipboard(apiKey, "Chave")}>
-                  {copied === "Chave" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label="Copiar chave" onClick={() => copyToClipboard(apiKey, "Chave")}>
+                  {copied === "Chave" ? <Check className="h-4 w-4" style={toneText.positive} /> : <Copy className="h-4 w-4" />}
                 </Button>
               )}
-              <Button onClick={generateKey} disabled={generating} variant={apiKey ? "outline" : "default"} className="gap-2 whitespace-nowrap">
-                <RefreshCw className={`h-4 w-4 ${generating ? "animate-spin" : ""}`} />
+              <NpButton onClick={generateKey} disabled={generating} variant={apiKey ? "secondary" : "primary"} icon={RefreshCw} className={`whitespace-nowrap ${generating ? "[&_svg]:animate-spin" : ""}`}>
                 {apiKey ? "Regenerar" : "Gerar Chave"}
-              </Button>
+              </NpButton>
             </div>
             {apiKey && (
-              <p className="text-xs text-muted-foreground">⚠️ Regenerar invalidará integrações existentes.</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5 shrink-0" style={toneText.accent} />Regenerar invalidará integrações existentes.</p>
             )}
           </div>
 
-          <div className="rounded-lg bg-muted/50 p-4 space-y-2">
+          <div className={`${insetClass} p-4 space-y-2`}>
             <div className="flex items-center gap-2 mb-2">
               <ShieldCheck className="h-4 w-4 text-primary" />
-              <p className="text-sm font-medium">Headers obrigatórios</p>
+              <p className="text-sm font-medium text-foreground">Headers obrigatórios</p>
             </div>
-            <div className="font-mono text-xs space-y-1 text-muted-foreground">
+            <div className="font-mono text-xs space-y-1 text-muted-foreground break-all">
               <p>Content-Type: application/json</p>
               <p>x-api-key: {"<sua_chave_aqui>"}</p>
             </div>
@@ -329,8 +329,8 @@ curl -X POST "${baseUrl}/clients" \\
         </CardHeader>
         <CardContent className="space-y-2">
           {resources.map((r) => (
-            <div key={r.name} className="flex items-center justify-between rounded-lg border p-3">
-              <div className="flex items-center gap-3">
+            <div key={r.name} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3">
+              <div className="flex flex-wrap items-center gap-3 min-w-0">
                 <Badge variant="secondary" className="font-mono text-xs">/{r.name}</Badge>
                 <span className="text-sm text-muted-foreground">{r.desc}</span>
               </div>
@@ -346,23 +346,14 @@ curl -X POST "${baseUrl}/clients" \\
         </CardContent>
       </Card>
 
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <Globe className="h-5 w-5 text-primary mt-0.5" />
-            <div className="flex-1">
-              <h4 className="font-medium text-foreground">Documentação Completa</h4>
-              <p className="text-sm text-muted-foreground mt-1 mb-3">
-                Baixe a documentação com todos os endpoints, exemplos de requisição e respostas para integrar com qualquer sistema.
-              </p>
-              <Button onClick={generateDocumentation} className="gap-2">
-                <Download className="h-4 w-4" />
-                Baixar Documentação da API REST
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <Notice tone="accent" icon={Globe} title="Documentação Completa">
+        <p className="mb-3">
+          Baixe a documentação com todos os endpoints, exemplos de requisição e respostas para integrar com qualquer sistema.
+        </p>
+        <NpButton icon={Download} onClick={generateDocumentation}>
+          Baixar Documentação da API REST
+        </NpButton>
+      </Notice>
     </div>
   );
 }

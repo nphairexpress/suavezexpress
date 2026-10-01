@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { glassModal, modalTitle } from "@/components/financeiro/glass";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -39,9 +40,9 @@ export function CaixaSelectModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className={`sm:max-w-lg max-h-[80vh] overflow-hidden flex flex-col ${glassModal}`}>
         <DialogHeader>
-          <DialogTitle>Selecionar Caixa para Fechamento</DialogTitle>
+          <DialogTitle className={modalTitle}>Selecionar Caixa para Fechamento</DialogTitle>
           <p className="text-sm text-muted-foreground">
             Caixas abertos em {format(comandaDate, "dd/MM/yyyy", { locale: ptBR })}
           </p>
@@ -122,8 +123,8 @@ export function CaixaSelectModal({
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button variant="outline" className="h-12" onClick={onClose}>
             Cancelar
           </Button>
         </DialogFooter>

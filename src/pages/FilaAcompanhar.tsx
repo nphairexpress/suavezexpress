@@ -3,24 +3,29 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { GlassCard, Badge, Button as NpButton, npAssets, type BadgeTone } from "@design-system";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { RefreshCw, Users, AlertTriangle } from "lucide-react";
+import { RefreshCw, AlertTriangle } from "lucide-react";
 
 // Acompanhamento da fila via TOKEN OPACO (falhas 2/13 corrigidas):
 // - A página só enxerga a PRÓPRIA entrada (RPC fila_minha_situacao).
 // - Cancelar exige o token (RPC fila_cancelar) — o crédito de pagamento
 //   confirmado é gerado no SERVIDOR, nunca pelo browser.
 
-const statusLabels: Record<string, { label: string; color: string }> = {
-  waiting: { label: "Aguardando", color: "bg-blue-500" },
-  checked_in: { label: "Check-in feito", color: "bg-green-500" },
-  in_service: { label: "Em atendimento", color: "bg-orange-500" },
-  completed: { label: "Concluido", color: "bg-gray-500" },
-  cancelled: { label: "Cancelado", color: "bg-red-500" },
-  no_show: { label: "Nao compareceu", color: "bg-red-500" },
+const statusLabels: Record<string, { label: string; tone: BadgeTone; live?: boolean }> = {
+  waiting: { label: "Aguardando", tone: "neutral" },
+  checked_in: { label: "Check-in feito", tone: "positive" },
+  in_service: { label: "Em atendimento", tone: "solid", live: true },
+  completed: { label: "Concluido", tone: "neutral" },
+  cancelled: { label: "Cancelado", tone: "danger" },
+  no_show: { label: "Nao compareceu", tone: "danger" },
 };
+
+// Página PÚBLICA (celular, sem login): tema escuro fixo do design system aplicado aqui mesmo.
+// A rota ainda recebe html.np-legacy do App.tsx; o wrapper redefine os tokens (data-theme="dark"
+// + classe .dark), e o modal repete isso porque é renderizado fora do wrapper (portal).
+const PUBLIC_SHELL = "dark np-bg np-bg--waves min-h-screen text-foreground [font-family:var(--np-font-body)]";
+const PUBLIC_MODAL = "dark rounded-2xl border-[color:var(--np-border-glass)] bg-[color:var(--np-surface-glass-strong)] text-foreground shadow-[var(--np-shadow-modal)] backdrop-blur-2xl [font-family:var(--np-font-body)]";
 
 interface MinhaSituacao {
   found: boolean;
@@ -63,17 +68,19 @@ export default function FilaAcompanhar() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-zinc-800 flex items-center justify-center">
-        <RefreshCw className="h-8 w-8 animate-spin text-white" />
+      <div data-theme="dark" className={`${PUBLIC_SHELL} flex items-center justify-center`}>
+        <RefreshCw className="h-8 w-8 animate-spin text-[color:var(--np-accent-text)]" />
       </div>
     );
   }
 
   if (!entry?.found) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-zinc-800 flex flex-col items-center justify-center p-4 text-white">
-        <p>Entrada nao encontrada.</p>
-        <Button variant="outline" className="mt-4" onClick={() => navigate("/fila")}>Voltar</Button>
+      <div data-theme="dark" className={`${PUBLIC_SHELL} flex flex-col items-center justify-center gap-4 p-4`}>
+        <GlassCard padding={24} className="w-full max-w-sm text-center">
+          <p className="text-foreground">Entrada nao encontrada.</p>
+          <NpButton variant="secondary" size="lg" block className="mt-4" onClick={() => navigate("/fila")}>Voltar</NpButton>
+        </GlassCard>
       </div>
     );
   }
@@ -85,32 +92,34 @@ export default function FilaAcompanhar() {
   const gotCredit = entry.payment_status === "credit";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-900 to-zinc-800 flex flex-col items-center p-4">
-      <div className="w-full max-w-sm">
-        <h1 className="text-xl font-bold text-white text-center mb-6">NP Hair Express</h1>
+    <div data-theme="dark" className={PUBLIC_SHELL}>
+      <div className="mx-auto flex min-h-screen w-full max-w-sm flex-col gap-6 px-4 py-8">
+        <header className="flex justify-center">
+          <img src={npAssets.logoWordmark} alt="NP Hair Express" className="h-auto w-44 max-w-full" />
+        </header>
 
-        <Card className="mb-4">
-          <CardContent className="pt-6 text-center space-y-4">
-            <Badge className={`${status.color} text-white`}>{status.label}</Badge>
+        <GlassCard padding={24} glow={isNext || entry.status === "in_service"} className="text-center">
+          <div className="flex justify-center">
+            <Badge tone={status.tone} dot live={status.live}>{status.label}</Badge>
+          </div>
 
+          <div className="mt-5 space-y-2">
             {isActive && (
-              <div>
-                {isNext ? (
-                  <p className="text-2xl font-bold text-green-500">Voce e a proxima!</p>
-                ) : (
-                  <div className="flex items-center justify-center gap-2">
-                    <Users className="h-5 w-5 text-primary" />
-                    <span className="text-3xl font-bold">{aheadCount}</span>
-                    <span className="text-muted-foreground">
-                      {aheadCount === 1 ? "pessoa na frente" : "pessoas na frente"}
-                    </span>
-                  </div>
-                )}
-              </div>
+              isNext ? (
+                <p className="np-display text-3xl text-[color:var(--np-accent-display)]">Voce e a proxima!</p>
+              ) : (
+                <div>
+                  <p className="np-caps">Na sua frente</p>
+                  <p className="np-num mt-1 text-[96px] font-black leading-none tabular-nums text-foreground">{aheadCount}</p>
+                  <p className="mt-1 text-muted-foreground">
+                    {aheadCount === 1 ? "pessoa na frente" : "pessoas na frente"}
+                  </p>
+                </div>
+              )
             )}
 
             {entry.status === "in_service" && (
-              <p className="text-xl font-bold text-orange-500">Voce esta sendo atendida!</p>
+              <p className="np-display text-2xl text-[color:var(--np-accent-display)]">Voce esta sendo atendida!</p>
             )}
 
             {entry.status === "completed" && (
@@ -124,37 +133,37 @@ export default function FilaAcompanhar() {
                   : "Sua entrada na fila foi encerrada."}
               </p>
             )}
+          </div>
 
-            <div className="border-t pt-4">
-              <p className="text-sm text-muted-foreground">Servico</p>
-              <p className="font-medium">{entry.service_names || "—"}</p>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="mt-6 border-t border-[color:var(--np-divider)] pt-4">
+            <p className="np-caps">Servico</p>
+            <p className="mt-1 font-medium text-foreground">{entry.service_names || "—"}</p>
+          </div>
+        </GlassCard>
 
         <div className="space-y-3">
-          <Button variant="outline" className="w-full" onClick={() => refetch()}>
-            <RefreshCw className="h-4 w-4 mr-2" />Atualizar
-          </Button>
+          <NpButton variant="secondary" size="lg" block icon={RefreshCw} onClick={() => refetch()}>
+            Atualizar
+          </NpButton>
           {isActive && (
-            <Button variant="ghost" className="w-full text-destructive hover:text-destructive" onClick={() => setCancelDialogOpen(true)}>
-              <AlertTriangle className="h-4 w-4 mr-2" />Desistir da fila
-            </Button>
+            <NpButton variant="ghost" size="lg" block icon={AlertTriangle} className="text-destructive" onClick={() => setCancelDialogOpen(true)}>
+              Desistir da fila
+            </NpButton>
           )}
         </div>
       </div>
 
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader><DialogTitle>Desistir da fila?</DialogTitle></DialogHeader>
+        <DialogContent data-theme="dark" className={`sm:max-w-sm ${PUBLIC_MODAL}`}>
+          <DialogHeader><DialogTitle className="np-display text-xl">Desistir da fila?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">
             {entry.payment_status === "confirmed"
               ? "O valor pago vira um credito valido por 30 dias para usar em outra visita."
               : "Sua entrada sera cancelada."}
           </p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelDialogOpen(false)} disabled={cancelling}>Voltar</Button>
-            <Button variant="destructive" onClick={handleCancel} disabled={cancelling}>
+            <Button variant="outline" className="h-12 border-border bg-transparent" onClick={() => setCancelDialogOpen(false)} disabled={cancelling}>Voltar</Button>
+            <Button variant="destructive" className="h-12" onClick={handleCancel} disabled={cancelling}>
               {cancelling ? "Cancelando…" : "Sim, desistir"}
             </Button>
           </DialogFooter>

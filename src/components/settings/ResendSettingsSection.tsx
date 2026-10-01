@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Notice, toneText } from "@/components/settings/settingsUi";
+import { Button as NpButton } from "@design-system";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -173,42 +174,21 @@ export function ResendSettingsSection() {
   return (
     <div className="space-y-4">
       {/* Status Card */}
-      <Card className={isConfigured
-        ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30"
-        : "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30"
-      }>
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            {isConfigured ? (
-              <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5" />
-            ) : (
-              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
-            )}
-            <div>
-              <h4 className={`font-medium ${isConfigured
-                ? "text-green-900 dark:text-green-100"
-                : "text-amber-900 dark:text-amber-100"
-              }`}>
-                {isConfigured ? "E-mails automáticos ativados" : "E-mails automáticos desativados"}
-              </h4>
-              <p className={`text-sm mt-1 ${isConfigured
-                ? "text-green-700 dark:text-green-300"
-                : "text-amber-700 dark:text-amber-300"
-              }`}>
-                {isConfigured
-                  ? "O sistema está enviando e-mails automáticos para seus clientes."
-                  : "Configure a API Key do Resend abaixo para ativar o envio de e-mails automáticos. Essa configuração é opcional — o sistema funciona normalmente sem ela."}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <Notice
+        tone={isConfigured ? "positive" : "accent"}
+        icon={isConfigured ? CheckCircle2 : AlertCircle}
+        title={isConfigured ? "E-mails automáticos ativados" : "E-mails automáticos desativados"}
+      >
+        {isConfigured
+          ? "O sistema está enviando e-mails automáticos para seus clientes."
+          : "Configure a API Key do Resend abaixo para ativar o envio de e-mails automáticos. Essa configuração é opcional — o sistema funciona normalmente sem ela."}
+      </Notice>
 
       {/* API Key Card */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Mail className="h-5 w-5" />
+            <Mail className="h-5 w-5 text-primary" />
             API Key do Resend
           </CardTitle>
           <CardDescription>
@@ -226,13 +206,14 @@ export function ResendSettingsSection() {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxxxx"
-                  className="pr-10"
+                  className="pr-12"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  aria-label={showKey ? "Ocultar chave" : "Mostrar chave"}
+                  className="absolute right-0 top-0 h-full w-11 px-3 hover:bg-transparent"
                   onClick={() => setShowKey(!showKey)}
                 >
                   {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -241,25 +222,25 @@ export function ResendSettingsSection() {
             </div>
           </div>
 
-          <div className="flex gap-2">
-            <Button
+          <div className="flex flex-wrap gap-2">
+            <NpButton
+              icon={Save}
+              loading={saving}
               onClick={handleSave}
               disabled={saving || (apiKey.trim() === (savedKey || ""))}
-              className="gap-2"
             >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               Salvar
-            </Button>
+            </NpButton>
             {isConfigured && (
-              <Button
-                variant="outline"
+              <NpButton
+                variant="secondary"
+                icon={Send}
+                loading={testing}
                 onClick={handleTest}
                 disabled={testing}
-                className="gap-2"
               >
-                {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 Enviar e-mail de teste
-              </Button>
+              </NpButton>
             )}
           </div>
         </CardContent>
@@ -269,14 +250,14 @@ export function ResendSettingsSection() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Info className="h-5 w-5" />
+            <Info className="h-5 w-5 text-primary" />
             Como configurar
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3 text-sm">
             <div className="flex gap-3">
-              <Badge variant="outline" className="h-6 w-6 shrink-0 flex items-center justify-center rounded-full p-0 text-xs">1</Badge>
+              <Badge variant="outline" className="h-6 w-6 shrink-0 flex items-center justify-center rounded-full p-0 text-xs border-border text-primary tabular-nums">1</Badge>
               <p>
                 Crie uma conta gratuita em{" "}
                 <a href="https://resend.com/signup" target="_blank" rel="noopener noreferrer" className="text-primary underline inline-flex items-center gap-1">
@@ -285,24 +266,24 @@ export function ResendSettingsSection() {
               </p>
             </div>
             <div className="flex gap-3">
-              <Badge variant="outline" className="h-6 w-6 shrink-0 flex items-center justify-center rounded-full p-0 text-xs">2</Badge>
+              <Badge variant="outline" className="h-6 w-6 shrink-0 flex items-center justify-center rounded-full p-0 text-xs border-border text-primary tabular-nums">2</Badge>
               <p>Compre um dominio personalizado (ex: seusalao.com.br) ou use um que ja possui</p>
             </div>
             <div className="flex gap-3">
-              <Badge variant="outline" className="h-6 w-6 shrink-0 flex items-center justify-center rounded-full p-0 text-xs">3</Badge>
+              <Badge variant="outline" className="h-6 w-6 shrink-0 flex items-center justify-center rounded-full p-0 text-xs border-border text-primary tabular-nums">3</Badge>
               <p>
                 No painel do Resend, va em{" "}
                 <strong>Domains</strong> e conecte seu dominio (configurar registros DNS: MX, SPF, DKIM)
               </p>
             </div>
             <div className="flex gap-3">
-              <Badge variant="outline" className="h-6 w-6 shrink-0 flex items-center justify-center rounded-full p-0 text-xs">4</Badge>
+              <Badge variant="outline" className="h-6 w-6 shrink-0 flex items-center justify-center rounded-full p-0 text-xs border-border text-primary tabular-nums">4</Badge>
               <p>
                 Va em <strong>API Keys</strong> → <strong>Create API Key</strong> e copie a chave gerada
               </p>
             </div>
             <div className="flex gap-3">
-              <Badge variant="outline" className="h-6 w-6 shrink-0 flex items-center justify-center rounded-full p-0 text-xs">5</Badge>
+              <Badge variant="outline" className="h-6 w-6 shrink-0 flex items-center justify-center rounded-full p-0 text-xs border-border text-primary tabular-nums">5</Badge>
               <p>Cole a chave no campo acima e clique em <strong>Salvar</strong></p>
             </div>
           </div>
@@ -313,7 +294,7 @@ export function ResendSettingsSection() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Mail className="h-5 w-5" />
+            <Mail className="h-5 w-5 text-primary" />
             E-mails automaticos
           </CardTitle>
           <CardDescription>
@@ -331,12 +312,12 @@ export function ResendSettingsSection() {
             ].map((item) => (
               <div key={item.label} className="flex items-start gap-3">
                 {isConfigured ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" style={toneText.positive} />
                 ) : (
                   <XCircle className="h-5 w-5 text-muted-foreground/40 shrink-0 mt-0.5" />
                 )}
                 <div>
-                  <p className="font-medium text-sm">{item.label}</p>
+                  <p className="font-medium text-sm text-foreground">{item.label}</p>
                   <p className="text-xs text-muted-foreground">{item.desc}</p>
                 </div>
               </div>

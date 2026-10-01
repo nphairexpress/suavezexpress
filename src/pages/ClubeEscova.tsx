@@ -13,18 +13,45 @@ import {
   Sparkles,
   Wallet,
 } from "lucide-react";
+import { Badge, GlassCard, cx } from "@design-system";
 import { CountUp, Reveal, useInView, prefersReducedMotion } from "@/components/clube/Reveal";
 
 /**
  * Clube da Escova — página pública de vendas (assinatura recorrente Asaas).
- * Rota /clube-escova (sem login). Marca NP Hair Express: #F7A100 sobre near-black.
- * Tráfego = Instagram no celular → mobile-first.
+ * Rota /clube-escova (sem login). Tráfego = Instagram no celular → mobile-first.
+ *
+ * Design system NP Express com tema ESCURO FIXO: a rota fica isolada em np-legacy (tema claro
+ * forçado no <html>), então o tema escuro é aplicado aqui no wrapper raiz (data-theme="dark")
+ * e só se usam tokens --np-* e componentes de @design-system. Nada de classe shadcn de tema.
  */
 
-const BRAND = "#F7A100";
-const INK = "#17120f";
 const WHATS =
   "https://wa.me/5519990091315?text=Quero%20saber%20do%20Clube%20da%20Escova";
+
+/* ---------- classes de apresentação (só tokens --np-*) ---------- */
+
+// .np-app a pinta todo link de âmbar e sublinha no hover: os links-botão anulam isso.
+const LINK_BTN = "no-underline hover:!no-underline";
+const BTN_PRIMARY = cx(
+  "np-btn np-btn--primary np-btn--lg",
+  LINK_BTN,
+  "!text-[color:var(--np-text-on-accent)] font-bold",
+);
+const BTN_OUTLINE_ACCENT = cx(
+  "np-btn np-btn--secondary np-btn--lg",
+  LINK_BTN,
+  "!border-[color:var(--np-accent-border)] !text-[color:var(--np-accent-text)] font-bold",
+  "hover:!bg-[color:var(--np-accent)] hover:!text-[color:var(--np-text-on-accent)]",
+);
+
+const T1 = "text-[color:var(--np-text-primary)]";
+const T2 = "text-[color:var(--np-text-secondary)]";
+const T3 = "text-[color:var(--np-text-tertiary)]";
+const ACCENT = "text-[color:var(--np-accent-text)]";
+const DISPLAY = "np-display";
+const H2 = cx(DISPLAY, T1, "text-center text-3xl sm:text-4xl");
+const SECTION_ALT =
+  "border-y border-[color:var(--np-divider)] bg-[color:var(--np-surface-inset)]";
 
 type Comprimento = "curto" | "longo";
 
@@ -98,52 +125,69 @@ function PlanoCard({ p, comprimento }: { p: Plano; comprimento: Comprimento }) {
   const porEscova = Math.round(preco / p.escovas);
 
   return (
-    <div
-      className={`group relative flex flex-col rounded-2xl border p-6 transition-transform duration-300 hover:-translate-y-1.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0 ${
-        p.destaque
-          ? "border-[#F7A100] bg-[#221a12] shadow-[0_10px_40px_-12px_rgba(247,161,0,0.25)]"
-          : "border-white/10 bg-[#1e1813] hover:border-[#F7A100]/40"
-      }`}
+    <GlassCard
+      lift
+      selected={p.destaque}
+      glow={p.destaque}
+      tone={p.destaque ? "strong" : "default"}
+      className={cx(
+        "relative flex flex-col",
+        !p.destaque && "hover:!border-[color:var(--np-accent-border)]",
+      )}
     >
       {p.destaque && (
-        <span className="absolute -top-3 left-6 rounded-full bg-[#F7A100] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#17120f]">
+        <Badge
+          tone="solid"
+          className="absolute -top-3 left-6 uppercase tracking-[0.12em] !text-[11px] font-bold"
+        >
           Mais escolhido
-        </span>
+        </Badge>
       )}
 
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#a89a87]">
+      <p className={cx("text-xs font-semibold uppercase tracking-[0.2em]", T2)}>
         {p.escovas} escovas por mês
       </p>
-      <p className="mt-1 font-serif text-2xl text-[#f6f0e7]">
+      <p className={cx(DISPLAY, T1, "mt-1 text-2xl")}>
         {p.escovas === 4 ? "Uma por semana" : "Duas por semana"}
       </p>
 
       <div className="mt-5 flex items-baseline gap-1.5">
-        <span className="font-mono text-[2.6rem] font-bold leading-none text-[#F7A100]">
+        <span
+          className={cx(
+            DISPLAY,
+            "text-[2.6rem] font-black leading-none tabular-nums",
+            "text-[color:var(--np-accent-display)]",
+          )}
+        >
           R${preco}
         </span>
-        <span className="text-sm text-[#a89a87]">/mês</span>
+        <span className={cx("text-sm", T2)}>/mês</span>
       </div>
-      <p className="mt-2 text-sm text-[#cdbfab]">
-        Sai a <b className="text-[#f6f0e7]">R${porEscova} por escova</b>
-        <span className="text-[#7d7160]"> · avulso custaria R${avulso}</span>
+      <p className={cx("mt-2 text-sm", T2)}>
+        Sai a <b className={cx(T1, "font-semibold tabular-nums")}>R${porEscova} por escova</b>
+        <span className={cx(T3, "tabular-nums")}> · avulso custaria R${avulso}</span>
       </p>
-      <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-[#F7A100]">
+      <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold tabular-nums text-[color:var(--np-positive-text)]">
         <Wallet className="h-4 w-4" aria-hidden />
         R${economia} de volta no seu bolso, todo mês
       </p>
 
-      <ul className="mt-6 space-y-2.5 border-t border-white/10 pt-5 text-sm text-[#cdbfab]">
+      <ul
+        className={cx(
+          "mt-6 space-y-2.5 border-t border-[color:var(--np-divider)] pt-5 text-sm",
+          T2,
+        )}
+      >
         <li className="flex items-start gap-2">
-          <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#F7A100]" aria-hidden />
+          <Check className={cx("mt-0.5 h-4 w-4 shrink-0", ACCENT)} aria-hidden />
           Escovas valem dentro do mês
         </li>
         <li className="flex items-start gap-2">
-          <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#F7A100]" aria-hidden />
+          <Check className={cx("mt-0.5 h-4 w-4 shrink-0", ACCENT)} aria-hidden />
           Sem hora marcada — fila digital pelo celular
         </li>
         <li className="flex items-start gap-2">
-          <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#F7A100]" aria-hidden />
+          <Check className={cx("mt-0.5 h-4 w-4 shrink-0", ACCENT)} aria-hidden />
           Cancela quando quiser, sem fidelidade
         </li>
       </ul>
@@ -152,15 +196,11 @@ function PlanoCard({ p, comprimento }: { p: Plano; comprimento: Comprimento }) {
         href={p.link[comprimento]}
         target="_blank"
         rel="noopener noreferrer"
-        className={`mt-6 block rounded-xl py-3.5 text-center text-base font-bold transition-colors ${
-          p.destaque
-            ? "bg-[#F7A100] text-[#17120f] hover:bg-[#ffb524]"
-            : "border border-[#F7A100]/60 text-[#F7A100] hover:bg-[#F7A100] hover:text-[#17120f]"
-        }`}
+        className={cx("mt-6 w-full", p.destaque ? BTN_PRIMARY : BTN_OUTLINE_ACCENT)}
       >
         Assinar agora
       </a>
-    </div>
+    </GlassCard>
   );
 }
 
@@ -169,57 +209,69 @@ function ContaNaMesa() {
   const shown = inView || prefersReducedMotion();
   const barBase =
     "h-9 rounded-lg transition-[width] duration-1000 ease-out motion-reduce:transition-none";
+  const track = "w-full rounded-lg bg-[color:var(--np-surface-inset)]";
 
   return (
-    <div
-      ref={ref}
-      className="rounded-2xl border border-white/10 bg-[#1e1813] p-6 sm:p-8"
-    >
-      <div className="space-y-6">
-        <div>
-          <div className="mb-2 flex items-baseline justify-between gap-3">
-            <span className="text-sm text-[#a89a87]">
-              4 escovas avulsas no mês
-            </span>
-            <CountUp
-              to={308}
-              className="font-mono text-2xl font-bold text-[#7d7160] line-through decoration-[#7d7160]/60 decoration-2"
-            />
+    <div ref={ref}>
+      <GlassCard radius="xl" className="p-6 sm:!p-8">
+        <div className="space-y-6">
+          <div>
+            <div className="mb-2 flex items-baseline justify-between gap-3">
+              <span className={cx("text-sm", T2)}>4 escovas avulsas no mês</span>
+              <CountUp
+                to={308}
+                className={cx(
+                  DISPLAY,
+                  T3,
+                  "text-2xl tabular-nums line-through decoration-2",
+                )}
+              />
+            </div>
+            <div className={track}>
+              <div
+                className={cx(barBase, "bg-[color:var(--np-graphite-500)]")}
+                style={{ width: shown ? "100%" : "0%" }}
+              />
+            </div>
           </div>
-          <div className="w-full rounded-lg bg-white/5">
-            <div
-              className={`${barBase} bg-[#4a4038]`}
-              style={{ width: shown ? "100%" : "0%" }}
-            />
+
+          <div>
+            <div className="mb-2 flex items-baseline justify-between gap-3">
+              <span className={cx("text-sm font-semibold", T1)}>As mesmas 4 no Clube</span>
+              <CountUp
+                to={197}
+                className={cx(
+                  DISPLAY,
+                  "text-3xl font-black tabular-nums text-[color:var(--np-accent-display)]",
+                )}
+              />
+            </div>
+            <div className={track}>
+              <div
+                className={cx(
+                  barBase,
+                  "bg-[color:var(--np-accent)] shadow-[var(--np-shadow-accent)]",
+                )}
+                style={{ width: shown ? "64%" : "0%" }}
+              />
+            </div>
           </div>
         </div>
 
-        <div>
-          <div className="mb-2 flex items-baseline justify-between gap-3">
-            <span className="text-sm font-semibold text-[#f6f0e7]">
-              As mesmas 4 no Clube
-            </span>
-            <CountUp
-              to={197}
-              className="font-mono text-3xl font-bold text-[#F7A100]"
-            />
-          </div>
-          <div className="w-full rounded-lg bg-white/5">
-            <div
-              className={`${barBase} bg-[#F7A100] shadow-[0_0_24px_rgba(247,161,0,0.35)]`}
-              style={{ width: shown ? "64%" : "0%" }}
-            />
-          </div>
-        </div>
-      </div>
-
-      <p className="mt-8 border-t border-white/10 pt-6 text-center font-serif text-xl leading-snug text-[#f6f0e7] sm:text-2xl">
-        Sai a <span className="text-[#F7A100]">R$49 cada escova</span>. São
-        R$111 que ficam com você — todo santo mês.
-      </p>
-      <p className="mt-2 text-center text-sm text-[#a89a87]">
-        No cabelo longo a diferença é ainda maior: R$141 por mês.
-      </p>
+        <p
+          className={cx(
+            DISPLAY,
+            T1,
+            "mt-8 border-t border-[color:var(--np-divider)] pt-6 text-center text-xl leading-snug sm:text-2xl",
+          )}
+        >
+          Sai a <span className={ACCENT}>R$49 cada escova</span>. São
+          R$111 que ficam com você — todo santo mês.
+        </p>
+        <p className={cx("mt-2 text-center text-sm", T2)}>
+          No cabelo longo a diferença é ainda maior: R$141 por mês.
+        </p>
+      </GlassCard>
     </div>
   );
 }
@@ -234,39 +286,46 @@ function FaqItem({
   onToggle: () => void;
 }) {
   return (
-    <div
-      className={`rounded-xl border transition-colors ${
-        open ? "border-[#F7A100]/50 bg-[#221a12]" : "border-white/10 bg-[#1e1813]"
-      }`}
+    <GlassCard
+      padding={0}
+      selected={open}
+      className={cx("overflow-hidden", open && "!bg-[color:var(--np-surface-glass-strong)]")}
     >
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
+        className="flex min-h-[56px] w-full items-center justify-between gap-4 px-5 py-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[color:var(--np-focus-ring)] focus-visible:ring-0 focus-visible:ring-offset-0"
       >
-        <span className="text-[15px] font-semibold text-[#f6f0e7]">
-          {item.q}
-        </span>
+        <span className={cx("text-[15px] font-semibold", T1)}>{item.q}</span>
         <ChevronDown
-          className={`h-5 w-5 shrink-0 text-[#F7A100] transition-transform duration-300 motion-reduce:transition-none ${
-            open ? "rotate-180" : ""
-          }`}
+          className={cx(
+            "h-5 w-5 shrink-0 transition-transform duration-300 motion-reduce:transition-none",
+            ACCENT,
+            open && "rotate-180",
+          )}
           aria-hidden
         />
       </button>
       <div
-        className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${
-          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-        }`}
+        className={cx(
+          "grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none",
+          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+        )}
       >
         <div className="overflow-hidden">
-          <p className="px-5 pb-5 text-sm leading-relaxed text-[#cdbfab]">
-            {item.a}
-          </p>
+          <p className={cx("px-5 pb-5 text-sm leading-relaxed", T2)}>{item.a}</p>
         </div>
       </div>
-    </div>
+    </GlassCard>
+  );
+}
+
+function Marca() {
+  return (
+    <p className={cx(DISPLAY, T1, "text-sm uppercase tracking-[0.28em]")}>
+      NP Hair <span className={ACCENT}>Express</span>
+    </p>
   );
 }
 
@@ -278,16 +337,21 @@ export default function ClubeEscova() {
   const hero = useInView<HTMLDivElement>(0, false);
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-[#17120f] text-[#f6f0e7] antialiased">
+    <div
+      data-theme="dark"
+      className={cx("np-app np-bg min-h-screen overflow-x-clip text-base antialiased", T1)}
+    >
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-white/5 bg-[#17120f]/90 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-[color:var(--np-border-glass)] bg-[color:var(--np-surface-glass-strong)] backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3.5">
-          <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#f6f0e7]">
-            NP Hair <span className="text-[#F7A100]">Express</span>
-          </p>
+          <Marca />
           <a
             href="#planos"
-            className="hidden rounded-full bg-[#F7A100] px-5 py-2 text-sm font-bold text-[#17120f] transition-colors hover:bg-[#ffb524] sm:block"
+            className={cx(
+              "np-btn np-btn--primary np-btn--sm hidden rounded-full px-5 sm:inline-flex",
+              LINK_BTN,
+              "!text-[color:var(--np-text-on-accent)] font-bold",
+            )}
           >
             Assinar
           </a>
@@ -303,48 +367,54 @@ export default function ClubeEscova() {
           className="pointer-events-none absolute -top-32 left-1/2 h-[420px] w-[720px] -translate-x-1/2"
           style={{
             background:
-              "radial-gradient(closest-side, rgba(247,161,0,0.28), transparent 70%)",
+              "radial-gradient(closest-side, var(--np-accent-glow), transparent 70%)",
           }}
           aria-hidden
         />
         <div className="relative mx-auto max-w-3xl text-center">
           <Reveal>
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#F7A100]/40 bg-[#F7A100]/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#F7A100]">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#F7A100] opacity-60 motion-reduce:animate-none" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-[#F7A100]" />
-              </span>
+            <Badge
+              tone="accent"
+              live
+              size="lg"
+              className="uppercase tracking-[0.14em] !text-xs font-bold"
+            >
               Só 30 vagas no 1º lote
-            </span>
+            </Badge>
           </Reveal>
 
           <Reveal delay={100}>
-            <h1 className="mt-6 font-serif text-[2.05rem] leading-[1.1] min-[420px]:text-4xl sm:text-6xl sm:leading-[1.05]">
+            <h1
+              className={cx(
+                DISPLAY,
+                T1,
+                "mt-6 text-[2.05rem] leading-[1.1] min-[420px]:text-4xl sm:text-6xl sm:leading-[1.05]",
+              )}
+            >
               Escova toda semana.
               <br />
-              <em className="text-[#F7A100]">Preço fechado.</em>
+              <em className="not-italic text-[color:var(--np-accent-display)] [text-shadow:var(--np-accent-text-glow)]">
+                Preço fechado.
+              </em>
             </h1>
           </Reveal>
 
           <Reveal delay={200}>
-            <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-[#cdbfab] sm:text-lg">
+            <p className={cx("mx-auto mt-5 max-w-xl text-base leading-relaxed sm:text-lg", T2)}>
               O Clube da Escova é a assinatura do NP Hair Express: 4 ou 8
               escovas por mês pagando bem menos que o avulso. A partir de{" "}
-              <b className="text-[#f6f0e7]">R$197/mês</b> — até{" "}
-              <b className="text-[#f6f0e7]">R$329 de economia</b> todo mês.
+              <b className={cx(T1, "font-semibold tabular-nums")}>R$197/mês</b> — até{" "}
+              <b className={cx(T1, "font-semibold tabular-nums")}>R$329 de economia</b> todo mês.
             </p>
           </Reveal>
 
           <Reveal delay={300}>
             <div className="mt-8 flex flex-col items-center gap-4">
-              <a
-                href="#planos"
-                className="inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-xl bg-[#F7A100] px-8 py-4 text-lg font-bold text-[#17120f] transition-colors hover:bg-[#ffb524] sm:w-auto"
-              >
+              <a href="#planos" className={cx(BTN_PRIMARY, "w-full max-w-xs sm:w-auto sm:px-8")}>
                 Quero ver os planos
                 <ArrowDown className="h-5 w-5" aria-hidden />
               </a>
-              <p className="text-xs uppercase tracking-[0.18em] text-[#7d7160]">
+              <p className={cx("text-xs uppercase tracking-[0.18em]", T3)}>
                 sem hora marcada · fila digital · Salto/SP
               </p>
             </div>
@@ -356,10 +426,8 @@ export default function ClubeEscova() {
       <section className="px-5 py-14 sm:py-20">
         <div className="mx-auto max-w-3xl">
           <Reveal>
-            <h2 className="text-center font-serif text-3xl sm:text-4xl">
-              A conta na mesa
-            </h2>
-            <p className="mt-3 text-center text-[#a89a87]">
+            <h2 className={H2}>A conta na mesa</h2>
+            <p className={cx("mt-3 text-center", T2)}>
               Mesma escova, mesmas profissionais, mesma cadeira. Só o preço que
               muda.
             </p>
@@ -371,12 +439,10 @@ export default function ClubeEscova() {
       </section>
 
       {/* 3 · COMO FUNCIONA */}
-      <section className="border-y border-white/5 bg-[#1a1410] px-5 py-14 sm:py-20">
+      <section className={cx(SECTION_ALT, "px-5 py-14 sm:py-20")}>
         <div className="mx-auto max-w-4xl">
           <Reveal>
-            <h2 className="text-center font-serif text-3xl sm:text-4xl">
-              Como funciona
-            </h2>
+            <h2 className={H2}>Como funciona</h2>
           </Reveal>
           <div className="mt-10 grid gap-6 sm:grid-cols-3">
             {[
@@ -396,19 +462,15 @@ export default function ClubeEscova() {
                 text: "Sua escova do mês já está paga. Levantou da cadeira, tá liberada — sem abrir a carteira.",
               },
             ].map((s, i) => (
-              <Reveal key={s.title} delay={i * 120}>
-                <div className="h-full rounded-2xl border border-white/10 bg-[#1e1813] p-6 transition-transform duration-300 hover:-translate-y-1 motion-reduce:transition-none">
-                  <span className="font-mono text-sm font-bold text-[#7d7160]">
-                    0{i + 1}
+              <Reveal key={s.title} delay={i * 120} className="h-full">
+                <GlassCard lift className="h-full">
+                  <span className={cx(DISPLAY, T3, "text-sm tabular-nums")}>0{i + 1}</span>
+                  <span className="mt-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[color:var(--np-accent-soft)]">
+                    <s.icon className={cx("h-6 w-6", ACCENT)} aria-hidden />
                   </span>
-                  <s.icon className="mt-3 h-7 w-7 text-[#F7A100]" aria-hidden />
-                  <h3 className="mt-4 text-lg font-bold text-[#f6f0e7]">
-                    {s.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[#cdbfab]">
-                    {s.text}
-                  </p>
-                </div>
+                  <h3 className={cx(DISPLAY, T1, "mt-4 text-lg")}>{s.title}</h3>
+                  <p className={cx("mt-2 text-sm leading-relaxed", T2)}>{s.text}</p>
+                </GlassCard>
               </Reveal>
             ))}
           </div>
@@ -419,10 +481,8 @@ export default function ClubeEscova() {
       <section id="planos" className="scroll-mt-20 px-5 py-14 sm:py-20">
         <div className="mx-auto max-w-4xl">
           <Reveal>
-            <h2 className="text-center font-serif text-3xl sm:text-4xl">
-              Escolha o seu plano
-            </h2>
-            <p className="mt-3 text-center text-[#a89a87]">
+            <h2 className={H2}>Escolha o seu plano</h2>
+            <p className={cx("mt-3 text-center", T2)}>
               Assinatura mensal pelo Asaas. Sem fidelidade — cancela quando
               quiser.
             </p>
@@ -431,7 +491,11 @@ export default function ClubeEscova() {
           {/* toggle comprimento */}
           <Reveal delay={100}>
             <div className="mt-8 flex justify-center">
-              <div className="inline-flex rounded-full border border-white/10 bg-[#1e1813] p-1">
+              <div
+                role="group"
+                aria-label="Comprimento do cabelo"
+                className="inline-flex rounded-full border border-[color:var(--np-border-glass)] bg-[color:var(--np-surface-glass-strong)] p-1 backdrop-blur-xl"
+              >
                 {(
                   [
                     ["curto", "Curto ou médio"],
@@ -443,18 +507,20 @@ export default function ClubeEscova() {
                     type="button"
                     onClick={() => setComprimento(value)}
                     aria-pressed={comprimento === value}
-                    className={`rounded-full px-5 py-2 text-sm font-bold transition-colors ${
+                    className={cx(
+                      "min-h-[44px] rounded-full px-5 py-2 text-sm font-bold transition-colors",
+                      "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--np-focus-ring)] focus-visible:ring-0 focus-visible:ring-offset-0",
                       comprimento === value
-                        ? "bg-[#F7A100] text-[#17120f]"
-                        : "text-[#a89a87] hover:text-[#f6f0e7]"
-                    }`}
+                        ? "bg-[color:var(--np-accent)] text-[color:var(--np-text-on-accent)]"
+                        : "text-[color:var(--np-text-secondary)] hover:text-[color:var(--np-text-primary)]",
+                    )}
                   >
                     {label}
                   </button>
                 ))}
               </div>
             </div>
-            <p className="mt-3 text-center text-xs text-[#7d7160]">
+            <p className={cx("mt-3 text-center text-xs", T3)}>
               Longo = passa da linha do busto
             </p>
           </Reveal>
@@ -468,7 +534,7 @@ export default function ClubeEscova() {
             ))}
           </div>
 
-          <p className="mt-6 text-center text-xs text-[#7d7160]">
+          <p className={cx("mt-6 text-center text-xs", T3)}>
             Escova modelada soma R$10 na hora. Pagamento seguro pelo Asaas —
             cartão, Pix ou boleto.
           </p>
@@ -476,12 +542,10 @@ export default function ClubeEscova() {
       </section>
 
       {/* 5 · PRA QUEM É */}
-      <section className="border-y border-white/5 bg-[#1a1410] px-5 py-14 sm:py-20">
+      <section className={cx(SECTION_ALT, "px-5 py-14 sm:py-20")}>
         <div className="mx-auto max-w-3xl">
           <Reveal>
-            <h2 className="text-center font-serif text-3xl sm:text-4xl">
-              O Clube é pra você que&hellip;
-            </h2>
+            <h2 className={H2}>O Clube é pra você que&hellip;</h2>
           </Reveal>
           <div className="mt-10 space-y-4">
             {[
@@ -502,19 +566,15 @@ export default function ClubeEscova() {
               },
             ].map((b, i) => (
               <Reveal key={b.title} delay={i * 100}>
-                <div className="flex items-start gap-4 rounded-2xl border border-white/10 bg-[#1e1813] p-5">
-                  <span className="rounded-xl bg-[#F7A100]/10 p-2.5">
-                    <b.icon className="h-6 w-6 text-[#F7A100]" aria-hidden />
+                <GlassCard padding={20} className="flex items-start gap-4">
+                  <span className="shrink-0 rounded-xl bg-[color:var(--np-accent-soft)] p-2.5">
+                    <b.icon className={cx("h-6 w-6", ACCENT)} aria-hidden />
                   </span>
                   <div>
-                    <h3 className="font-serif text-xl text-[#f6f0e7]">
-                      {b.title}
-                    </h3>
-                    <p className="mt-1 text-sm leading-relaxed text-[#cdbfab]">
-                      {b.text}
-                    </p>
+                    <h3 className={cx(DISPLAY, T1, "text-xl")}>{b.title}</h3>
+                    <p className={cx("mt-1 text-sm leading-relaxed", T2)}>{b.text}</p>
                   </div>
-                </div>
+                </GlassCard>
               </Reveal>
             ))}
           </div>
@@ -525,10 +585,8 @@ export default function ClubeEscova() {
       <section className="px-5 py-14 sm:py-20">
         <div className="mx-auto max-w-2xl">
           <Reveal>
-            <h2 className="text-center font-serif text-3xl sm:text-4xl">
-              Pode perguntar
-            </h2>
-            <p className="mt-3 text-center text-[#a89a87]">
+            <h2 className={H2}>Pode perguntar</h2>
+            <p className={cx("mt-3 text-center", T2)}>
               As dúvidas que toda cliente tem antes de assinar — respondidas sem
               enrolação.
             </p>
@@ -547,36 +605,47 @@ export default function ClubeEscova() {
         </div>
       </section>
 
-      {/* 7 · URGÊNCIA + CTA FINAL */}
+      {/* 7 · URGÊNCIA + CTA FINAL (único bloco âmbar sólido da página) */}
       <section className="px-5 pb-20 pt-4 sm:pb-24">
         <Reveal>
-          <div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl bg-[#F7A100] px-6 py-12 text-center sm:px-12 sm:py-16">
+          <GlassCard
+            tone="accent"
+            radius="xl"
+            padding={0}
+            className="relative mx-auto max-w-4xl overflow-hidden !px-6 !py-12 text-center sm:!px-12 sm:!py-16"
+          >
             <div
               className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full"
               style={{
                 background:
-                  "radial-gradient(closest-side, rgba(255,255,255,0.35), transparent 70%)",
+                  "radial-gradient(closest-side, var(--np-white-40), transparent 70%)",
               }}
               aria-hidden
             />
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#17120f]/70">
+            <p className="np-on-accent-2 relative text-xs font-bold uppercase tracking-[0.22em]">
               Primeiro lote · 30 assinantes
             </p>
             <h2
-              className="mx-auto mt-3 max-w-xl font-serif text-3xl leading-tight sm:text-4xl"
-              style={{ color: INK }}
+              className={cx(
+                DISPLAY,
+                "np-on-accent relative mx-auto mt-3 max-w-xl text-3xl leading-tight sm:text-4xl",
+              )}
             >
               As primeiras 30 assinantes entram com esse preço.
             </h2>
-            <p className="mx-auto mt-4 max-w-md text-[15px] leading-relaxed text-[#17120f]/80">
+            <p className="np-on-accent-2 relative mx-auto mt-4 max-w-md text-[15px] leading-relaxed">
               Depois que o lote fechar, fecha mesmo — a agenda da equipe tem
               limite. Se escova toda semana já é a sua vida, garante a sua vaga
               agora.
             </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <div className="relative mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <a
                 href="#planos"
-                className="w-full rounded-xl bg-[#17120f] px-8 py-4 text-lg font-bold text-[#F7A100] transition-transform hover:scale-[1.03] motion-reduce:transition-none sm:w-auto"
+                className={cx(
+                  "np-btn np-btn--dark np-btn--lg w-full font-bold sm:w-auto sm:px-8",
+                  LINK_BTN,
+                  "!text-[color:var(--np-accent-hover)]",
+                )}
               >
                 Garantir minha vaga
               </a>
@@ -584,23 +653,26 @@ export default function ClubeEscova() {
                 href={WHATS}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-[#17120f]/30 px-8 py-[14px] text-base font-bold text-[#17120f] transition-colors hover:bg-[#17120f]/10 sm:w-auto"
+                className={cx(
+                  "np-btn np-btn--lg w-full font-bold sm:w-auto sm:px-8",
+                  LINK_BTN,
+                  "border-2 !border-[color:var(--np-text-on-accent-2)] bg-transparent !text-[color:var(--np-text-on-accent)]",
+                  "hover:!bg-[color:var(--np-on-accent-overlay)]",
+                )}
               >
                 <MessageCircle className="h-5 w-5" aria-hidden />
                 Tirar dúvida no WhatsApp
               </a>
             </div>
-          </div>
+          </GlassCard>
         </Reveal>
       </section>
 
       {/* 8 · RODAPÉ */}
-      <footer className="border-t border-white/5 px-5 pb-28 pt-10 text-center sm:pb-10">
-        <p className="text-sm font-bold uppercase tracking-[0.28em] text-[#f6f0e7]">
-          NP Hair <span className="text-[#F7A100]">Express</span>
-        </p>
-        <p className="mt-3 inline-flex items-center gap-1.5 text-xs text-[#7d7160]">
-          <MapPin className="h-3.5 w-3.5" aria-hidden />
+      <footer className="border-t border-[color:var(--np-divider)] px-5 pb-28 pt-10 text-center sm:pb-10">
+        <Marca />
+        <p className={cx("mt-3 inline-flex items-center gap-1.5 text-xs", T2)}>
+          <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
           R. 7 de Setembro, 374 — Centro, Salto/SP · terça a sábado
         </p>
         <div className="mt-3">
@@ -608,7 +680,7 @@ export default function ClubeEscova() {
             href="https://www.instagram.com/nphairexpress"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#F7A100] hover:underline"
+            className="inline-flex min-h-[44px] items-center gap-1.5 text-xs font-semibold"
           >
             <Instagram className="h-3.5 w-3.5" aria-hidden />
             @nphairexpress
@@ -618,14 +690,12 @@ export default function ClubeEscova() {
 
       {/* CTA sticky mobile */}
       <div
-        className={`fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#17120f]/95 px-4 py-3 backdrop-blur transition-transform duration-300 motion-reduce:transition-none sm:hidden ${
-          hero.inView ? "translate-y-full" : "translate-y-0"
-        }`}
+        className={cx(
+          "fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--np-border-glass)] bg-[color:var(--np-surface-glass-strong)] px-4 py-3 backdrop-blur-xl transition-transform duration-300 motion-reduce:transition-none sm:hidden",
+          hero.inView ? "translate-y-full" : "translate-y-0",
+        )}
       >
-        <a
-          href="#planos"
-          className="block rounded-xl bg-[#F7A100] py-3.5 text-center text-base font-bold text-[#17120f]"
-        >
+        <a href="#planos" className={cx(BTN_PRIMARY, "w-full")}>
           Assinar por R$197/mês
         </a>
       </div>

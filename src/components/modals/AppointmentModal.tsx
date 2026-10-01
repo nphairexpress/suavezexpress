@@ -425,7 +425,7 @@ export function AppointmentModal({
               <Button
                 type="button"
                 variant="default"
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-[var(--np-positive)] hover:brightness-95 text-[var(--np-black)]"
                 onClick={handleOpenComanda}
               >
                 <DollarSign className="h-4 w-4 mr-2" />

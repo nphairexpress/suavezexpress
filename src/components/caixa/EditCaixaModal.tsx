@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { glassModal, modalTitle } from "@/components/financeiro/glass";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -97,9 +98,9 @@ export function EditCaixaModal({ open, onClose, caixa }: EditCaixaModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className={`sm:max-w-lg ${glassModal}`}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className={`flex items-center gap-2 ${modalTitle}`}>
             Editar Caixa
             <Badge variant={isClosed ? "secondary" : "default"}>
               {isClosed ? "Fechado" : "Aberto"}
@@ -126,7 +127,7 @@ export function EditCaixaModal({ open, onClose, caixa }: EditCaixaModalProps) {
                 </div>
               )}
               {!isToday && (
-                <p className="text-xs text-orange-600 mt-2">
+                <p className="text-xs text-[color:var(--np-accent-text)] mt-2">
                   ⚠️ Não é possível alterar o valor de abertura de caixas de dias anteriores.
                 </p>
               )}
@@ -138,6 +139,7 @@ export function EditCaixaModal({ open, onClose, caixa }: EditCaixaModalProps) {
             <Label htmlFor="openingBalance">Valor de Abertura (R$)</Label>
             <Input
               id="openingBalance"
+              className="h-12 text-lg font-semibold tabular-nums"
               type="text"
               value={openingBalance}
               onChange={(e) => setOpeningBalance(e.target.value)}
@@ -199,8 +201,8 @@ export function EditCaixaModal({ open, onClose, caixa }: EditCaixaModalProps) {
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button variant="outline" className="h-12" onClick={onClose} disabled={isLoading}>
             Cancelar
           </Button>
           <Button onClick={handleSave} disabled={isLoading}>

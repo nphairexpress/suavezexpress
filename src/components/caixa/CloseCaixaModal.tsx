@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { glassModal, modalTitle, display, txtAccent } from "@/components/financeiro/glass";
+import { DiffField } from "@design-system";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -465,13 +467,13 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
   if (showSuccess) {
     return (
       <Dialog open={open} onOpenChange={handleDismiss}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className={`sm:max-w-lg max-h-[92vh] overflow-y-auto ${glassModal}`}>
           <DialogHeader>
-            <DialogTitle>Caixa Fechado</DialogTitle>
+            <DialogTitle className={modalTitle}>Caixa Fechado</DialogTitle>
           </DialogHeader>
           <div className="space-y-6 py-4">
             <div className="flex flex-col items-center gap-3 text-center">
-              <CheckCircle className="h-12 w-12 text-green-500" />
+              <CheckCircle className="h-12 w-12 text-[color:var(--np-positive-text)]" />
               <h3 className="text-lg font-semibold">Caixa fechado com sucesso!</h3>
               <p className="text-sm text-muted-foreground">
                 Você pode imprimir ou gerar o PDF do relatório de fechamento.
@@ -498,9 +500,9 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className={`sm:max-w-lg max-h-[92vh] overflow-y-auto ${glassModal}`}>
         <DialogHeader>
-          <DialogTitle>Fechar Caixa</DialogTitle>
+          <DialogTitle className={modalTitle}>Fechar Caixa</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {/* Warning for open comandas */}
@@ -525,7 +527,7 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
                           <span>
                             <strong>#{c.comanda_number ? String(c.comanda_number).padStart(4, "0") : c.id.slice(0, 8)}</strong> — {c.client_name}
                           </span>
-                          <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => abrirComanda(c.id)}>
+                          <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => abrirComanda(c.id)}>
                             Abrir comanda
                           </Button>
                         </li>
@@ -547,8 +549,8 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
           {/* Summary */}
           <Card>
             <CardContent className="p-4 space-y-3">
-              <h4 className="font-medium text-sm">Resumo do Caixa</h4>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <h4 className={`${display} font-bold text-sm text-foreground`}>Resumo do Caixa</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm tabular-nums">
                 <span className="text-muted-foreground">Abertura:</span>
                 <span className="text-right">{formatCurrency(caixa.opening_balance || 0)}</span>
 
@@ -567,11 +569,11 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
                 <span className="text-muted-foreground">Outros:</span>
                 <span className="text-right">{formatCurrency(displayOther)}</span>
 
-                <span className="font-medium border-t pt-2">Total Recebido:</span>
-                <span className="text-right font-medium border-t pt-2">{formatCurrency(totalReceived)}</span>
+                <span className="font-medium border-t border-border pt-2">Total Recebido:</span>
+                <span className={`${display} text-right font-bold border-t border-border pt-2`}>{formatCurrency(totalReceived)}</span>
 
-                <span className="font-medium text-primary">Dinheiro Esperado:</span>
-                <span className="text-right font-medium text-primary">{formatCurrency(expectedCash)}</span>
+                <span className={`font-semibold ${txtAccent}`}>Dinheiro Esperado:</span>
+                <span className={`${display} text-right font-bold ${txtAccent}`}>{formatCurrency(expectedCash)}</span>
               </div>
 
               {/* Sangrias / Suprimentos info */}
@@ -579,20 +581,20 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
                 <div className="border-t pt-3 space-y-1.5 text-sm">
                   {sangriasCash > 0 && (
                     <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-red-600">
+                      <span className="flex items-center gap-1.5 text-[color:var(--np-danger-text)]">
                         <ArrowDownCircle className="h-3.5 w-3.5" />
                         Sangrias (dinheiro):
                       </span>
-                      <span className="text-red-600 font-medium">-{formatCurrency(sangriasCash)}</span>
+                      <span className="text-[color:var(--np-danger-text)] font-medium">-{formatCurrency(sangriasCash)}</span>
                     </div>
                   )}
                   {suprimentosCash > 0 && (
                     <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-green-600">
+                      <span className="flex items-center gap-1.5 text-[color:var(--np-positive-text)]">
                         <ArrowUpCircle className="h-3.5 w-3.5" />
                         Suprimentos (dinheiro):
                       </span>
-                      <span className="text-green-600 font-medium">+{formatCurrency(suprimentosCash)}</span>
+                      <span className="text-[color:var(--np-positive-text)] font-medium">+{formatCurrency(suprimentosCash)}</span>
                     </div>
                   )}
                   <p className="text-[11px] text-muted-foreground italic pt-0.5">
@@ -606,11 +608,11 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
                 <div className="border-t pt-3 space-y-2">
                   {totalCredits > 0 && (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="flex items-center gap-1.5 text-green-600">
+                      <span className="flex items-center gap-1.5 text-[color:var(--np-positive-text)]">
                         <Gift className="h-3.5 w-3.5" />
                         Créditos gerados para clientes:
                       </span>
-                      <span className="text-green-600 font-medium">{formatCurrency(totalCredits)}</span>
+                      <span className="text-[color:var(--np-positive-text)] font-medium">{formatCurrency(totalCredits)}</span>
                     </div>
                   )}
                   {totalDebts > 0 && (
@@ -636,7 +638,11 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
               value={closingBalance}
               onChange={(e) => { setClosingBalance(e.target.value); setFormError(null); }}
               disabled={blocked}
+              className="h-12 text-lg font-semibold tabular-nums"
             />
+            {closingBalance.trim() !== "" && !Number.isNaN(parseFloat(closingBalance.replace(",", "."))) && (
+              <DiffField label="Contado − esperado" value={parseFloat(closingBalance.replace(",", ".")) - expectedCash} />
+            )}
             {formError ? (
               <p className="text-xs text-destructive">{formError}</p>
             ) : (
@@ -658,11 +664,12 @@ export function CloseCaixaModal({ open, onClose, onConfirm, caixa, isLoading }: 
             />
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button variant="outline" className="h-12" onClick={onClose} disabled={isLoading}>
             Cancelar
           </Button>
           <Button
+            className="h-12"
             onClick={handleConfirm}
             disabled={isLoading || blocked || checkingComandas}
           >

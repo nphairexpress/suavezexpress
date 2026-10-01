@@ -1,7 +1,8 @@
 // @ts-nocheck
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Badge, EmptyState } from "@design-system";
+import { ReportLoading, CHART_GRID, CHART_TICK, CHART_TOOLTIP } from "./ReportKit";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -68,11 +69,11 @@ export function EmailReportsTab() {
   }, [filtered]);
 
   const chartData = useMemo(() => [
-    { name: "Enviados", value: stats.sent, color: "hsl(217, 91%, 50%)" },
-    { name: "Entregues", value: stats.delivered, color: "hsl(142, 76%, 36%)" },
-    { name: "Abertos", value: stats.opened, color: "hsl(38, 92%, 50%)" },
-    { name: "Clicados", value: stats.clicked, color: "hsl(262, 83%, 58%)" },
-    { name: "Falharam", value: stats.failed, color: "hsl(0, 84%, 60%)" },
+    { name: "Enviados", value: stats.sent, color: "var(--np-text-secondary)" },
+    { name: "Entregues", value: stats.delivered, color: "var(--np-positive)" },
+    { name: "Abertos", value: stats.opened, color: "var(--np-accent)" },
+    { name: "Clicados", value: stats.clicked, color: "var(--np-amber-300)" },
+    { name: "Falharam", value: stats.failed, color: "var(--np-danger)" },
   ], [stats]);
 
   const typeOptions = useMemo(() => {
@@ -81,29 +82,26 @@ export function EmailReportsTab() {
   }, [emailLogs]);
 
   const statusBadge = (log: any) => {
-    if (log.clicked_at) return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100"><MousePointerClick className="h-3 w-3 mr-1" />Clicado</Badge>;
-    if (log.opened_at) return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100"><Eye className="h-3 w-3 mr-1" />Aberto</Badge>;
-    if (log.delivered_at) return <Badge className="bg-green-100 text-green-800 hover:bg-green-100"><CheckCircle2 className="h-3 w-3 mr-1" />Entregue</Badge>;
-    if (log.status === "sent") return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100"><Send className="h-3 w-3 mr-1" />Enviado</Badge>;
-    if (log.status === "bounced") return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Bounce</Badge>;
-    if (log.status === "complained") return <Badge variant="destructive"><AlertTriangle className="h-3 w-3 mr-1" />Spam</Badge>;
-    if (log.status === "failed") return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Falhou</Badge>;
-    return <Badge variant="secondary">{log.status}</Badge>;
+    const ic = "h-3 w-3 mr-1 inline-block align-[-2px]";
+    if (log.clicked_at) return <Badge tone="accent"><MousePointerClick className={ic} />Clicado</Badge>;
+    if (log.opened_at) return <Badge tone="accent"><Eye className={ic} />Aberto</Badge>;
+    if (log.delivered_at) return <Badge tone="positive"><CheckCircle2 className={ic} />Entregue</Badge>;
+    if (log.status === "sent") return <Badge tone="neutral"><Send className={ic} />Enviado</Badge>;
+    if (log.status === "bounced") return <Badge tone="danger"><XCircle className={ic} />Bounce</Badge>;
+    if (log.status === "complained") return <Badge tone="danger"><AlertTriangle className={ic} />Spam</Badge>;
+    if (log.status === "failed") return <Badge tone="danger"><XCircle className={ic} />Falhou</Badge>;
+    return <Badge tone="neutral">{log.status}</Badge>;
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <ReportLoading />;
   }
 
   return (
     <div className="space-y-6">
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {PERIOD_OPTIONS.map(opt => (
             <Button
               key={opt.days}
@@ -116,7 +114,7 @@ export function EmailReportsTab() {
           ))}
         </div>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="h-11 w-full sm:w-[200px]">
             <SelectValue placeholder="Tipo de e-mail" />
           </SelectTrigger>
           <SelectContent>
@@ -129,22 +127,22 @@ export function EmailReportsTab() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {[
-          { label: "Total", value: stats.total, icon: Mail, color: "text-primary" },
-          { label: "Enviados", value: stats.sent, icon: Send, color: "text-blue-600" },
-          { label: "Entregues", value: stats.delivered, icon: CheckCircle2, color: "text-green-600" },
-          { label: "Abertos", value: stats.opened, icon: Eye, color: "text-amber-600" },
-          { label: "Clicados", value: stats.clicked, icon: MousePointerClick, color: "text-purple-600" },
-          { label: "Falharam", value: stats.failed, icon: AlertTriangle, color: "text-destructive" },
+          { label: "Total", value: stats.total, icon: Mail, color: "var(--np-accent-text)" },
+          { label: "Enviados", value: stats.sent, icon: Send, color: "var(--np-text-secondary)" },
+          { label: "Entregues", value: stats.delivered, icon: CheckCircle2, color: "var(--np-positive-text)" },
+          { label: "Abertos", value: stats.opened, icon: Eye, color: "var(--np-accent-text)" },
+          { label: "Clicados", value: stats.clicked, icon: MousePointerClick, color: "var(--np-accent-text)" },
+          { label: "Falharam", value: stats.failed, icon: AlertTriangle, color: "var(--np-danger-text)" },
         ].map(item => (
           <Card key={item.label}>
             <CardContent className="p-4 text-center">
-              <item.icon className={`h-5 w-5 mx-auto mb-2 ${item.color}`} />
-              <p className="text-2xl font-bold">{item.value}</p>
+              <item.icon className="h-5 w-5 mx-auto mb-2" style={{ color: item.color }} />
+              <p className="np-num text-2xl text-foreground">{item.value}</p>
               <p className="text-xs text-muted-foreground">{item.label}</p>
               {stats.total > 0 && item.label !== "Total" && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs tabular-nums text-muted-foreground mt-1">
                   {((item.value / stats.total) * 100).toFixed(1)}%
                 </p>
               )}
@@ -156,17 +154,17 @@ export function EmailReportsTab() {
       {/* Funnel Chart */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Funil de E-mails</CardTitle>
+          <CardTitle className="np-display text-lg">Funil de E-mails</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[250px]">
             {stats.total > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                  <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                  <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
+                  <XAxis dataKey="name" tick={CHART_TICK} />
+                  <YAxis tick={CHART_TICK} />
+                  <Tooltip {...CHART_TOOLTIP} />
                   <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                     {chartData.map((entry, index) => (
                       <Cell key={index} fill={entry.color} />
@@ -186,14 +184,11 @@ export function EmailReportsTab() {
       {/* Email Log Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Histórico de E-mails ({filtered.length})</CardTitle>
+          <CardTitle className="np-display text-lg">Histórico de E-mails ({filtered.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Nenhum e-mail encontrado no período</p>
-            </div>
+            <EmptyState icon={Mail} title="Nenhum e-mail encontrado no período" />
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -210,11 +205,11 @@ export function EmailReportsTab() {
                 <TableBody>
                   {filtered.slice(0, 100).map((log: any) => (
                     <TableRow key={log.id}>
-                      <TableCell className="whitespace-nowrap text-sm">
+                      <TableCell className="whitespace-nowrap text-sm tabular-nums">
                         {format(new Date(log.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge tone="neutral">
                           {TYPE_LABELS[log.email_type] || log.email_type}
                         </Badge>
                       </TableCell>

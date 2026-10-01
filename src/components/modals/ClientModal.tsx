@@ -16,7 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@design-system";
+import { glassModal, modalTitle, tabsList, tabsTrigger, txtAccent, txtDanger, inset } from "@/components/clients/clientsUi";
 import { Client, ClientInput } from "@/hooks/useClients";
 import { useSalonPermissions } from "@/hooks/useSalonPermissions";
 import { useClientComandas } from "@/hooks/useComandas";
@@ -222,17 +223,17 @@ export function ClientModal({ open, onOpenChange, client, onSubmit, isLoading, i
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-5xl max-h-[95vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{client ? "Editar Cliente" : "Cadastre um novo cliente"}</DialogTitle>
+      <DialogContent className={`${glassModal} w-[calc(100%-1.5rem)] rounded-2xl sm:max-w-5xl max-h-[95vh] overflow-y-auto p-4 sm:p-6 grid-cols-[minmax(0,1fr)]`}>
+        <DialogHeader className="text-left">
+          <DialogTitle className={`${modalTitle} text-xl pr-8`}>{client ? "Editar Cliente" : "Cadastre um novo cliente"}</DialogTitle>
         </DialogHeader>
-        <Tabs defaultValue="cadastro" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="cadastro">Cadastro</TabsTrigger>
-            <TabsTrigger value="comandas" disabled={!client}>Comandas</TabsTrigger>
-            <TabsTrigger value="pacotes" disabled={!client}>Pacotes</TabsTrigger>
-            <TabsTrigger value="financeiro" disabled={!client}>Financeiro</TabsTrigger>
-            <TabsTrigger value="anamnese">Anamnese</TabsTrigger>
+        <Tabs defaultValue="cadastro" className="w-full min-w-0">
+          <TabsList className={tabsList}>
+            <TabsTrigger className={`${tabsTrigger} sm:flex-1`} value="cadastro">Cadastro</TabsTrigger>
+            <TabsTrigger className={`${tabsTrigger} sm:flex-1`} value="comandas" disabled={!client}>Comandas</TabsTrigger>
+            <TabsTrigger className={`${tabsTrigger} sm:flex-1`} value="pacotes" disabled={!client}>Pacotes</TabsTrigger>
+            <TabsTrigger className={`${tabsTrigger} sm:flex-1`} value="financeiro" disabled={!client}>Financeiro</TabsTrigger>
+            <TabsTrigger className={`${tabsTrigger} sm:flex-1`} value="anamnese">Anamnese</TabsTrigger>
           </TabsList>
           <form onSubmit={handleSubmit}>
             <ScrollArea className="h-[60vh] pr-4">
@@ -611,7 +612,7 @@ export function ClientModal({ open, onOpenChange, client, onSubmit, isLoading, i
               </TabsContent>
             </ScrollArea>
 
-            <DialogFooter className="mt-4 pt-4 border-t">
+            <DialogFooter className="mt-4 gap-2 border-t border-border pt-4">
               <Button 
                 type="button" 
                 variant="outline" 
@@ -691,27 +692,27 @@ function ClientComandasTab({ clientId }: ClientComandasTabProps) {
         const payments = comanda.payments || [];
 
         return (
-          <div key={comanda.id} className="border rounded-lg overflow-hidden">
+          <div key={comanda.id} className={`${inset} overflow-hidden`}>
             {/* Summary row */}
             <button
               type="button"
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left"
+              className="w-full min-h-[48px] flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-2 px-4 py-3 hover:bg-[var(--np-surface-inset-hover)] transition-colors text-left"
               onClick={() => setExpandedComanda(isExpanded ? null : comanda.id)}
             >
-              <span className="font-semibold text-primary whitespace-nowrap">{date}</span>
+              <span className={`font-semibold tabular-nums whitespace-nowrap ${txtAccent}`}>{date}</span>
               <span className="text-sm text-muted-foreground truncate">{profName}</span>
               <div className="flex-1 min-w-0 flex gap-1 flex-wrap">
                 {items.slice(0, 2).map((item: any) => (
-                  <Badge key={item.id} variant="outline" className="text-xs truncate max-w-[150px]">
-                    {item.description}
+                  <Badge key={item.id} className="max-w-[150px]">
+                    <span className="block truncate">{item.description}</span>
                   </Badge>
                 ))}
                 {items.length > 2 && (
-                  <Badge variant="secondary" className="text-xs">+{items.length - 2}</Badge>
+                  <Badge>+{items.length - 2}</Badge>
                 )}
               </div>
-              <span className="font-semibold whitespace-nowrap">{formatCurrency(comanda.total || 0)}</span>
-              <Badge variant={comanda.is_paid ? "default" : "secondary"} className="text-xs shrink-0">
+              <span className="font-semibold tabular-nums whitespace-nowrap text-foreground">{formatCurrency(comanda.total || 0)}</span>
+              <Badge tone={comanda.is_paid ? "positive" : "accent"} className="shrink-0">
                 {comanda.is_paid ? "Pago" : "Aberto"}
               </Badge>
               {isExpanded ? <ChevronUp className="h-4 w-4 shrink-0" /> : <ChevronDown className="h-4 w-4 shrink-0" />}
@@ -719,7 +720,7 @@ function ClientComandasTab({ clientId }: ClientComandasTabProps) {
 
             {/* Expanded details */}
             {isExpanded && (
-              <div className="border-t bg-muted/20 px-4 py-3 space-y-3">
+              <div className="border-t border-border bg-[var(--np-surface-inset)] px-4 py-3 space-y-3">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                   <div>
                     <span className="text-xs text-muted-foreground block">Comanda</span>
@@ -731,11 +732,11 @@ function ClientComandasTab({ clientId }: ClientComandasTabProps) {
                   </div>
                   <div>
                     <span className="text-xs text-muted-foreground block">Total</span>
-                    <span className="font-medium">{formatCurrency(comanda.total || 0)}</span>
+                    <span className="font-medium tabular-nums">{formatCurrency(comanda.total || 0)}</span>
                   </div>
                   <div>
                     <span className="text-xs text-muted-foreground block">Status</span>
-                    <Badge variant={comanda.is_paid ? "default" : "secondary"}>
+                    <Badge tone={comanda.is_paid ? "positive" : "accent"}>
                       {comanda.is_paid ? "Pago" : "Em aberto"}
                     </Badge>
                   </div>
@@ -744,7 +745,7 @@ function ClientComandasTab({ clientId }: ClientComandasTabProps) {
                 {/* Services/Items */}
                 <div>
                   <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Itens</span>
-                  <div className="mt-1 divide-y">
+                  <div className="mt-1 divide-y divide-border">
                     {items.map((item: any) => (
                       <div key={item.id} className="flex items-center justify-between py-1.5 text-sm">
                         <div className="flex-1">
@@ -755,9 +756,9 @@ function ClientComandasTab({ clientId }: ClientComandasTabProps) {
                         </div>
                         <div className="flex items-center gap-3">
                           {item.product_cost > 0 && (
-                            <span className="text-xs text-destructive">Prod: -{formatCurrency(item.product_cost)}</span>
+                            <span className={`text-xs tabular-nums ${txtDanger}`}>Prod: -{formatCurrency(item.product_cost)}</span>
                           )}
-                          <span className="font-medium">{formatCurrency(item.total_price || 0)}</span>
+                          <span className="font-medium tabular-nums">{formatCurrency(item.total_price || 0)}</span>
                         </div>
                       </div>
                     ))}
@@ -771,15 +772,15 @@ function ClientComandasTab({ clientId }: ClientComandasTabProps) {
                 {payments.length > 0 && (
                   <div>
                     <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pagamentos</span>
-                    <div className="mt-1 divide-y">
+                    <div className="mt-1 divide-y divide-border">
                       {payments.map((p: any) => (
                         <div key={p.id} className="flex items-center justify-between py-1.5 text-sm">
                           <span>{formatPaymentMethod(p.payment_method)}</span>
                           <div className="flex items-center gap-2">
                             {p.fee_amount > 0 && (
-                              <span className="text-xs text-destructive">Taxa: -{formatCurrency(p.fee_amount)}</span>
+                              <span className={`text-xs tabular-nums ${txtDanger}`}>Taxa: -{formatCurrency(p.fee_amount)}</span>
                             )}
-                            <span className="font-medium">{formatCurrency(Number(p.amount) || 0)}</span>
+                            <span className="font-medium tabular-nums">{formatCurrency(Number(p.amount) || 0)}</span>
                           </div>
                         </div>
                       ))}

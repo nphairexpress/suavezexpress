@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useState } from "react";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
+import { PageHeader, GlassCard, EmptyState, Skeleton } from "@design-system";
 import { useAuth } from "@/contexts/AuthContext";
 import { useClosureIssues } from "@/hooks/useClosureIssues";
 import { IssueCard } from "@/components/pendencias/IssueCard";
@@ -15,20 +16,30 @@ export default function Pendencias() {
 
   return (
     <AppLayoutNew>
-      <div className="container max-w-4xl mx-auto p-4 md:p-6">
-        <header className="mb-6">
-          <h1 className="text-2xl font-bold">⚠️ Pendências de Fechamento</h1>
-          <p className="text-slate-500 text-sm">
-            {openCount} aberta{openCount !== 1 ? "s" : ""}
-          </p>
-        </header>
+      <div className="max-w-4xl space-y-4 md:space-y-6">
+        <PageHeader
+          eyebrow="Fechamento"
+          title="Pendências de Fechamento"
+          description={
+            <span className="tabular-nums">
+              {openCount} aberta{openCount !== 1 ? "s" : ""}
+            </span>
+          }
+        />
 
         {isLoading && (
-          <div className="p-6 text-center text-slate-500">Carregando…</div>
+          <GlassCard aria-busy="true">
+            <span className="sr-only">Carregando…</span>
+            <Skeleton lines={3} />
+          </GlassCard>
         )}
 
         {error && (
-          <div className="p-4 mb-4 rounded border border-rose-200 bg-rose-50 text-rose-900 text-sm">
+          <div
+            role="alert"
+            className="rounded-xl border p-4 text-sm"
+            style={{ background: "var(--np-danger-soft)", borderColor: "var(--np-danger-border)", color: "var(--np-danger-text)" }}
+          >
             Erro ao carregar pendências: {String((error as any)?.message ?? error)}
           </div>
         )}
@@ -42,9 +53,9 @@ export default function Pendencias() {
             />
           ))}
           {!isLoading && !error && openCount === 0 && (
-            <div className="p-6 text-center text-slate-500 border rounded">
-              ✅ Nenhuma pendência aberta
-            </div>
+            <GlassCard>
+              <EmptyState icon="circle-check" title="Nenhuma pendência aberta" />
+            </GlassCard>
           )}
         </div>
 

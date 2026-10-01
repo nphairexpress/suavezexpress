@@ -247,15 +247,15 @@ export function ComandaServiceProducts({
         <div className="mt-3 space-y-2">
           {/* Show saved cost info when products don't match */}
           {savedProductCost > 0 && productUsages.length === 0 && (
-            <div className="p-2 rounded-md bg-amber-50 border border-amber-200 text-sm">
-              <span className="font-medium text-amber-800">Custo registrado: {formatCurrency(savedProductCost)}</span>
-              <p className="text-xs text-amber-600 mt-1">
+            <div className="p-2 rounded-md bg-[var(--np-accent-soft)] border border-[var(--np-accent-border)] text-sm">
+              <span className="font-medium text-[var(--np-accent-text)]">Custo registrado: {formatCurrency(savedProductCost)}</span>
+              <p className="text-xs text-[var(--np-accent-text)] mt-1">
                 Produtos foram lançados anteriormente mas o serviço não possui produtos configurados. Adicione os produtos manualmente abaixo.
               </p>
             </div>
           )}
           {savedProductCost > 0 && productUsages.length > 0 && Math.abs(totalProductCost - savedProductCost) > 0.01 && (
-            <div className="p-2 rounded-md bg-amber-50 border border-amber-200 text-xs text-amber-700">
+            <div className="p-2 rounded-md bg-[var(--np-accent-soft)] border border-[var(--np-accent-border)] text-xs text-[var(--np-accent-text)]">
               Custo registrado na comanda: {formatCurrency(savedProductCost)} • Custo calculado: {formatCurrency(totalProductCost)}
               {!disabled && " — Clique em Salvar para atualizar"}
             </div>
@@ -269,7 +269,7 @@ export function ComandaServiceProducts({
                 size="sm"
                 className={cn(
                   "gap-2",
-                  isSaved && "bg-green-600 hover:bg-green-700",
+                  isSaved && "bg-[var(--np-positive)] hover:brightness-95 text-[var(--np-black)]",
                   isDirty && "animate-pulse"
                 )}
                 onClick={saveProducts}
@@ -278,10 +278,10 @@ export function ComandaServiceProducts({
                 {isSaved ? "Salvo!" : "Salvar Produtos"}
               </Button>
               {isDirty && (
-                <span className="text-xs text-amber-600 font-medium">Alterações não salvas</span>
+                <span className="text-xs text-[var(--np-accent-text)] font-medium">Alterações não salvas</span>
               )}
               {isSaved && (
-                <span className="text-xs text-green-600 font-medium">Custo atualizado na comanda</span>
+                <span className="text-xs text-[var(--np-positive-text)] font-medium">Custo atualizado na comanda</span>
               )}
             </div>
           )}
@@ -350,7 +350,7 @@ export function ComandaServiceProducts({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-green-600 hover:text-green-700 hover:bg-green-100"
+                  className="h-7 w-7 text-[var(--np-positive-text)] hover:text-[var(--np-positive-text)] hover:bg-[var(--np-positive-soft)]"
                   disabled={disabled}
                   onClick={saveProducts}
                   title="Salvar produtos"
@@ -408,7 +408,7 @@ export function ComandaServiceProducts({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-100"
+                  className="h-8 w-8 text-[var(--np-positive-text)] hover:text-[var(--np-positive-text)] hover:bg-[var(--np-positive-soft)]"
                   onClick={handleAddProduct}
                   disabled={!newProductId}
                   title="Adicionar"

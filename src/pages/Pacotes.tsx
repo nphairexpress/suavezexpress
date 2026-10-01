@@ -9,6 +9,8 @@ import { usePackages, Package, PackageInput } from "@/hooks/usePackages";
 import { PackageModal } from "@/components/modals/PackageModal";
 import { DeleteConfirmModal } from "@/components/modals/DeleteConfirmModal";
 
+const GLASS = "rounded-2xl border-[color:var(--np-border-glass)] bg-[color:var(--np-surface-glass)] text-foreground shadow-[var(--np-shadow-glass)] backdrop-blur-xl";
+
 export default function Pacotes() {
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -50,16 +52,16 @@ export default function Pacotes() {
   return (
     <AppLayoutNew>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-wrap justify-between items-center gap-3">
           <p className="text-muted-foreground">Gerencie os pacotes de servicos do salao</p>
-          <Button className="gap-2" onClick={() => { setSelectedPackage(null); setModalOpen(true); }}>
+          <Button className="h-11 gap-2 font-semibold" onClick={() => { setSelectedPackage(null); setModalOpen(true); }}>
             <Plus className="h-4 w-4" />
             Novo Pacote
           </Button>
         </div>
 
         {packages.length === 0 ? (
-          <Card className="flex items-center justify-center py-12">
+          <Card className={`${GLASS} flex items-center justify-center py-12`}>
             <div className="text-center text-muted-foreground">
               <Gift className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Nenhum pacote cadastrado</p>
@@ -75,19 +77,19 @@ export default function Pacotes() {
               const totalServices = items.reduce((sum, i) => sum + i.quantity, 0);
 
               return (
-                <Card key={pkg.id} className={`hover:shadow-md transition-shadow ${!pkg.is_active ? "opacity-60" : ""}`}>
+                <Card key={pkg.id} className={`${GLASS} transition-transform hover:-translate-y-0.5 hover:shadow-[var(--np-shadow-lift)] ${!pkg.is_active ? "opacity-60" : ""}`}>
                   <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Gift className="h-4 w-4 text-primary" />
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <CardTitle className="np-display text-lg flex items-center gap-2">
+                          <Gift className="h-4 w-4 shrink-0 text-[color:var(--np-accent-text)]" />
                           {pkg.name}
                         </CardTitle>
                         {!pkg.is_active && <Badge variant="secondary" className="mt-1">Inativo</Badge>}
                       </div>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="icon" aria-label="Ações" className="h-11 w-11 shrink-0"><MoreHorizontal className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleEdit(pkg)}>Editar</DropdownMenuItem>
@@ -108,7 +110,7 @@ export default function Pacotes() {
                           <span className="text-muted-foreground">
                             {item.quantity}x {item.service?.name || "Servico"}
                           </span>
-                          <span className="text-muted-foreground">
+                          <span className="text-muted-foreground tabular-nums">
                             {formatCurrency(Number(item.unit_price) * item.quantity)}
                           </span>
                         </div>
@@ -116,14 +118,14 @@ export default function Pacotes() {
                     </div>
 
                     {/* Pricing footer */}
-                    <div className="border-t pt-3 space-y-1">
+                    <div className="border-t border-[color:var(--np-divider)] pt-3 space-y-1">
                       {Number(pkg.original_price) > 0 && Number(pkg.original_price) !== Number(pkg.price) && (
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground flex items-center gap-1">
                             <Tag className="h-3 w-3" />
                             Preco original
                           </span>
-                          <span className="line-through text-muted-foreground">
+                          <span className="line-through text-muted-foreground tabular-nums">
                             {formatCurrency(Number(pkg.original_price))}
                           </span>
                         </div>
@@ -133,13 +135,13 @@ export default function Pacotes() {
                           <DollarSign className="h-4 w-4" />
                           Preco do pacote
                         </span>
-                        <span className="font-bold text-primary">
+                        <span className="np-num text-xl tabular-nums text-[color:var(--np-accent-text)]">
                           {formatCurrency(Number(pkg.price))}
                         </span>
                       </div>
                       {Number(pkg.discount_percent) > 0 && (
                         <div className="flex justify-end">
-                          <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+                          <Badge variant="default" className="border-transparent bg-[color:var(--np-positive-soft)] text-[color:var(--np-positive-text)] hover:bg-[color:var(--np-positive-soft)]">
                             <Percent className="h-3 w-3 mr-1" />
                             {Number(pkg.discount_percent).toFixed(1)}% de desconto
                           </Badge>
