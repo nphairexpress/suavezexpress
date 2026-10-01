@@ -1,0 +1,5 @@
+/* Tokens do design system NP Express. Importado por src/index.css: só declara variáveis --np-*, não muda o visual do app. */
+@import './colors.css';
+@import './typography.css';
+@import './spacing.css';
+@import './effects.css';

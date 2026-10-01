@@ -1,0 +1,42 @@
+*,*::before,*::after{box-sizing:border-box}
+html{background-color:var(--bg-app)}
+.np-theme-anim,.np-theme-anim *{transition:background-color var(--dur-slow) var(--ease-out),color var(--dur-slow) var(--ease-out),border-color var(--dur-slow) var(--ease-out)!important}
+.np-app{font-family:var(--font-body);color:var(--text-primary);font-size:var(--fs-sm);line-height:var(--lh-body);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+.np-display{font-family:var(--font-display);font-weight:var(--fw-extrabold);letter-spacing:var(--ls-display);line-height:var(--lh-tight)}
+.np-num{font-family:var(--font-display);font-weight:var(--fw-extrabold);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.np-caps{font-size:var(--fs-2xs);font-weight:var(--fw-semibold);letter-spacing:var(--ls-caps);text-transform:uppercase;color:var(--text-tertiary)}
+.np-label{font-size:var(--fs-sm);color:var(--text-secondary)}
+.np-caption{font-size:var(--fs-xs);color:var(--text-tertiary)}
+a{color:var(--accent-text);text-decoration:none}a:hover{color:var(--accent-hover);text-decoration:underline}
+/* Fundos */
+:root,[data-theme="dark"]{
+--bg-photo:url('../../assets/bg-graphite.jpg'); /* @kind other */
+--bg-photo-portrait:url('../../assets/bg-waves-portrait.jpg'); /* @kind other */
+--bg-glow-1:rgba(240,144,0,.20);--bg-glow-2:rgba(240,144,0,.10);--bg-scrim-top:rgba(23,18,15,.35);--bg-scrim-bottom:rgba(23,18,15,.75);--bg-scrim-portrait-top:rgba(23,18,15,.55);--bg-scrim-portrait-bottom:rgba(23,18,15,.85);
+}
+[data-theme="light"]{
+--bg-photo:url('../../assets/bg-light.jpg'); /* @kind other */
+--bg-photo-portrait:url('../../assets/bg-light.jpg'); /* @kind other */
+--bg-glow-1:rgba(240,144,0,.14);--bg-glow-2:rgba(240,144,0,.06);--bg-scrim-top:rgba(247,247,248,.7);--bg-scrim-bottom:rgba(226,226,230,.75);--bg-scrim-portrait-top:rgba(247,247,248,.72);--bg-scrim-portrait-bottom:rgba(226,226,230,.8);
+}
+.np-bg{background-color:var(--bg-app);background-image:radial-gradient(900px 600px at 85% -10%,var(--bg-glow-1),transparent 60%),radial-gradient(700px 500px at 0% 110%,var(--bg-glow-2),transparent 60%),linear-gradient(180deg,var(--bg-scrim-top),var(--bg-scrim-bottom)),var(--bg-photo);background-size:cover;background-position:center;background-attachment:fixed;transition:background-color var(--dur-slow)}
+.np-bg--waves{background-image:radial-gradient(600px 500px at 90% 0%,var(--bg-glow-1),transparent 60%),linear-gradient(180deg,var(--bg-scrim-portrait-top),var(--bg-scrim-portrait-bottom)),var(--bg-photo-portrait)}
+.np-bg--light{background-color:var(--bg-app);background-image:radial-gradient(800px 600px at 90% 0%,var(--bg-glow-1),transparent 60%),linear-gradient(160deg,var(--bg-scrim-top),var(--bg-scrim-bottom)),var(--bg-photo);background-size:cover;background-position:center}
+/* Logo: só em fundo escuro — no tema claro ganha uma cápsula escura */
+.np-logo-chip{display:inline-flex;max-width:100%;border-radius:10px;transition:background var(--dur-slow),padding var(--dur-slow)}
+[data-theme="light"] .np-logo-chip{background:var(--logo-chip-bg);padding:var(--logo-chip-pad,6px 10px);box-shadow:var(--shadow-sm)}
+[data-theme="light"] [data-theme="dark"] .np-logo-chip{background:transparent;padding:0;box-shadow:none}
+/* Vidro */
+.glass-card{background:var(--surface-glass);-webkit-backdrop-filter:blur(var(--blur-glass)) saturate(140%);backdrop-filter:blur(var(--blur-glass)) saturate(140%);border:1px solid var(--border-glass);border-radius:var(--radius-lg);box-shadow:var(--shadow-glass),var(--inner-highlight);transition:transform var(--dur-base) var(--ease-out),box-shadow var(--dur-base) var(--ease-out),background var(--dur-base)}
+.glass-card--lift:hover{transform:translateY(var(--lift-hover));box-shadow:var(--shadow-lift),var(--inner-highlight)}
+.glass-card--xl{border-radius:var(--radius-xl)}
+.glass-card--strong{background:var(--surface-glass-strong)}
+.glass-card--accent{background:linear-gradient(135deg,var(--accent-hover),var(--accent-press));border-color:var(--glass-btn-border);color:var(--text-on-accent);box-shadow:var(--shadow-accent)}
+.glass-card--glow{box-shadow:var(--shadow-glass),var(--glow-accent),var(--inner-highlight)}
+@keyframes np-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
+@keyframes np-fade-up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes np-pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes np-ticket-in{0%{transform:scale(.85);opacity:0;filter:blur(8px)}100%{transform:none;opacity:1;filter:none}}
+@keyframes np-spin{to{transform:rotate(360deg)}}
+.np-fade-up{animation:np-fade-up var(--dur-slow) var(--ease-out) both}
+@media (prefers-reduced-motion:reduce){*{animation-duration:1ms!important;transition-duration:1ms!important}}

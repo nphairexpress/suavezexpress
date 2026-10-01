@@ -1,0 +1,42 @@
+/* Base do design system NP Express (vidro, fundos, tipografia utilitária, keyframes).
+   Portado de design-system-export/styles/base.css: variáveis com --np-, classes com .np-, sem seletor de elemento global. */
+.np-theme-anim,.np-theme-anim *{transition:background-color var(--np-dur-slow) var(--np-ease-out),color var(--np-dur-slow) var(--np-ease-out),border-color var(--np-dur-slow) var(--np-ease-out)!important}
+.np-app{box-sizing:border-box;font-family:var(--np-font-body);color:var(--np-text-primary);font-size:var(--np-fs-sm);line-height:var(--np-lh-body);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+.np-display{font-family:var(--np-font-display);font-weight:var(--np-fw-extrabold);letter-spacing:var(--np-ls-display);line-height:var(--np-lh-tight)}
+.np-num{font-family:var(--np-font-display);font-weight:var(--np-fw-extrabold);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.np-caps{font-size:var(--np-fs-2xs);font-weight:var(--np-fw-semibold);letter-spacing:var(--np-ls-caps);text-transform:uppercase;color:var(--np-text-tertiary)}
+.np-label{font-size:var(--np-fs-sm);color:var(--np-text-secondary)}
+.np-caption{font-size:var(--np-fs-xs);color:var(--np-text-tertiary)}
+.np-app a{color:var(--np-accent-text);text-decoration:none}.np-app a:hover{color:var(--np-accent-hover);text-decoration:underline}
+/* Fundos */
+:root,[data-theme="dark"]{
+--np-bg-photo:url('../assets/bg-graphite.jpg'); 
+--np-bg-photo-portrait:url('../assets/bg-waves-portrait.jpg'); 
+--np-bg-glow-1:rgba(240,144,0,.20);--np-bg-glow-2:rgba(240,144,0,.10);--np-bg-scrim-top:rgba(23,18,15,.35);--np-bg-scrim-bottom:rgba(23,18,15,.75);--np-bg-scrim-portrait-top:rgba(23,18,15,.55);--np-bg-scrim-portrait-bottom:rgba(23,18,15,.85);
+}
+[data-theme="light"]{
+--np-bg-photo:url('../assets/bg-light.jpg'); 
+--np-bg-photo-portrait:url('../assets/bg-light.jpg'); 
+--np-bg-glow-1:rgba(240,144,0,.14);--np-bg-glow-2:rgba(240,144,0,.06);--np-bg-scrim-top:rgba(247,247,248,.7);--np-bg-scrim-bottom:rgba(226,226,230,.75);--np-bg-scrim-portrait-top:rgba(247,247,248,.72);--np-bg-scrim-portrait-bottom:rgba(226,226,230,.8);
+}
+.np-bg{background-color:var(--np-bg-app);background-image:radial-gradient(900px 600px at 85% -10%,var(--np-bg-glow-1),transparent 60%),radial-gradient(700px 500px at 0% 110%,var(--np-bg-glow-2),transparent 60%),linear-gradient(180deg,var(--np-bg-scrim-top),var(--np-bg-scrim-bottom)),var(--np-bg-photo);background-size:cover;background-position:center;background-attachment:fixed;transition:background-color var(--np-dur-slow)}
+.np-bg--waves{background-image:radial-gradient(600px 500px at 90% 0%,var(--np-bg-glow-1),transparent 60%),linear-gradient(180deg,var(--np-bg-scrim-portrait-top),var(--np-bg-scrim-portrait-bottom)),var(--np-bg-photo-portrait)}
+.np-bg--light{background-color:var(--np-bg-app);background-image:radial-gradient(800px 600px at 90% 0%,var(--np-bg-glow-1),transparent 60%),linear-gradient(160deg,var(--np-bg-scrim-top),var(--np-bg-scrim-bottom)),var(--np-bg-photo);background-size:cover;background-position:center}
+/* Logo: só em fundo escuro — no tema claro ganha uma cápsula escura */
+.np-logo-chip{display:inline-flex;max-width:100%;border-radius:10px;transition:background var(--np-dur-slow),padding var(--np-dur-slow)}
+[data-theme="light"] .np-logo-chip{background:var(--np-logo-chip-bg);padding:var(--np-logo-chip-pad,6px 10px);box-shadow:var(--np-shadow-sm)}
+[data-theme="light"] [data-theme="dark"] .np-logo-chip{background:transparent;padding:0;box-shadow:none}
+/* Vidro */
+.np-glass-card{background:var(--np-surface-glass);-webkit-backdrop-filter:blur(var(--np-blur-glass)) saturate(140%);backdrop-filter:blur(var(--np-blur-glass)) saturate(140%);border:1px solid var(--np-border-glass);border-radius:var(--np-radius-lg);box-shadow:var(--np-shadow-glass),var(--np-inner-highlight);transition:transform var(--np-dur-base) var(--np-ease-out),box-shadow var(--np-dur-base) var(--np-ease-out),background var(--np-dur-base)}
+.np-glass-card--lift:hover{transform:translateY(var(--np-lift-hover));box-shadow:var(--np-shadow-lift),var(--np-inner-highlight)}
+.np-glass-card--xl{border-radius:var(--np-radius-xl)}
+.np-glass-card--strong{background:var(--np-surface-glass-strong)}
+.np-glass-card--accent{background:linear-gradient(135deg,var(--np-accent-hover),var(--np-accent-press));border-color:var(--np-glass-btn-border);color:var(--np-text-on-accent);box-shadow:var(--np-shadow-accent)}
+.np-glass-card--glow{box-shadow:var(--np-shadow-glass),var(--np-glow-accent),var(--np-inner-highlight)}
+@keyframes np-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
+@keyframes np-fade-up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes np-pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes np-ticket-in{0%{transform:scale(.85);opacity:0;filter:blur(8px)}100%{transform:none;opacity:1;filter:none}}
+@keyframes np-spin{to{transform:rotate(360deg)}}
+.np-fade-up{animation:np-fade-up var(--np-dur-slow) var(--np-ease-out) both}
+@media (prefers-reduced-motion:reduce){.np-app,.np-app *{animation-duration:1ms!important;transition-duration:1ms!important}}

@@ -1,0 +1,72 @@
+/* Gerado a partir de design-system-export/tokens (Claude Design) em 30/09/2026.
+   Regra do projeto: TODA variável do design system começa com --np- (evita colisão com o tema shadcn/Tailwind).
+   Só :root e [data-theme] declaram variáveis aqui; nenhum seletor global de elemento. */
+:root{
+/* Marca */
+--np-black:#17120F;--np-black-deep:#0D0A08;--np-ink:#17120F;
+--np-amber-300:#FFB733;--np-amber-400:#F7A100;--np-amber-500:#F09000;--np-amber-600:#D67F00;--np-amber-ink:#9A5A00;
+--np-white:#FFFFFF;
+/* Neutros grafite (fundo escuro) */
+--np-graphite-900:#0D0A08;--np-graphite-800:#17120F;--np-graphite-700:#221C18;--np-graphite-600:#2E2723;--np-graphite-500:#453D38;
+/* Neutros claros (tema recepção) */
+--np-mist-50:#F7F7F8;--np-mist-100:#EEEEF0;--np-mist-200:#E2E2E6;--np-mist-300:#CDCDD3;
+/* Semânticas */
+--np-green-500:#22C55E;--np-green-400:#4ADE80;--np-green-700:#15803D;
+--np-red-500:#EF4444;--np-red-400:#F87171;--np-red-700:#B91C1C;
+/* Branco por opacidade (hierarquia no vidro) */
+--np-white-100:rgba(255,255,255,1);--np-white-80:rgba(255,255,255,.8);--np-white-60:rgba(255,255,255,.6);--np-white-40:rgba(255,255,255,.4);--np-white-20:rgba(255,255,255,.2);--np-white-10:rgba(255,255,255,.1);--np-white-06:rgba(255,255,255,.06);--np-white-04:rgba(255,255,255,.04);
+}
+/* ===== Semânticos — tema escuro (padrão). Troca só por [data-theme] no elemento raiz ===== */
+:root,[data-theme="dark"]{
+--np-bg-app:var(--np-black);
+--np-text-primary:var(--np-white-100);--np-text-secondary:var(--np-white-60);--np-text-tertiary:rgba(255,255,255,.5);
+--np-text-on-accent:var(--np-black);--np-text-on-accent-2:rgba(23,18,15,.72);--np-on-accent-overlay:rgba(23,18,15,.14);
+--np-text-on-danger:#FFFFFF;--np-danger-solid:#DC2626;--np-danger-solid-hover:var(--np-red-700);
+--np-surface-ink:var(--np-black);--np-surface-ink-hover:var(--np-graphite-600);--np-text-on-ink:#FFFFFF;
+--np-accent:var(--np-amber-500);--np-accent-hover:var(--np-amber-400);--np-accent-press:var(--np-amber-600);--np-accent-text:var(--np-amber-400);
+--np-accent-soft:rgba(240,144,0,.14);--np-accent-glow:rgba(240,144,0,.35);--np-accent-border:rgba(240,144,0,.5);--np-accent-glow-soft:rgba(240,144,0,.14);
+--np-accent-text-glow:0 0 40px rgba(240,144,0,.45); 
+--np-positive:var(--np-green-500);--np-positive-text:var(--np-green-400);--np-positive-soft:rgba(34,197,94,.16);--np-positive-border:rgba(34,197,94,.32);
+--np-danger:var(--np-red-500);--np-danger-text:var(--np-red-400);--np-danger-soft:rgba(239,68,68,.16);--np-danger-border:rgba(239,68,68,.48);--np-danger-glow:rgba(239,68,68,.18);
+--np-surface-glass:rgba(30,25,22,.55);--np-surface-glass-strong:rgba(23,18,15,.78);--np-surface-glass-hover:rgba(40,34,30,.62);
+--np-surface-inset:rgba(255,255,255,.06);--np-surface-inset-hover:rgba(255,255,255,.1);
+--np-border-glass:rgba(255,255,255,.1);--np-border-strong:rgba(255,255,255,.18);--np-divider:rgba(255,255,255,.08);
+--np-focus-ring:rgba(247,161,0,.6);
+--np-accent-display:var(--np-amber-400);--np-logo-chip-bg:var(--np-black);
+--np-sidebar-from:rgba(60,54,50,.55);--np-sidebar-to:rgba(23,18,15,.62);--np-sidebar-text:var(--np-text-primary);--np-sidebar-item:rgba(255,255,255,.8);--np-sidebar-label:rgba(255,255,255,.5);--np-sidebar-hover:rgba(255,255,255,.07);--np-sidebar-open:rgba(255,255,255,.1);--np-sidebar-sep:rgba(255,255,255,.18);
+--np-tabs-bg:rgba(23,18,15,.72);--np-tabs-text:rgba(255,255,255,.72);--np-tabs-text-hover:#FFFFFF;
+--np-chip-bg:#FFFFFF;--np-chip-text:var(--np-black);
+--np-avatar-from:var(--np-graphite-500);--np-avatar-to:var(--np-graphite-700);--np-avatar-text:#FFFFFF;--np-avatar-ring:rgba(255,255,255,.14);
+--np-ring-bg:rgba(23,18,15,.6);
+--np-hero-from:var(--np-graphite-600);--np-hero-to:var(--np-black);
+--np-chart-bar-from:rgba(247,161,0,.45);--np-chart-bar-to:rgba(240,144,0,.18);--np-chart-area:rgba(240,144,0,.35);
+--np-glass-btn-bg:rgba(255,255,255,.14);--np-glass-btn-bg-hover:rgba(255,255,255,.24);--np-glass-btn-border:rgba(255,255,255,.22);
+--np-text-on-photo-2:rgba(255,255,255,.8);--np-photo-scrim-top:rgba(23,18,15,.25);--np-photo-scrim-bottom:rgba(23,18,15,.85);--np-photo-glow:rgba(240,144,0,.35);
+--np-phone-bezel:var(--np-black-deep);--np-phone-edge:rgba(255,255,255,.14);
+--np-receipt-bg:#FFFFFF;--np-receipt-ink:var(--np-ink);--np-receipt-ink-2:rgba(23,18,15,.72);--np-receipt-rule:rgba(23,18,15,.3);--np-receipt-accent:var(--np-amber-ink);
+}
+/* ===== Tema claro (variante MindBridge) ===== */
+[data-theme="light"]{
+--np-bg-app:var(--np-mist-100);
+--np-text-primary:var(--np-ink);--np-text-secondary:rgba(23,18,15,.68);--np-text-tertiary:rgba(23,18,15,.6);
+--np-accent-text:var(--np-amber-ink);--np-accent-display:#B86A00;--np-accent-soft:rgba(240,144,0,.16);--np-accent-glow:rgba(240,144,0,.25);--np-accent-border:rgba(214,127,0,.55);--np-accent-glow-soft:rgba(240,144,0,.12);
+--np-accent-text-glow:0 0 0 transparent; 
+--np-positive-text:var(--np-green-700);--np-positive-soft:rgba(34,197,94,.14);--np-positive-border:rgba(21,128,61,.3);
+--np-danger-text:var(--np-red-700);--np-danger-soft:rgba(239,68,68,.12);--np-danger-border:rgba(185,28,28,.4);--np-danger-glow:rgba(239,68,68,.14);
+--np-surface-glass:rgba(255,255,255,.62);--np-surface-glass-strong:rgba(255,255,255,.82);--np-surface-glass-hover:rgba(255,255,255,.74);
+--np-surface-inset:rgba(23,18,15,.05);--np-surface-inset-hover:rgba(23,18,15,.08);
+--np-border-glass:rgba(255,255,255,.85);--np-border-strong:rgba(23,18,15,.14);--np-divider:rgba(23,18,15,.08);
+--np-focus-ring:rgba(214,127,0,.7);
+--np-sidebar-from:rgba(255,255,255,.78);--np-sidebar-to:rgba(255,255,255,.58);--np-sidebar-item:rgba(23,18,15,.8);--np-sidebar-label:rgba(23,18,15,.6);--np-sidebar-hover:rgba(23,18,15,.05);--np-sidebar-open:rgba(23,18,15,.07);--np-sidebar-sep:rgba(23,18,15,.14);
+--np-tabs-bg:rgba(23,18,15,.88);
+--np-chip-bg:var(--np-black);--np-chip-text:#FFFFFF;
+--np-avatar-from:var(--np-mist-200);--np-avatar-to:var(--np-mist-300);--np-avatar-text:var(--np-ink);--np-avatar-ring:rgba(255,255,255,.95);
+--np-ring-bg:rgba(255,255,255,.9);
+--np-hero-from:var(--np-mist-50);--np-hero-to:var(--np-mist-200);
+--np-chart-bar-from:rgba(240,144,0,.5);--np-chart-bar-to:rgba(240,144,0,.2);--np-chart-area:rgba(240,144,0,.28);
+--np-phone-bezel:var(--np-black);--np-phone-edge:rgba(23,18,15,.2);
+}
+
+/* color-scheme só entra quando há data-theme (rota do design system), nunca no :root do app */
+[data-theme="dark"]{color-scheme:dark}
+[data-theme="light"]{color-scheme:light}

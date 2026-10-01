@@ -41,6 +41,8 @@ const ClubeAdmin = lazy(() => import("./pages/ClubeAdmin"));
 const Pendencias = lazy(() => import("@/pages/Pendencias"));
 const Fechamentos = lazy(() => import("@/pages/Fechamentos"));
 const ContasAPagar = lazy(() => import("@/pages/ContasAPagar"));
+// Vitrine do design system (redesign): fora do menu, sem gate nesta branch.
+const DesignSystemShowcase = lazy(() => import("@/pages/DesignSystemShowcase"));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 60_000, refetchOnWindowFocus: false } },
@@ -104,6 +106,14 @@ function AppRoutes() {
   // qualquer checagem de instalação — visitante anônimo não tem config no
   // navegador e NUNCA pode cair no instalador.
   const publicPathname = window.location.pathname;
+  // Vitrine do design system: só a biblioteca, sem dado do salão; responde antes das checagens.
+  if (publicPathname === "/design-system") {
+    return (
+      <Routes>
+        <Route path="/design-system" element={<DesignSystemShowcase />} />
+      </Routes>
+    );
+  }
   const isPublicPath =
     publicPathname === "/clube-escova" ||
     publicPathname === "/fila" ||

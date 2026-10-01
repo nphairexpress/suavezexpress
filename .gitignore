@@ -30,3 +30,6 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Dump cru do Claude Design (fonte da importação; fica só no disco)
+design-system-export/

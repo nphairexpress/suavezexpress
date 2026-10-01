@@ -1,0 +1,28 @@
+<!-- @dsCard group="Components" viewport="700x1100" name="Salão — domínio" subtitle="Fila, profissional, comanda, caixa, cupom, pendências" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script><script src="../../_dev/load-ds.js"></script><style>body{margin:0}</style></head>
+<body class="np-app np-bg" style="min-height:100vh"><div id="root" style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start"></div>
+<script type="text/babel">
+const { QueueTicketCard, ProfessionalCard, CheckoutCard, CashCard, Receipt, PendingCard, Button } = window.NPHairExpressDesignSystem_ba69cf;
+const items=[{name:'Escova modelada',pro:'Juliana',price:60},{name:'Hidratação',pro:'Juliana',price:45}];
+function App(){return <>
+<div style={{display:'flex',flexDirection:'column',gap:14}}>
+<QueueTicketCard ticket="A027" client="Mariana Souza" service="Escova" wait="12 min" position={1} status="chamada" onCall={()=>{}} onSkip={()=>{}} />
+<QueueTicketCard size="sm" ticket="A028" client="Paula Lima" service="Corte + escova" wait="4 min" position={2} />
+<ProfessionalCard name="Juliana Prado" role="Escovista" status="davez" turn={1} today={7} onAction={()=>{}} />
+<ProfessionalCard name="Carla Mendes" role="Cabeleireira" status="atendendo" ticket="A024" client="Renata · Escova" elapsed="18:42" today={5} turn={3} />
+<ProfessionalCard name="Bianca Rocha" role="Escovista" status="livre" today={4} turn={2} />
+</div>
+<div style={{display:'flex',flexDirection:'column',gap:14}}>
+<CheckoutCard number="#1042" client="Mariana Souza" ticket="A027" items={items} defaultReceived={100} />
+</div>
+<CashCard openedBy="Rafaela" openedAt="08:02" lines={[{label:'Dinheiro',expected:640,counted:628},{label:'Pix',expected:1820},{label:'Débito',expected:910}]} footer={<Button variant="danger" icon="triangle-alert" block>Registrar falta</Button>} />
+<div style={{display:'flex',justifyContent:'center'}}><Receipt number="#1042" date="30/09/2026 14:32" client="Mariana Souza" ticket="A027" items={items} method="Dinheiro" received={110} change={5} /></div>
+<PendingCard severity="alta" title="Falta de R$ 12,00 no caixa" description="Fechamento de 29/09 não conferiu no dinheiro." owner="Rafaela · recepção" when="Ontem, 19:40" value="− R$ 12,00" onAction={()=>{}} />
+<PendingCard severity="media" title="Comanda #1038 sem pagamento" description="Aberta às 16:10, profissional já liberada." when="Hoje, 16:10" onAction={()=>{}} />
+</>}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script></body></html>

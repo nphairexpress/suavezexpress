@@ -1,0 +1,9 @@
+/* Gerado a partir de design-system-export/tokens (Claude Design) em 30/09/2026.
+   Regra do projeto: TODA variável do design system começa com --np- (evita colisão com o tema shadcn/Tailwind).
+   Só :root e [data-theme] declaram variáveis aqui; nenhum seletor global de elemento. */
+:root{
+--np-space-1:4px;--np-space-2:8px;--np-space-3:12px;--np-space-4:16px;--np-space-5:20px;--np-space-6:24px;--np-space-8:32px;--np-space-10:40px;--np-space-12:48px;--np-space-16:64px;
+--np-radius-sm:8px;--np-radius-md:12px;--np-radius-lg:16px;--np-radius-xl:24px;--np-radius-2xl:32px;--np-radius-pill:999px;
+--np-card-padding:24px;--np-sidebar-width:280px;--np-sidebar-collapsed:84px;--np-sidebar-gap:16px;
+--np-touch-min:44px;--np-touch-terminal:48px;
+}

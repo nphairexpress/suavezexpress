@@ -1,0 +1,18 @@
+<!-- @dsCard group="Components" viewport="700x420" name="Superfícies — vidro, métricas, gráficos" subtitle="GlassCard, StatCard, LineChart, BarChart, CalendarCard, TaskList" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script><script src="../../_dev/load-ds.js"></script><style>body{margin:0}</style></head>
+<body class="np-app np-bg" style="min-height:100vh"><div id="root" style="padding:20px;display:grid;grid-template-columns:1.5fr 1fr;gap:14px"></div>
+<script type="text/babel">
+const { GlassCard, StatCard, LineChart, BarChart, CalendarCard } = window.NPHairExpressDesignSystem_ba69cf;
+function App(){return <>
+<div style={{display:'flex',flexDirection:'column',gap:14}}>
+<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}><StatCard title="Faturamento hoje" value="R$ 4.280" change="12,5" icon="dollar-sign" /><StatCard title="Atendimentos" value="38" change="3,1" trend="down" icon="scissors" /></div>
+<GlassCard title="Faturamento da semana" subtitle="Setembro 2026"><LineChart height={150} data={[1200,1800,1500,2600,2100,3400,2800]} labels={['Seg','Ter','Qua','Qui','Sex','Sáb','Dom']} highlight={5} format={v=>'R$ '+v.toLocaleString('pt-BR')} /></GlassCard>
+</div>
+<GlassCard padding={18}><CalendarCard compact year={2026} month={8} selected={30} marks={{12:'positive',19:'positive',22:'danger'}} /></GlassCard>
+</>}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script></body></html>

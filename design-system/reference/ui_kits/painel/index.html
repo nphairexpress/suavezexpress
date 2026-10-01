@@ -1,0 +1,393 @@
+<!-- @dsCard group="Painel desktop" viewport="1440x900" name="Painel do dono" subtitle="Visão geral, Fila, Comanda, Caixa, Clientes, Clube, Pendências, Comissões, Relatórios, Permissões" -->
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Sua Vez Express — Painel</title><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script><script src="../../_dev/load-ds.js"></script><script>window.NPHairExpressDesignSystem_ba69cf.ThemeToggle.init()</script>
+<script src="../shared/data.js"></script>
+<style>body{margin:0;height:100vh;overflow:hidden}@media(max-width:1200px){[data-split]{grid-template-columns:minmax(0,1fr)!important}}</style></head>
+<body class="np-app np-bg"><div id="root" style="height:100%"></div>
+<script type="text/babel" data-origem="screens-overview.jsx">
+const DS = window.NPHairExpressDesignSystem_ba69cf;
+const D = window.NPData;
+
+function OverviewScreen({ go }) {
+  const { TopBar, NavTabs, StatCard, GlassCard, LineChart, CalendarCard, TaskList, ProfessionalCard, Button, QueueTicketCard, Badge, Icon } = DS;
+  const [p, setP] = React.useState('hoje');
+  return (
+    <div data-split style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 320px', gap: 16 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0 }}>
+        <TopBar themeToggle title="Bom dia, Nilton" subtitle="Terça, 30 de setembro · salão aberto desde 08:00">
+          <Button icon="plus" onClick={() => go('comanda')}>Nova comanda</Button>
+        </TopBar>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span className="np-caps">Indicadores do dia</span>
+          <NavTabs value={p} onChange={setP} tabs={[{ id: 'hoje', label: 'Hoje' }, { id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mês' }]} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(170px,1fr))', gap: 16 }}>
+          <StatCard title="Faturamento" value={p === 'hoje' ? 'R$ 4.280' : p === 'semana' ? 'R$ 16.100' : 'R$ 61.940'} change="12,5" icon="dollar-sign" />
+          <StatCard title="Atendimentos" value={p === 'hoje' ? '38' : p === 'semana' ? '214' : '862'} change="8,2" icon="scissors" />
+          <StatCard title="Ticket médio" value="R$ 112,60" change="2,4" trend="down" icon="receipt" />
+          <StatCard title="Na fila agora" value="6 clientes" icon="ticket" accent />
+        </div>
+        <GlassCard title="Faturamento da semana" subtitle="Valores fechados no caixa" action={<Badge tone="positive" dot>Sábado foi o melhor dia</Badge>} lift>
+          <LineChart height={190} data={D.semana.slice(0, 6)} labels={D.diasSemana.slice(0, 6)} highlight={5} format={(v) => D.brl(v)} />
+        </GlassCard>
+        <div data-split style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.3fr) minmax(0,1fr)', gap: 16 }}>
+          <GlassCard title="Metas de hoje" subtitle="Atualiza a cada comanda fechada" lift>
+            <TaskList items={[
+              { title: 'Escovas do Clube', meta: '12 de 20 previstas', durationLabel: 'Restante', duration: '8', progress: 60 },
+              { title: 'Faturamento do dia', meta: 'Meta R$ 5.000', durationLabel: 'Falta', duration: 'R$ 720', progress: 86 },
+              { title: 'Novos clientes', meta: 'Meta 5', durationLabel: 'Falta', duration: '3', progress: 40 },
+            ]} />
+          </GlassCard>
+          <div className="glass-card glass-card--accent glass-card--lift" style={{ padding: 24, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: 'var(--on-accent-overlay)', display: 'grid', placeItems: 'center' }}><Icon name="crown" size={24} /></div>
+              <span className="np-num" style={{ fontSize: 13 }}>+9 este mês</span>
+            </div>
+            <div>
+              <div className="np-num" style={{ fontSize: 40, lineHeight: 1 }}>86</div>
+              <div style={{ fontSize: 15, fontWeight: 600 }}>assinantes no Clube da Escova</div>
+              <div style={{ fontSize: 13, color: 'var(--text-on-accent-2)' }}>R$ 12.890,00 em recorrência</div>
+            </div>
+            <Button variant="dark" onClick={() => go('clube')} iconRight="arrow-right">Ver Clube</Button>
+          </div>
+        </div>
+      </div>
+      <aside className="glass-card glass-card--xl" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 18, alignSelf: 'start', position: 'sticky', top: 0 }}>
+        <CalendarCard compact year={2026} month={8} selected={30} marks={{ 6: 'positive', 13: 'positive', 20: 'positive', 27: 'positive', 29: 'danger' }} />
+        <div style={{ height: 1, background: 'var(--divider)' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontWeight: 600 }}>Próximas da fila</span>
+          <a href="#" onClick={(e) => { e.preventDefault(); go('fila'); }} style={{ fontSize: 12 }}>Ver fila</a>
+        </div>
+        {D.fila.slice(0, 4).map((f, i) => (
+          <div key={f.ticket} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 10, borderRadius: 14, background: i === 0 ? 'var(--accent-soft)' : 'var(--surface-inset)', border: '1px solid ' + (i === 0 ? 'var(--accent-border)' : 'transparent') }}>
+            <span className="np-num" style={{ fontSize: 20, fontWeight: 900, width: 64, color: i === 0 ? 'var(--accent-display)' : 'var(--text-primary)' }}>{f.ticket}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600 }}>{f.client}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{f.service} · {f.wait}</div>
+            </div>
+          </div>
+        ))}
+        <div style={{ height: 1, background: 'var(--divider)' }} />
+        <span style={{ fontWeight: 600 }}>Equipe agora</span>
+        {D.pros.map((p) => (
+          <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <DS.Avatar name={p.name} size={34} />
+            <span style={{ flex: 1, fontSize: 13 }}>{p.name.split(' ')[0]}</span>
+            <DS.StatusPill status={p.status} />
+          </div>
+        ))}
+      </aside>
+    </div>
+  );
+}
+
+function FilaScreen() {
+  const { TopBar, NavTabs, QueueTicketCard, ProfessionalCard, Button, GlassCard } = DS;
+  const [fila, setFila] = React.useState(D.fila);
+  const [tab, setTab] = React.useState('fila');
+  const callNext = () => setFila((f) => { const rest = f.slice(1); if (rest[0]) rest[0] = { ...rest[0], status: 'chamada' }; return rest; });
+  const cur = fila[0];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <TopBar themeToggle title="Fila de atendimento" subtitle={fila.length + ' clientes aguardando · espera média 8 min'} searchPlaceholder="Buscar senha ou cliente…">
+        <Button icon="ticket-plus" variant="secondary">Emitir senha</Button>
+        <Button icon="megaphone" onClick={callNext}>Chamar próxima</Button>
+      </TopBar>
+      <NavTabs variant="underline" value={tab} onChange={setTab} tabs={[{ id: 'fila', label: 'Aguardando', count: fila.length }, { id: 'at', label: 'Em atendimento', count: 2 }, { id: 'ok', label: 'Atendidas hoje', count: 31 }]} />
+      <div data-split style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 340px', gap: 16, alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {cur && <QueueTicketCard key={cur.ticket} {...cur} position={1} size="lg" status="chamada" onCall={() => {}} onSkip={callNext} />}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(220px,1fr))', gap: 16 }}>
+            {fila.slice(1).map((f, i) => <QueueTicketCard key={f.ticket} {...f} status="aguardando" position={i + 2} size="sm" />)}
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <span className="np-caps">Ordem da vez</span>
+          {D.pros.map((p) => <ProfessionalCard key={p.name} {...p} onAction={p.status === 'davez' ? callNext : undefined} />)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { OverviewScreen, FilaScreen });
+
+</script>
+<script type="text/babel" data-origem="screens-operacao.jsx">
+function ComandaScreen() {
+  const DS = window.NPHairExpressDesignSystem_ba69cf, D = window.NPData;
+  const { TopBar, CheckoutCard, Receipt, GlassCard, Button, Badge } = DS;
+  const [done, setDone] = React.useState(null);
+  const abertas = [{ n: '#1042', c: 'Mariana Souza', t: 'A027', v: 105, s: 'Pronta' }, { n: '#1041', c: 'Tatiane Ramos', t: 'A024', v: 60, s: 'Em atendimento' }, { n: '#1040', c: 'Sônia Prates', t: 'A025', v: 85, s: 'Em atendimento' }];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <TopBar themeToggle title="Comanda" subtitle="3 comandas abertas" searchPlaceholder="Buscar comanda ou senha…"><Button icon="plus">Nova comanda</Button></TopBar>
+      <div data-split style={{ display: 'grid', gridTemplateColumns: '300px minmax(0,1fr) 340px', gap: 16, alignItems: 'start' }}>
+        <GlassCard title="Abertas" padding={16}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {abertas.map((a, i) => (
+              <button key={a.n} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 12, borderRadius: 14, border: '1px solid ' + (i === 0 ? 'var(--accent-border)' : 'transparent'), background: i === 0 ? 'var(--accent-soft)' : 'var(--surface-inset)', color: 'inherit', fontFamily: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
+                <span className="np-num" style={{ fontSize: 18, fontWeight: 900, width: 56 }}>{a.t}</span>
+                <span style={{ flex: 1, minWidth: 0 }}><span style={{ display: 'block', fontSize: 13, fontWeight: 600 }}>{a.c}</span><span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{a.n} · {a.s}</span></span>
+                <span className="np-num" style={{ fontSize: 13 }}>{D.brl(a.v)}</span>
+              </button>
+            ))}
+          </div>
+        </GlassCard>
+        <CheckoutCard {...D.comanda} defaultReceived={110} onFinish={(r) => setDone(r)} />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          {done ? (
+            <div className="np-fade-up" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <Badge tone="positive" dot size="lg">Comanda finalizada</Badge>
+              <Receipt number={D.comanda.number} date="30/09/2026 14:32" client={D.comanda.client} ticket={D.comanda.ticket} items={D.comanda.items} method={{ dinheiro: 'Dinheiro', pix: 'Pix', debito: 'Débito', credito: 'Crédito', clube: 'Clube' }[done.method]} received={done.received} change={done.diff} />
+              <Button variant="secondary" icon="printer">Imprimir de novo</Button>
+            </div>
+          ) : (
+            <GlassCard style={{ width: '100%', textAlign: 'center' }}><div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>O comprovante aparece aqui ao finalizar.</div></GlassCard>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CaixaScreen() {
+  const DS = window.NPHairExpressDesignSystem_ba69cf, D = window.NPData;
+  const { TopBar, CashCard, GlassCard, Button, UploadButton, Badge, Input } = DS;
+  const movs = [['14:32', 'Comanda #1042 · Mariana', 'Dinheiro', 105], ['14:10', 'Comanda #1039 · Patrícia', 'Pix', 60], ['13:55', 'Sangria para cofre', 'Dinheiro', -300], ['13:20', 'Comanda #1037 · Cláudia', 'Débito', 145], ['12:48', 'Clube · mensalidade Renata', 'Crédito', 149.9]];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <TopBar themeToggle title="Caixa" subtitle="Recepção · aberto às 08:02 por Rafaela" searchPlaceholder={null}>
+        <Button variant="secondary" icon="arrow-down-to-line">Sangria</Button>
+        <Button icon="lock">Fechar caixa</Button>
+      </TopBar>
+      <div data-split style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 16, alignItems: 'start' }}>
+        <CashCard openedBy="Rafaela" openedAt="08:02" lines={D.caixa} footer={
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <Button variant="danger" icon="triangle-alert">Registrar falta</Button>
+            <UploadButton demo label="Anexar contagem" variant="secondary" />
+          </div>} />
+        <GlassCard title="Movimentações" subtitle="Hoje" action={<Badge>5 de 41</Badge>}>
+          <table className="np-table">
+            <tbody>
+              {movs.map((m, i) => (
+                <tr key={i}>
+                  <td className="np-num" style={{ fontSize: 12, color: 'var(--text-tertiary)', width: 54 }}>{m[0]}</td>
+                  <td>{m[1]}<div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{m[2]}</div></td>
+                  <td className="np-num" style={{ textAlign: 'right', fontSize: 14, color: m[3] < 0 ? 'var(--danger-text)' : 'var(--text-primary)' }}>{m[3] < 0 ? '− ' + D.brl(-m[3]) : D.brl(m[3])}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </GlassCard>
+      </div>
+    </div>
+  );
+}
+
+function PendenciasScreen() {
+  const DS = window.NPHairExpressDesignSystem_ba69cf, D = window.NPData;
+  const { TopBar, NavTabs, PendingCard } = DS;
+  const [f, setF] = React.useState('todas');
+  const [ok, setOk] = React.useState({});
+  const list = D.pendencias.filter((p) => f === 'todas' || p.severity === f);
+  const cnt = (s) => D.pendencias.filter((p) => p.severity === s).length;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <TopBar themeToggle title="Pendências de fechamento" subtitle="Resolva antes de fechar o dia" searchPlaceholder={null} />
+      <NavTabs value={f} onChange={setF} tabs={[{ id: 'todas', label: 'Todas', count: D.pendencias.length }, { id: 'alta', label: 'Alta', count: cnt('alta') }, { id: 'media', label: 'Média', count: cnt('media') }, { id: 'baixa', label: 'Baixa', count: cnt('baixa') }]} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 820 }}>
+        {list.map((p) => <PendingCard key={p.title} {...p} resolved={!!ok[p.title]} onAction={() => setOk({ ...ok, [p.title]: true })} />)}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { ComandaScreen, CaixaScreen, PendenciasScreen });
+
+</script>
+<script type="text/babel" data-origem="screens-gestao.jsx">
+function ClientesScreen() {
+  const DS = window.NPHairExpressDesignSystem_ba69cf, D = window.NPData;
+  const { TopBar, GlassCard, Badge, Avatar, Button, Icon } = DS;
+  const [q, setQ] = React.useState('');
+  const [sel, setSel] = React.useState(D.clientes[0]);
+  const list = D.clientes.filter((c) => c.name.toLowerCase().includes(q.toLowerCase()) || c.phone.includes(q));
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <TopBar themeToggle title="Clientes" subtitle="1.284 cadastradas" searchPlaceholder="Nome ou telefone…" onSearch={setQ}><Button icon="user-plus">Nova cliente</Button></TopBar>
+      <div data-split style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 320px', gap: 16, alignItems: 'start' }}>
+        <GlassCard padding={12}>
+          <table className="np-table">
+            <thead><tr><th>Cliente</th><th>Telefone</th><th>Última visita</th><th style={{ textAlign: 'right' }}>Visitas</th><th style={{ textAlign: 'right' }}>Gasto total</th></tr></thead>
+            <tbody>
+              {list.map((c) => (
+                <tr key={c.name} onClick={() => setSel(c)} style={{ cursor: 'pointer', background: sel.name === c.name ? 'var(--accent-soft)' : undefined }}>
+                  <td><div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Avatar name={c.name} size={32} /><span style={{ fontWeight: 500 }}>{c.name}</span>{c.club && <Badge tone="accent">Clube</Badge>}</div></td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{c.phone}</td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{c.last}</td>
+                  <td className="np-num" style={{ textAlign: 'right', fontSize: 13 }}>{c.visits}</td>
+                  <td className="np-num" style={{ textAlign: 'right', fontSize: 13 }}>{D.brl(c.spent)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </GlassCard>
+        <GlassCard radius="xl" padding={0} style={{ overflow: 'hidden' }}>
+          <div style={{ height: 96, background: 'radial-gradient(300px 140px at 80% 0%, var(--accent-border), transparent 70%), linear-gradient(135deg,var(--hero-from),var(--hero-to))' }} />
+          <div style={{ padding: '0 20px 20px', marginTop: -40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center' }}>
+            <Avatar name={sel.name} size={80} style={{ boxShadow: '0 0 0 4px var(--bg-app)' }} />
+            <div style={{ fontSize: 18, fontWeight: 600, marginTop: 6 }}>{sel.name}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{sel.phone}</div>
+            {sel.club ? <Badge tone="accent" dot>Clube da Escova · 3 de 4 no mês</Badge> : <Badge>Sem assinatura</Badge>}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', width: '100%', marginTop: 12, gap: 8 }}>
+              {[['Visitas', sel.visits], ['Gasto', D.brl(sel.spent).replace(',00', '')], ['Última', sel.last]].map(([l, v]) => <div key={l}><div className="np-num" style={{ fontSize: 16 }}>{v}</div><div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{l}</div></div>)}
+            </div>
+            <div style={{ display: 'flex', gap: 8, width: '100%', marginTop: 12 }}>
+              <Button block icon="ticket-plus">Emitir senha</Button>
+              <DS.IconButton icon="message-circle" label="WhatsApp" />
+            </div>
+          </div>
+        </GlassCard>
+      </div>
+    </div>
+  );
+}
+
+function ClubeScreen() {
+  const DS = window.NPHairExpressDesignSystem_ba69cf, D = window.NPData;
+  const { TopBar, StatCard, GlassCard, Badge, Button, Icon } = DS;
+  const planos = [{ n: 'Clube 4', d: '4 escovas por mês', p: 149.9, s: 52 }, { n: 'Clube 8', d: '8 escovas por mês', p: 269.9, s: 27, hot: true }, { n: 'Pacote 5', d: '5 escovas · validade 60 dias', p: 199.9, s: 7 }];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <TopBar themeToggle title="Clube da Escova e pacotes" subtitle="Assinaturas renovam todo dia 5" searchPlaceholder="Buscar assinante…"><Button icon="plus">Nova assinatura</Button></TopBar>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 16 }}>
+        <StatCard title="Assinantes ativas" value="86" change="11,7" icon="crown" />
+        <StatCard title="Recorrência mensal" value="R$ 12.890" change="9,4" icon="repeat" />
+        <StatCard title="Escovas usadas no mês" value="241 / 392" change="61" hint="de uso" icon="wind" />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 16 }}>
+        {planos.map((p) => (
+          <div key={p.n} className={'glass-card glass-card--lift' + (p.hot ? ' glass-card--glow' : '')} style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 12, borderColor: p.hot ? 'var(--accent-border)' : undefined }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span className="np-display" style={{ fontSize: 22 }}>{p.n}</span>{p.hot && <Badge tone="solid">Mais vendido</Badge>}</div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{p.d}</div>
+            <div><span className="np-num" style={{ fontSize: 30 }}>{D.brl(p.p)}</span><span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}> /mês</span></div>
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{p.s} clientes</div>
+            <Button variant={p.hot ? 'primary' : 'secondary'} block>Vender</Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ComissoesScreen() {
+  const DS = window.NPHairExpressDesignSystem_ba69cf, D = window.NPData;
+  const { TopBar, GlassCard, BarChart, Avatar, NavTabs, Button } = DS;
+  const rows = [['Juliana Prado', 142, 9840, 40], ['Carla Mendes', 118, 8910, 40], ['Débora Lins', 126, 7620, 35], ['Bianca Rocha', 97, 6150, 35]];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <TopBar themeToggle title="Comissões" subtitle="Período de 01 a 30 de setembro" searchPlaceholder={null}><Button variant="secondary" icon="download">Exportar</Button><Button icon="check-check">Fechar período</Button></TopBar>
+      <div data-split style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.4fr) minmax(0,1fr)', gap: 16, alignItems: 'start' }}>
+        <GlassCard padding={12}>
+          <table className="np-table">
+            <thead><tr><th>Profissional</th><th style={{ textAlign: 'right' }}>Atend.</th><th style={{ textAlign: 'right' }}>Produção</th><th style={{ textAlign: 'right' }}>%</th><th style={{ textAlign: 'right' }}>Comissão</th></tr></thead>
+            <tbody>{rows.map((r) => (
+              <tr key={r[0]}><td><div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Avatar name={r[0]} size={32} />{r[0]}</div></td><td className="np-num" style={{ textAlign: 'right', fontSize: 13 }}>{r[1]}</td><td className="np-num" style={{ textAlign: 'right', fontSize: 13 }}>{D.brl(r[2])}</td><td style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>{r[3]}%</td><td className="np-num" style={{ textAlign: 'right', fontSize: 15, color: 'var(--accent-text)' }}>{D.brl(r[2] * r[3] / 100)}</td></tr>
+            ))}</tbody>
+          </table>
+        </GlassCard>
+        <GlassCard title="Produção por profissional">
+          <BarChart height={220} highlight={0} data={rows.map((r) => ({ label: r[0].split(' ')[0], value: r[2] }))} format={(v) => D.brl(v).replace(',00', '')} />
+        </GlassCard>
+      </div>
+    </div>
+  );
+}
+
+function RelatoriosScreen() {
+  const DS = window.NPHairExpressDesignSystem_ba69cf, D = window.NPData;
+  const { TopBar, GlassCard, LineChart, BarChart, NavTabs, Button } = DS;
+  const [p, setP] = React.useState('mes');
+  const serv = [['Escova modelada', 412, 58], ['Escova Clube', 241, 34], ['Corte + escova', 96, 14], ['Hidratação', 88, 12]];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <TopBar themeToggle title="Relatórios" subtitle="Setembro 2026" searchPlaceholder={null}><NavTabs value={p} onChange={setP} tabs={[{ id: 'semana', label: 'Semana' }, { id: 'mes', label: 'Mês' }, { id: 'ano', label: 'Ano' }]} /><Button variant="secondary" icon="download">PDF</Button></TopBar>
+      <GlassCard title="Faturamento diário" subtitle="R$ 61.940,00 no mês · +12% sobre agosto">
+        <LineChart height={200} data={[1400, 1900, 1700, 2300, 2600, 3900, 1100, 1800, 2100, 2000, 2500, 2900, 4100, 900, 1700, 2200, 2400, 2600, 3100, 4300, 1000]} highlight={19} format={(v) => D.brl(v).replace(',00', '')} />
+      </GlassCard>
+      <div data-split style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 16 }}>
+        <GlassCard title="Atendimentos por dia da semana"><BarChart height={200} highlight={5} data={['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((l, i) => ({ label: l, value: [98, 121, 112, 140, 168, 223][i] }))} /></GlassCard>
+        <GlassCard title="Serviços mais vendidos">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {serv.map((s) => <div key={s[0]}><div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 6 }}><span>{s[0]}</span><span className="np-num">{s[1]}</span></div><div className="np-progress"><span style={{ width: s[2] + '%' }} /></div></div>)}
+          </div>
+        </GlassCard>
+      </div>
+    </div>
+  );
+}
+
+function PermissoesScreen() {
+  const DS = window.NPHairExpressDesignSystem_ba69cf;
+  const { TopBar, GlassCard, Checkbox, Button } = DS;
+  const perms = ['Ver faturamento', 'Abrir e fechar caixa', 'Dar desconto', 'Cancelar comanda', 'Editar comissões', 'Gerenciar usuários'];
+  const roles = ['Dono', 'Gerente', 'Recepção', 'Profissional'];
+  const init = { Dono: [1, 1, 1, 1, 1, 1], Gerente: [1, 1, 1, 1, 0, 0], 'Recepção': [0, 1, 1, 0, 0, 0], Profissional: [0, 0, 0, 0, 0, 0] };
+  const [m, setM] = React.useState(init);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <TopBar themeToggle title="Permissões" subtitle="O que cada perfil pode fazer" searchPlaceholder={null}><Button icon="save">Salvar alterações</Button></TopBar>
+      <GlassCard padding={12} style={{ maxWidth: 900 }}>
+        <table className="np-table">
+          <thead><tr><th>Permissão</th>{roles.map((r) => <th key={r} style={{ textAlign: 'center' }}>{r}</th>)}</tr></thead>
+          <tbody>{perms.map((p, i) => (
+            <tr key={p}><td style={{ fontWeight: 500 }}>{p}</td>{roles.map((r) => (
+              <td key={r} style={{ textAlign: 'center', padding: 4 }}><Checkbox aria-label={p + ' — ' + r} checked={!!m[r][i]} disabled={r === 'Dono'} onChange={() => setM({ ...m, [r]: m[r].map((v, j) => (j === i ? (v ? 0 : 1) : v)) })} /></td>
+            ))}</tr>
+          ))}</tbody>
+        </table>
+      </GlassCard>
+    </div>
+  );
+}
+
+Object.assign(window, { ClientesScreen, ClubeScreen, ComissoesScreen, RelatoriosScreen, PermissoesScreen });
+
+</script>
+<script type="text/babel">
+const NAV = [
+  { title: 'Menu', items: [
+    { id: 'visao', label: 'Visão geral', icon: 'layout-dashboard' },
+    { id: 'fila', label: 'Fila', icon: 'ticket', badge: 6 },
+    { id: 'vendas', label: 'Vendas', icon: 'shopping-bag', children: [{ id: 'comanda', label: 'Comanda', badge: 3 }, { id: 'caixa', label: 'Caixa' }, { id: 'pendencias', label: 'Pendências', badge: 4, badgeTone: 'danger' }] },
+    { id: 'clientes', label: 'Clientes', icon: 'users' },
+  ]},
+  { title: 'Gestão', items: [
+    { id: 'clube', label: 'Clube da Escova', icon: 'crown' },
+    { id: 'comissoes', label: 'Comissões', icon: 'percent' },
+    { id: 'relatorios', label: 'Relatórios', icon: 'chart-no-axes-column' },
+  ]},
+  { title: 'Geral', items: [{ id: 'permissoes', label: 'Permissões', icon: 'shield-check' }] },
+];
+const SCREENS = { visao: 'OverviewScreen', fila: 'FilaScreen', comanda: 'ComandaScreen', caixa: 'CaixaScreen', pendencias: 'PendenciasScreen', clientes: 'ClientesScreen', clube: 'ClubeScreen', comissoes: 'ComissoesScreen', relatorios: 'RelatoriosScreen', permissoes: 'PermissoesScreen' };
+function App() {
+  const { GlassSidebar } = window.NPHairExpressDesignSystem_ba69cf;
+  const [tela, setTela] = React.useState(() => localStorage.getItem('np-painel-tela') || 'visao');
+  const go = (t) => { if (t === 'sair') { location.href = '../login/index.html'; return; } setTela(t); localStorage.setItem('np-painel-tela', t); };
+  const Screen = window[SCREENS[tela]] || window.OverviewScreen;
+  return (
+    <div style={{ display: 'flex', gap: 16, height: '100%', padding: 16 }}>
+      <GlassSidebar logoSrc="../../../assets/logo-np-express-wordmark.png" user={window.NPData.user} notifications={3} themeToggle="collapsed" defaultCollapsed={window.innerWidth < 1100} activeId={tela} onSelect={go} sections={NAV} footer={[{ id: 'sair', label: 'Sair', icon: 'log-out' }]} style={{ flex: 'none' }} />
+      <main key={tela} className="np-fade-up" style={{ flex: 1, minWidth: 0, overflowY: 'auto', padding: '8px 8px 24px 0' }}>
+        <Screen go={go} />
+      </main>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script></body></html>

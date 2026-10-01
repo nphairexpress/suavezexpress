@@ -1,0 +1,4 @@
+/* Montserrat (títulos, números, senhas) + Poppins (texto), via Google Fonts.
+   Carregado só junto com a biblioteca (chunk da rota que usa o design system), nunca no index.css do app.
+   Trocar por arquivos locais quando o salão tiver os .woff2. */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Poppins:wght@400;500;600&display=swap');

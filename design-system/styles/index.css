@@ -1,0 +1,6 @@
+/* Estilos da biblioteca. Importado por design-system/index.ts, então só entra no CSS
+   das rotas que usam o design system. Os tokens (--np-*) já vêm do src/index.css. */
+@import './fonts.css';
+@import './base.css';
+@import './components.css';
+@import './acervo.css';

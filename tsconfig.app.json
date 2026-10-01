@@ -19,6 +19,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@design-system": [
+        "./design-system/index.ts"
+      ],
+      "@design-system/*": [
+        "./design-system/*"
       ]
     },
     "skipLibCheck": true,
@@ -30,6 +36,7 @@
     "useDefineForClassFields": true
   },
   "include": [
-    "src"
+    "src",
+    "design-system"
   ]
 }

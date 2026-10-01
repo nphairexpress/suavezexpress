@@ -1,0 +1,55 @@
+<!-- @dsCard group="TV da fila" viewport="1920x1080" name="TV da fila" subtitle="Senha chamada gigante + próximas; troca a cada 6 s" -->
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Sua Vez Express — TV</title><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script><script src="../../_dev/load-ds.js"></script><script>window.NPHairExpressDesignSystem_ba69cf.ThemeToggle.init()</script><script src="../shared/data.js"></script>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:var(--bg-app)}#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center;background-attachment:scroll!important}</style></head>
+<body class="np-app"><div id="stage" class="np-bg"></div>
+<script type="text/babel">
+const { Icon, Badge, ThemeToggle } = window.NPHairExpressDesignSystem_ba69cf;
+const Q = [
+  { t: 'A027', n: 'Mariana S.', s: 'Escova modelada', p: 'Juliana' },
+  { t: 'A028', n: 'Paula L.', s: 'Corte + escova', p: 'Bianca' },
+  { t: 'C014', n: 'Renata A.', s: 'Escova · Clube', p: 'Carla' },
+  { t: 'A029', n: 'Fernanda D.', s: 'Hidratação', p: 'Débora' },
+  { t: 'A030', n: 'Larissa G.', s: 'Escova', p: 'Juliana' },
+  { t: 'A031', n: 'Beatriz N.', s: 'Escova + babyliss', p: 'Bianca' },
+];
+function fit(){const s=Math.min(innerWidth/1920,innerHeight/1080);document.getElementById('stage').style.transform='translate(-50%,-50%) scale('+s+')';}
+addEventListener('resize',fit);fit();
+function TV(){
+  const [i,setI]=React.useState(()=>+(localStorage.getItem('np-tv-i')||0)%Q.length);
+  const [now,setNow]=React.useState(new Date());
+  React.useEffect(()=>{const a=setInterval(()=>setI(x=>{const n=(x+1)%Q.length;localStorage.setItem('np-tv-i',n);return n;}),6000);const b=setInterval(()=>setNow(new Date()),1000);return()=>{clearInterval(a);clearInterval(b);};},[]);
+  const cur=Q[i]; const next=[1,2,3,4].map(k=>Q[(i+k)%Q.length]); const prev=[1,2,3].map(k=>Q[(i-k+Q.length)%Q.length]);
+  return <div style={{position:'absolute',inset:0,padding:56,display:'grid',gridTemplateColumns:'1fr 560px',gridTemplateRows:'auto 1fr auto',gap:40}}>
+    <header style={{gridColumn:'1 / -1',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+      <span className="np-logo-chip" style={{"--logo-chip-pad":"14px 22px"}}><img src="../../../assets/logo-np-express-wordmark.png" alt="NP Hair Express" style={{height:56,display:"block"}}/></span>
+      <div style={{display:'flex',alignItems:'center',gap:28}}>
+        <Badge tone="positive" dot live size="lg" style={{height:56,fontSize:24,padding:'0 24px',gap:12}}>4 profissionais no salão</Badge>
+        <ThemeToggle size="lg" /><span className="np-num" style={{fontSize:56}}>{now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>
+      </div>
+    </header>
+    <section className="glass-card glass-card--strong" style={{borderRadius:40,padding:64,display:'flex',flexDirection:'column',justifyContent:'center',borderColor:'var(--accent-border)',boxShadow:'var(--shadow-modal), 0 0 120px var(--accent-glow)'}}>
+      <div style={{display:'flex',alignItems:'center',gap:18,fontSize:36,fontWeight:600,color:'var(--accent-display)'}}><Icon name="megaphone" size={40}/>Chamando agora</div>
+      <div key={cur.t} className="np-num" style={{fontSize:'var(--fs-ticket-tv)',fontWeight:900,lineHeight:.9,letterSpacing:'-.04em',color:'var(--accent-display)',textShadow:'var(--accent-text-glow)',margin:'24px 0',animation:'np-ticket-in 700ms cubic-bezier(.22,1,.36,1)'}}>{cur.t}</div>
+      <div style={{fontSize:64,fontWeight:600}}>{cur.n}</div>
+      <div style={{display:'flex',alignItems:'center',gap:16,fontSize:40,color:'var(--text-secondary)',marginTop:12}}>Dirija-se a <b style={{color:'var(--text-primary)'}}>{cur.p}</b> · {cur.s}</div>
+    </section>
+    <aside style={{display:'flex',flexDirection:'column',gap:20}}>
+      <div style={{fontSize:28,fontWeight:600,letterSpacing:'.14em',textTransform:'uppercase',color:'var(--text-secondary)'}}>Próximas</div>
+      {next.map((q,k)=><div key={q.t+k} className="glass-card" style={{padding:'24px 32px',borderRadius:28,display:'flex',alignItems:'center',gap:28}}>
+        <span className="np-num" style={{fontSize:72,fontWeight:900,width:250}}>{q.t}</span>
+        <span style={{fontSize:32,fontWeight:500}}>{q.n}</span>
+      </div>)}
+    </aside>
+    <footer style={{gridColumn:'1 / -1',display:'flex',alignItems:'center',gap:32,fontSize:30,color:'var(--text-secondary)'}}>
+      <span style={{fontWeight:600}}>Já chamadas:</span>
+      {prev.map(q=><span key={q.t} className="np-num" style={{fontSize:36,color:'var(--text-secondary)'}}>{q.t}</span>)}
+      <span style={{marginLeft:'auto',fontWeight:600,color:'var(--text-primary)'}}>Beleza pra quem não para!</span>
+    </footer>
+  </div>;
+}
+ReactDOM.createRoot(document.getElementById('stage')).render(<TV/>);
+</script></body></html>

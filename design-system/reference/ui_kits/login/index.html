@@ -1,0 +1,20 @@
+<!-- @dsCard group="Login" viewport="1280x800" name="Tela de login" subtitle="Login deslizante com foto — Entrar ↔ Cadastrar; Entrar leva ao painel" -->
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Sua Vez Express — Entrar</title><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script><script src="../../_dev/load-ds.js"></script><script>window.NPHairExpressDesignSystem_ba69cf.ThemeToggle.init()</script>
+<style>body{margin:0;min-height:100vh}</style></head>
+<body class="np-app np-bg"><div id="root" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:24px"></div>
+<script type="text/babel">
+const { LoginSlider, ThemeToggle } = window.NPHairExpressDesignSystem_ba69cf;
+function App(){
+  const [ok,setOk]=React.useState(false);
+  return <>
+    <ThemeToggle variant="pill" style={{position:'fixed',top:20,right:20,zIndex:10}} />
+    <LoginSlider photoSrc="../../../assets/bg-graphite.jpg" logoSrc="../../../assets/logo-np-express.png" onLogin={()=>{setOk(true);setTimeout(()=>location.href='../painel/index.html',700);}} onSignup={()=>alert('Pedido de acesso enviado ao gerente.')} />
+    <div style={{fontSize:12,color:'var(--text-tertiary)',opacity:ok?0:1,transition:'opacity 300ms'}}>Sua Vez Express · NP Hair Express · Salto/SP</div>
+  </>;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script></body></html>

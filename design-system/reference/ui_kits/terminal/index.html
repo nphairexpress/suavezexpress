@@ -1,0 +1,146 @@
+<!-- @dsCard group="Terminal da profissional" viewport="900x920" name="Terminal da profissional" subtitle="Celular escuro, botões de 48–64 px: aguardar → da vez → atendendo → finalizar" -->
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Sua Vez Express — Terminal</title><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../shared/phone.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script><script src="../../_dev/load-ds.js"></script><script>window.NPHairExpressDesignSystem_ba69cf.ThemeToggle.init()</script><script src="../shared/data.js"></script>
+<style>body{margin:0;background:var(--bg-app)}</style></head>
+<body class="np-app"><div id="root"></div>
+<script type="text/babel" data-origem="../shared/phone-chrome.jsx">
+function StatusBar() {
+  const { Icon } = window.NPHairExpressDesignSystem_ba69cf;
+  return <div className="phone-status"><span className="np-num" style={{ fontFamily: 'var(--font-body)', fontWeight: 600 }}>14:32</span><span style={{ display: 'flex', gap: 6 }}><Icon name="signal" size={16} /><Icon name="wifi" size={16} /><Icon name="battery-full" size={18} /></span></div>;
+}
+function TabBar({ tabs, value, onChange }) {
+  const { Icon } = window.NPHairExpressDesignSystem_ba69cf;
+  return <nav className="phone-tabbar" role="tablist">{tabs.map((t) => <button key={t.id} role="tab" aria-selected={t.id === value} className="phone-tab" onClick={() => onChange(t.id)}><Icon name={t.icon} size={22} />{t.label}</button>)}</nav>;
+}
+Object.assign(window, { StatusBar, TabBar });
+
+</script>
+<script type="text/babel" data-origem="terminal-screens.jsx">
+function useTimer(running) {
+  const [s, setS] = React.useState(0);
+  React.useEffect(() => { if (!running) { setS(0); return; } const t = setInterval(() => setS((x) => x + 1), 1000); return () => clearInterval(t); }, [running]);
+  return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+}
+
+function TerminalHeader({ status, turn }) {
+  const { Avatar, StatusPill, ThemeToggle } = window.NPHairExpressDesignSystem_ba69cf;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <Avatar name="Juliana Prado" size={48} style={{ boxShadow: status === 'davez' ? '0 0 0 3px var(--accent)' : status === 'livre' ? '0 0 0 3px var(--positive)' : undefined }} />
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 17, fontWeight: 600 }}>Juliana Prado</div>
+        <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{status === 'atendendo' ? 'Em atendimento' : turn + 'º na ordem da vez'}</div>
+      </div>
+      <StatusPill status={status} />
+      <ThemeToggle />
+    </div>
+  );
+}
+
+function AtendimentoFlow() {
+  const DS = window.NPHairExpressDesignSystem_ba69cf;
+  const { Button, Icon, Badge, GlassCard } = DS;
+  const [st, setSt] = React.useState('livre');
+  const [turn, setTurn] = React.useState(2);
+  const [extra, setExtra] = React.useState([]);
+  const timer = useTimer(st === 'atendendo');
+  React.useEffect(() => { if (st === 'livre') { const t = setTimeout(() => { setSt('davez'); setTurn(1); }, 3500); return () => clearTimeout(t); } }, [st]);
+  const servs = [{ n: 'Escova modelada', v: 60 }].concat(extra);
+
+  if (st === 'livre') return (<>
+    <TerminalHeader status="livre" turn={turn} />
+    <GlassCard radius="xl" style={{ textAlign: 'center', padding: 28 }}>
+      <div style={{ width: 64, height: 64, margin: '0 auto 12px', borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'var(--positive-soft)', color: 'var(--positive-text)' }}><Icon name="coffee" size={30} /></div>
+      <div className="np-display" style={{ fontSize: 24 }}>Você está livre</div>
+      <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 }}>Falta 1 profissional antes de você. Fique de olho: o celular vibra quando for a sua vez.</div>
+    </GlassCard>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <Button size="lg" variant="secondary" icon="pause">Pausa</Button>
+      <Button size="lg" variant="secondary" icon="list-ordered">Ver fila</Button>
+    </div>
+  </>);
+
+  if (st === 'davez') return (<>
+    <TerminalHeader status="davez" turn={1} />
+    <div className="glass-card glass-card--xl glass-card--glow" style={{ padding: 24, borderColor: 'var(--accent-border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <span className="np-caps" style={{ color: 'var(--accent-text)' }}>É a sua vez · próxima cliente</span>
+      <div className="np-num" style={{ fontSize: 104, fontWeight: 900, lineHeight: .95, letterSpacing: '-.03em', color: 'var(--accent-display)', textShadow: 'var(--accent-text-glow)', animation: 'np-ticket-in 520ms cubic-bezier(.22,1,.36,1)' }}>A027</div>
+      <div style={{ fontSize: 20, fontWeight: 600 }}>Mariana Souza</div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}><Badge tone="accent">Escova modelada</Badge><Badge>Esperando 12 min</Badge></div>
+    </div>
+    <Button size="xl" block icon="megaphone" onClick={() => setSt('atendendo')}>Chamar e iniciar</Button>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <Button size="lg" variant="secondary" icon="volume-2">Repetir</Button>
+      <Button size="lg" variant="ghost" icon="user-x" onClick={() => { setSt('livre'); setTurn(4); }}>Não veio</Button>
+    </div>
+  </>);
+
+  if (st === 'atendendo') return (<>
+    <TerminalHeader status="atendendo" />
+    <GlassCard radius="xl" style={{ padding: 22 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div><div className="np-num" style={{ fontSize: 40, fontWeight: 900, lineHeight: 1 }}>A027</div><div style={{ fontSize: 15, fontWeight: 600, marginTop: 4 }}>Mariana Souza</div></div>
+        <div style={{ textAlign: 'right' }}><div className="np-caps">Tempo</div><div className="np-num" style={{ fontSize: 30, color: 'var(--accent-display)' }}>{timer}</div></div>
+      </div>
+      <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column' }}>
+        {servs.map((s, i) => <div key={i} className="np-fade-up" style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderTop: '1px solid var(--divider)', fontSize: 14 }}><span>{s.n}</span><span className="np-num">{window.NPData.brl(s.v)}</span></div>)}
+      </div>
+    </GlassCard>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <Button size="lg" variant="secondary" icon="droplets" onClick={() => setExtra([...extra, { n: 'Hidratação express', v: 45 }])}>Hidratação</Button>
+      <Button size="lg" variant="secondary" icon="plus" onClick={() => setExtra([...extra, { n: 'Babyliss', v: 25 }])}>Babyliss</Button>
+    </div>
+    <Button size="xl" block variant="success" icon="check" onClick={() => setSt('fim')}>Finalizar atendimento</Button>
+  </>);
+
+  return (<>
+    <TerminalHeader status="livre" turn={4} />
+    <div className="glass-card glass-card--xl np-fade-up" style={{ padding: 28, textAlign: 'center' }}>
+      <div style={{ width: 72, height: 72, margin: '0 auto 14px', borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'var(--positive)', color: 'var(--text-on-accent)', animation: 'np-pop 420ms cubic-bezier(.34,1.56,.64,1)' }}><Icon name="check" size={36} strokeWidth={3} /></div>
+      <div className="np-display" style={{ fontSize: 24 }}>Atendimento enviado</div>
+      <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 6 }}>A comanda #1042 foi para a recepção. Você voltou para o fim da vez (4º).</div>
+    </div>
+    <Button size="xl" block variant="secondary" onClick={() => { setExtra([]); setTurn(2); setSt('livre'); }}>Voltar</Button>
+  </>);
+}
+
+function MeuDia() {
+  const { StatCard, GlassCard, BarChart } = window.NPHairExpressDesignSystem_ba69cf;
+  return (<>
+    <div className="np-display" style={{ fontSize: 26 }}>Meu dia</div>
+    <StatCard title="Atendimentos hoje" value="7" change="16" hint="vs. terça passada" icon="scissors" />
+    <StatCard title="Comissão prevista" value="R$ 312,40" change="9,8" icon="wallet" />
+    <GlassCard title="Atendimentos por hora"><BarChart height={160} highlight={4} data={['9h', '10h', '11h', '13h', '14h', '15h'].map((l, i) => ({ label: l, value: [1, 2, 1, 1, 2, 0.4][i] }))} /></GlassCard>
+  </>);
+}
+function Perfil() {
+  const { GlassCard, Avatar, Button, Badge } = window.NPHairExpressDesignSystem_ba69cf;
+  return (<>
+    <GlassCard radius="xl" style={{ textAlign: 'center', padding: 28 }}>
+      <Avatar name="Juliana Prado" size={88} />
+      <div style={{ fontSize: 20, fontWeight: 600, marginTop: 12 }}>Juliana Prado</div>
+      <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Escovista · desde 2022</div>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 12 }}><Badge tone="accent">Escova</Badge><Badge>Babyliss</Badge><Badge>Hidratação</Badge></div>
+    </GlassCard>
+    <Button size="lg" block variant="secondary" icon="log-out">Sair do terminal</Button>
+  </>);
+}
+Object.assign(window, { AtendimentoFlow, MeuDia, Perfil });
+
+</script>
+<script type="text/babel">
+function App(){
+  const [tab,setTab]=React.useState('atend');
+  return <div className="phone-stage np-bg" style={{backgroundAttachment:'scroll'}}>
+    <div className="phone np-bg np-bg--waves">
+      <StatusBar/>
+      <div className="phone-body">{tab==='atend'?<AtendimentoFlow/>:tab==='hoje'?<MeuDia/>:<Perfil/>}</div>
+      <TabBar value={tab} onChange={setTab} tabs={[{id:'atend',label:'Atendimento',icon:'scissors'},{id:'hoje',label:'Meu dia',icon:'chart-no-axes-column'},{id:'perfil',label:'Perfil',icon:'user-round'}]}/>
+    </div>
+  </div>;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script></body></html>

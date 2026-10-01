@@ -1,0 +1,20 @@
+<!-- @dsCard group="Components" viewport="700x640" name="Navegação — sidebar, abas, topo" subtitle="GlassSidebar (aberta e recolhida), NavTabs, TopBar" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script><script src="../../_dev/load-ds.js"></script><style>body{margin:0}</style></head>
+<body class="np-app np-bg" style="height:100vh"><div id="root" style="height:100%;padding:16px;display:flex;gap:16px"></div>
+<script type="text/babel">
+const { GlassSidebar, NavTabs } = window.NPHairExpressDesignSystem_ba69cf;
+const sections=[{title:'Menu',items:[{id:'visao',label:'Visão geral',icon:'layout-dashboard'},{id:'fila',label:'Fila',icon:'ticket',badge:6},{id:'vendas',label:'Vendas',icon:'shopping-bag',children:[{id:'comanda',label:'Comanda'},{id:'caixa',label:'Caixa'},{id:'pend',label:'Pendências',badge:2,badgeTone:'danger'}]},{id:'clientes',label:'Clientes',icon:'users'}]},{title:'Gestão',items:[{id:'clube',label:'Clube da Escova',icon:'crown'},{id:'rel',label:'Relatórios',icon:'chart-no-axes-column'}]}];
+function App(){const [a,setA]=React.useState('comanda');const [t,setT]=React.useState('hoje');return <>
+<GlassSidebar logoSrc="../../../assets/logo-np-express-wordmark.png" user={{name:'Nilton Prado',subtitle:'Dono · trocar'}} notifications={3} activeId={a} onSelect={setA} sections={sections} footer={[{id:'sair',label:'Sair',icon:'log-out'}]} />
+<GlassSidebar defaultCollapsed activeId="fila" sections={sections} notifications={3} user={{name:'Nilton Prado'}} />
+<div style={{display:'flex',flexDirection:'column',gap:16,paddingTop:8}}>
+<NavTabs value={t} onChange={setT} tabs={[{id:'hoje',label:'Hoje'},{id:'semana',label:'Semana'},{id:'mes',label:'Mês'}]} />
+<NavTabs variant="underline" tabs={[{id:'fila',label:'Fila',count:6},{id:'at',label:'Atendendo',count:3}]} />
+</div>
+</>}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script></body></html>

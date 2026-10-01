@@ -1,0 +1,21 @@
+/* Gerado a partir de design-system-export/tokens (Claude Design) em 30/09/2026.
+   Regra do projeto: TODA variável do design system começa com --np- (evita colisão com o tema shadcn/Tailwind).
+   Só :root e [data-theme] declaram variáveis aqui; nenhum seletor global de elemento. */
+:root{
+--np-font-display:'Montserrat',system-ui,sans-serif;
+--np-font-body:'Poppins',system-ui,sans-serif;
+--np-fw-regular:400; 
+--np-fw-medium:500; 
+--np-fw-semibold:600; 
+--np-fw-bold:700; 
+--np-fw-extrabold:800; 
+--np-fw-black:900; 
+--np-fs-2xs:11px;--np-fs-xs:12px;--np-fs-sm:14px;--np-fs-base:16px;--np-fs-lg:18px;--np-fs-xl:20px;--np-fs-2xl:24px;--np-fs-3xl:30px;--np-fs-4xl:36px;--np-fs-5xl:48px;
+--np-fs-ticket-sm:48px;--np-fs-ticket-md:88px;--np-fs-ticket-lg:140px;--np-fs-ticket-tv:280px;
+--np-lh-tight:1.1; 
+--np-lh-snug:1.3; 
+--np-lh-body:1.5; 
+--np-ls-caps:.14em; 
+--np-ls-display:-.02em; 
+--np-num-tabular:tabular-nums; 
+}
