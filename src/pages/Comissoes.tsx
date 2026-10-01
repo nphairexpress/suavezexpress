@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { calculateItemCardFee as calcItemCardFee } from "@/lib/commissionFees";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
 import { Sensitive } from "@/components/common/SensitiveData";
-import { PageHeader, StatCard, Badge as DsBadge } from "@design-system";
+import { PageHeader, StatCard, Badge as DsBadge, EmptyState } from "@design-system";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,21 +63,18 @@ export default function Comissoes() {
     return format(d, "yyyy-MM-dd");
   });
   const [dateEnd, setDateEnd] = useState(() => format(new Date(), "yyyy-MM-dd"));
-  const [selectedProfessional, setSelectedProfessional] = useState<string>("all");
+  const [selectedProfessionalState, setSelectedProfessional] = useState<string>("all");
   const [commissionStatus, setCommissionStatus] = useState<string>("all");
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
 
-  const { professionalId: currentProfessionalId, isProfessionalUser, isLoading: loadingCurrentProfessional } = useCurrentProfessional();
+  const { professionalId: currentProfessionalId, isProfessionalUser, isLoading: loadingCurrentProfessional } = useCurrentProfessional({ anyRole: true });
   const { professionals, isLoading: loadingProfessionals } = useProfessionals();
 
-  // Auto-select the current professional's ID when they are a professional user
+  // Sem comissao.ver_todas (ex.: recepção, profissional) só existe a própria ficha:
+  // a seleção é derivada (não vem de estado), então a lista de todas nunca pisca.
   const { pode, isLoading: loadingPermissions } = useSalonPermissions();
   const canViewAllCommissions = pode("comissao.ver_todas");
-  useEffect(() => {
-    if (!canViewAllCommissions && currentProfessionalId) {
-      setSelectedProfessional(currentProfessionalId);
-    }
-  }, [canViewAllCommissions, currentProfessionalId]);
+  const selectedProfessional = canViewAllCommissions ? selectedProfessionalState : (currentProfessionalId ?? "all");
   const { salonId, user, userRole, isMaster } = useAuth();
   const canManageAdjustments = pode("comissao.editar");
   const canPayCommission = pode("comissao.editar") && pode("despesas.lancar");
@@ -535,7 +532,7 @@ export default function Comissoes() {
 
   const selectedProfessionalData = professionals.find(p => p.id === selectedProfessional);
 
-  const isLoading = loadingProfessionals || loadingComandas || loadingServices || loadingClients || (isProfessionalUser && loadingCurrentProfessional);
+  const isLoading = loadingProfessionals || loadingComandas || loadingServices || loadingClients || loadingPermissions || (!canViewAllCommissions && loadingCurrentProfessional);
 
   const generateCommissionPDF = async () => {
     if (!selectedProfessionalData) return;
@@ -696,6 +693,18 @@ export default function Comissoes() {
   // (RLS e o auto-select acima já limitam à dela) — a etapa 6 tinha fechado isso por engano.
   if (!loadingPermissions && !pode("financeiro.ver") && !isProfessionalUser) {
     return <Navigate to="/" replace />;
+  }
+
+  // Sem ver_todas e sem ficha própria: nenhum número de ninguém.
+  if (!canViewAllCommissions && !selectedProfessionalData) {
+    return (
+      <AppLayoutNew>
+        <div className="space-y-6">
+          <PageHeader eyebrow="Financeiro" title="Comissões" />
+          <EmptyState icon="info" title="Você não tem comissões para acompanhar" description="Sua conta não está vinculada a uma ficha de profissional." />
+        </div>
+      </AppLayoutNew>
+    );
   }
 
   return (

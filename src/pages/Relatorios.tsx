@@ -36,6 +36,7 @@ import { Report0020 } from "@/components/reports/Report0020";
 import { Report0021 } from "@/components/reports/Report0021";
 import { Report0024 } from "@/components/reports/Report0024";
 import { Report0028 } from "@/components/reports/Report0028";
+import { useSalonPermissions } from "@/hooks/useSalonPermissions";
 import { Report1128 } from "@/components/reports/Report1128";
 import { Report0033 } from "@/components/reports/Report0033";
 import { Report0085 } from "@/components/reports/Report0085";
@@ -56,6 +57,9 @@ const PRESET_RANGES = [
 const COLORS = CHART_COLORS;
 
 // Report catalog
+// Relatório que lista comissão por profissional (restrito a comissao.ver_todas).
+const COMMISSION_REPORT_ID = "0028";
+
 const REPORT_CATEGORIES = [
   {
     id: "clientes",
@@ -126,16 +130,20 @@ const REPORT_DESCRIPTIONS: Record<string, string> = {
 function ReportSelector({ onSelect }: { onSelect: (reportId: string) => void }) {
   const [filterCategory, setFilterCategory] = useState<string>("todos");
   const [searchQuery, setSearchQuery] = useState("");
+  // 0028 lista a comissão de todas as profissionais: só para quem tem comissao.ver_todas.
+  const { pode, isLoading: loadingPermissions } = useSalonPermissions();
+  const canViewAllCommissions = !loadingPermissions && pode("comissao.ver_todas");
 
   const allReports = useMemo(() => {
     const reports: { id: string; label: string; category: string; categoryIcon: any; needsDate: boolean; hasChart?: boolean }[] = [];
     REPORT_CATEGORIES.forEach(cat => {
       cat.reports.forEach(r => {
+        if (r.id === COMMISSION_REPORT_ID && !canViewAllCommissions) return;
         reports.push({ ...r, category: cat.label, categoryIcon: cat.icon });
       });
     });
     return reports;
-  }, []);
+  }, [canViewAllCommissions]);
 
   const filteredReports = useMemo(() => {
     return allReports.filter(r => {
@@ -238,6 +246,8 @@ function ReportSelector({ onSelect }: { onSelect: (reportId: string) => void }) 
 }
 
 function ActiveReport({ reportId, dateRange }: { reportId: string; dateRange: DateRange }) {
+  const { pode, isLoading: loadingPermissions } = useSalonPermissions();
+  if (reportId === COMMISSION_REPORT_ID && (loadingPermissions || !pode("comissao.ver_todas"))) return null;
   switch (reportId) {
     case "0004": return <Report0004 />;
     case "0008": return <Report0008 dateRange={dateRange} />;
