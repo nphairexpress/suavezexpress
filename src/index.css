@@ -1,7 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap");
-/* Tokens do design system (só variáveis --np-*; não muda o visual atual). Ver DESIGN.md. */
+/* Design system (Fase A): tokens --np-* e fontes Montserrat/Poppins para o app inteiro. Ver DESIGN.md. */
+@import "../design-system/styles/fonts.css";
 @import "../design-system/tokens/index.css";
 @tailwind base;
 @tailwind components;
@@ -17,11 +18,113 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* AVEC-inspired Design System for Salon CRM */
-/* Professional blue accent with clean, modern aesthetics */
+/* ===== Variáveis do shadcn (app antigo) → tokens do design system (Fase A, 30/09/2026) =====
+   O Tailwind lê estas variáveis como `hsl(var(--x))` (e `hsl(var(--x) / .5)` nos modificadores de
+   opacidade), então elas precisam continuar em triplet HSL. Cada valor abaixo é o HSL EXATO do token
+   --np-* indicado ao lado (DESIGN.md); mudou o token, muda aqui no mesmo commit.
+   - :root e .dark = tema escuro do DS (padrão)   - .light = tema claro do DS
+   - html.np-legacy = valores antigos, usados SÓ pelas páginas públicas da fila/clube e pelo terminal
+     (App.tsx > ThemeScope), para elas não mudarem de visual. */
 
 @layer base {
-  :root {
+  :root,
+  .dark {
+    --background: 22 21% 7%;          /* --np-bg-app = --np-black #17120F */
+    --foreground: 0 0% 100%;          /* --np-text-primary */
+    --card: 24 17% 11%;               /* --np-graphite-700 #221C18 (no shell vira vidro, ver abaixo) */
+    --card-foreground: 0 0% 100%;
+    --popover: 22 14% 16%;            /* --np-graphite-600 #2E2723 */
+    --popover-foreground: 0 0% 100%;
+    --primary: 36 100% 47%;           /* --np-accent = --np-amber-500 #F09000 */
+    --primary-foreground: 22 21% 7%;  /* --np-text-on-accent (preto) */
+    --secondary: 22 14% 16%;          /* --np-graphite-600 */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 22 14% 16%;              /* --np-graphite-600 */
+    --muted-foreground: 20 3% 66%;    /* --np-text-secondary (branco 60 % sobre o fundo), AA */
+    --accent: 34 61% 13%;             /* --np-accent-soft sobre o fundo */
+    --accent-foreground: 39 100% 48%; /* --np-accent-text = --np-amber-400 #F7A100 */
+    --destructive: 0 84% 60%;         /* --np-danger = --np-red-500 #EF4444 */
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 71% 45%;           /* --np-positive = --np-green-500 #22C55E */
+    --success-foreground: 22 21% 7%;
+    --warning: 39 100% 48%;           /* --np-amber-400 */
+    --warning-foreground: 22 21% 7%;
+    --border: 24 6% 21%;              /* --np-border-strong (branco 18 %) sobre o fundo */
+    --input: 24 6% 24%;
+    --ring: 39 100% 48%;              /* --np-focus-ring (âmbar 400) */
+    --radius: 0.75rem;                /* --np-radius-md 12 px */
+    --sidebar-background: 22 21% 7%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 36 100% 47%;
+    --sidebar-primary-foreground: 22 21% 7%;
+    --sidebar-accent: 22 14% 16%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 24 6% 21%;
+    --sidebar-ring: 39 100% 48%;
+    --sidebar: 24 17% 11%;
+    --header-height: 4rem;
+    --chart-1: 36 100% 47%;           /* --np-amber-500 */
+    --chart-2: 39 100% 60%;           /* --np-amber-300 #FFB733 */
+    --chart-3: 36 100% 42%;           /* --np-amber-600 #D67F00 */
+    --chart-4: 142 71% 45%;           /* --np-green-500 */
+    --chart-5: 20 3% 66%;
+    --font-sans: var(--np-font-body);
+    --font-serif: var(--np-font-display);
+    --font-mono: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --shadow-2xs: var(--np-shadow-sm);
+    --shadow-xs: var(--np-shadow-sm);
+    --shadow-sm: var(--np-shadow-sm);
+    --shadow: var(--np-shadow-sm);
+    --shadow-md: var(--np-shadow-glass);
+    --shadow-lg: var(--np-shadow-glass);
+    --shadow-xl: var(--np-shadow-lift);
+    --shadow-2xl: var(--np-shadow-modal);
+    --tracking-normal: 0em;
+    --spacing: 0.25rem;
+  }
+
+  .light {
+    --background: 240 6% 94%;         /* --np-bg-app = --np-mist-100 #EEEEF0 */
+    --foreground: 22 21% 7%;          /* --np-text-primary = --np-ink */
+    --card: 0 0% 100%;                /* vidro claro (branco 62 %) opaco; no shell vira vidro */
+    --card-foreground: 22 21% 7%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 22 21% 7%;
+    --primary: 36 100% 47%;           /* --np-accent #F09000 (igual nos dois temas) */
+    --primary-foreground: 22 21% 7%;
+    --secondary: 240 7% 89%;          /* --np-mist-200 #E2E2E6 */
+    --secondary-foreground: 22 21% 7%;
+    --muted: 240 7% 89%;              /* --np-mist-200 */
+    --muted-foreground: 11 3% 35%;    /* --np-text-secondary (ink 68 %), AA */
+    --accent: 35 52% 86%;             /* --np-accent-soft sobre o fundo claro */
+    --accent-foreground: 35 100% 30%; /* --np-accent-text = --np-amber-ink #9A5A00 */
+    --destructive: 0 72% 51%;         /* --np-danger-solid #DC2626 */
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 72% 29%;           /* --np-positive-text = --np-green-700 #15803D */
+    --success-foreground: 0 0% 100%;
+    --warning: 36 100% 47%;           /* --np-amber-500 */
+    --warning-foreground: 22 21% 7%;
+    --border: 20 2% 81%;              /* --np-border-strong (ink 14 %) sobre o fundo */
+    --input: 20 2% 78%;
+    --ring: 36 100% 42%;              /* --np-focus-ring (âmbar 600) */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 22 21% 7%;
+    --sidebar-primary: 36 100% 47%;
+    --sidebar-primary-foreground: 22 21% 7%;
+    --sidebar-accent: 240 7% 89%;
+    --sidebar-accent-foreground: 22 21% 7%;
+    --sidebar-border: 20 2% 81%;
+    --sidebar-ring: 36 100% 42%;
+    --sidebar: 0 0% 100%;
+    --chart-1: 36 100% 47%;
+    --chart-2: 36 100% 42%;
+    --chart-3: 35 100% 30%;           /* --np-amber-ink */
+    --chart-4: 142 72% 29%;
+    --chart-5: 11 3% 35%;
+  }
+
+  /* Valores ANTIGOS (antes do redesign): só páginas públicas e terminal. Não editar sem migrar essas telas. */
+  html.np-legacy {
     /* Base colors - Light mode */
     --background: 0 0% 96%;
     --foreground: 0 0% 9%;
@@ -100,65 +203,6 @@ input[type="number"] {
     --tracking-normal: 0em;
     --spacing: 0.25rem;
   }
-
-  .dark {
-    --background: 0 0% 9%;
-    --foreground: 0 0% 98%;
-
-    --card: 0 0% 14%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 0 0% 25%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 27 95% 60%;
-    --primary-foreground: 12 81% 14%;
-
-    --secondary: 0 0% 45%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 0 0% 45%;
-    --muted-foreground: 0 0% 98%;
-
-    --accent: 20 91% 14%;
-    --accent-foreground: 43 96% 56%;
-
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 85% 97%;
-
-    --success: 142 76% 46%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 100%;
-
-    --border: 0 0% 32%;
-    --input: 0 0% 32%;
-    --ring: 27 95% 60%;
-
-    --sidebar-background: 222 47% 6%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 27 95% 60%;
-    --sidebar-primary-foreground: 12 81% 14%;
-    --sidebar-accent: 43 96% 56%;
-    --sidebar-accent-foreground: 20 91% 14%;
-    --sidebar-border: 0 0% 32%;
-    --sidebar-ring: 27 95% 60%;
-    --chart-1: 30 97% 72%;
-    --chart-2: 45 96% 64%;
-    --chart-3: 48 96% 76%;
-    --chart-4: 27 95% 60%;
-    --chart-5: 0 0% 45%;
-    --sidebar: 0 0% 14%;
-    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
-    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
-  }
 }
 
 @layer base {
@@ -169,6 +213,13 @@ input[type="number"] {
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv11", "ss01";
+    font-family: var(--font-sans);
+  }
+
+  /* Fase A: títulos em Montserrat no app (páginas isoladas em np-legacy ficam como eram) */
+  html:not(.np-legacy) :is(h1, h2, h3, h4) {
+    font-family: var(--np-font-display);
+    letter-spacing: -0.01em;
   }
 
   /* Smooth scrolling */
@@ -300,4 +351,21 @@ input[type="number"] {
   .daily-report-content .issues li.sev-low {
     @apply border-sky-500 bg-sky-50 text-sky-900;
   }
+}
+/* ===== Fase A: telas ainda NÃO migradas, dentro do AppShell =====
+   O cartão do shadcn (classe bg-card) vira a superfície de vidro do tema, sem editar tela por tela.
+   Fora de @layer de propósito: vence o utilitário bg-card. Cartão dentro de cartão não ganha blur novo
+   (regra do DESIGN.md: dentro do vidro, preenchimento 6 %). */
+.np-shell__content .bg-card {
+  background-color: var(--np-surface-glass);
+  -webkit-backdrop-filter: blur(var(--np-blur-glass)) saturate(140%);
+  backdrop-filter: blur(var(--np-blur-glass)) saturate(140%);
+  border-color: var(--np-border-glass);
+  box-shadow: var(--np-shadow-glass), var(--np-inner-highlight);
+}
+.np-shell__content .bg-card .bg-card {
+  background-color: var(--np-surface-inset);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
 }

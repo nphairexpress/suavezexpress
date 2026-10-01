@@ -1,14 +1,6 @@
 // @ts-nocheck
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { useState } from "react";
+import { GlassCard, BarChart, brl } from "@design-system";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
@@ -75,66 +67,25 @@ export function RevenueChart() {
     refetchInterval: 5 * 60 * 1000,
   });
 
+  // Destaque começa no dia de hoje (Seg = 0 ... Dom = 6), mesma ordem do array acima.
+  // Clicar numa barra mostra o valor daquele dia (substitui o tooltip do recharts).
+  const [selectedDay, setSelectedDay] = useState(() => (new Date().getDay() + 6) % 7);
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">Faturamento da Semana</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorReceita" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-              <XAxis
-                dataKey="name"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-                tickFormatter={(value) =>
-                  value >= 1000 ? `R$ ${(value / 1000).toFixed(1)}k` : `R$ ${value}`
-                }
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                }}
-                formatter={(value: number) => [
-                  `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-                  "Receita",
-                ]}
-              />
-              <Area
-                type="monotone"
-                dataKey="receita"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#colorReceita)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+    <GlassCard title="Faturamento da Semana">
+      <BarChart
+        data={chartData.map((d) => ({ label: d.name, value: d.receita }))}
+        height={300}
+        highlight={selectedDay}
+        onSelect={setSelectedDay}
+        format={(v) => brl(v)}
+      />
+      <div className="mt-4 flex items-center justify-center gap-6 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="h-3 w-3 rounded-full" style={{ background: "var(--np-accent)" }} />
+          <span style={{ color: "var(--np-text-secondary)" }}>Faturamento Real</span>
         </div>
-        <div className="mt-4 flex items-center justify-center gap-6 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 rounded-full bg-primary" />
-            <span className="text-muted-foreground">Faturamento Real</span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </GlassCard>
   );
 }

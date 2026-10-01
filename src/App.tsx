@@ -4,7 +4,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useLayoutEffect } from "react";
+import { NpThemeProvider } from "@design-system";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { SensitiveDataProvider } from "@/components/common/SensitiveData";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
@@ -245,6 +247,33 @@ function AppRoutes() {
   );
 }
 
+// Fase A do redesign (30/09): tema do design system no app inteiro (escuro padrão, interruptor
+// "acender/apagar a luz", localStorage "np-theme"). Páginas públicas da fila/clube e o terminal da
+// profissional ficam ISOLADOS: tema claro fixo + classe np-legacy no <html>, que devolve as
+// variáveis antigas do shadcn (src/index.css), então elas continuam exatamente como eram.
+function isLegacyThemePath(pathname: string) {
+  return (
+    pathname === "/fila" ||
+    pathname.startsWith("/fila/") ||
+    pathname === "/clube-escova" ||
+    pathname === "/atendimento" ||
+    pathname === "/setup"
+  );
+}
+
+function ThemeScope({ children }: { children: React.ReactNode }) {
+  const { pathname } = useLocation();
+  const legacy = isLegacyThemePath(pathname);
+  useLayoutEffect(() => {
+    document.documentElement.classList.toggle("np-legacy", legacy);
+  }, [legacy]);
+  return (
+    <NpThemeProvider restoreOnUnmount={false} forcedTheme={legacy ? "light" : undefined}>
+      {children}
+    </NpThemeProvider>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -253,6 +282,7 @@ function App() {
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ThemeScope>
             <AuthProvider>
               <SensitiveDataProvider>
                 <Suspense fallback={<PageSpinner />}>
@@ -260,6 +290,7 @@ function App() {
                 </Suspense>
               </SensitiveDataProvider>
             </AuthProvider>
+            </ThemeScope>
           </BrowserRouter>
         </TooltipProvider>
       </ErrorBoundary>

@@ -1,18 +1,15 @@
 import { Clock, User, ChevronRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { GlassCard, Button, Badge, EmptyState, type BadgeTone } from "@design-system";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
-const statusConfig: Record<string, { label: string; className: string }> = {
-  scheduled: { label: "Agendado", className: "status-scheduled" },
-  confirmed: { label: "Confirmado", className: "status-confirmed" },
-  in_progress: { label: "Em atendimento", className: "status-in_progress" },
-  completed: { label: "Finalizado", className: "status-completed" },
+const statusConfig: Record<string, { label: string; tone: BadgeTone; live?: boolean }> = {
+  scheduled: { label: "Agendado", tone: "neutral" },
+  confirmed: { label: "Confirmado", tone: "positive" },
+  in_progress: { label: "Em atendimento", tone: "accent", live: true },
+  completed: { label: "Finalizado", tone: "neutral" },
 };
 
 function getInitials(name: string) {
@@ -90,89 +87,87 @@ export function UpcomingAppointments({ professionalId }: UpcomingAppointmentsPro
   });
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-3">
-        <CardTitle className="text-base md:text-lg font-semibold">
-          {professionalId ? "Meus Próximos Atendimentos" : "Próximos Atendimentos"}
-        </CardTitle>
-        <Button variant="outline" size="sm" className="text-xs md:text-sm shrink-0" onClick={() => navigate("/agenda")}>
+    <GlassCard
+      title={professionalId ? "Meus Próximos Atendimentos" : "Próximos Atendimentos"}
+      action={
+        <Button variant="secondary" size="sm" className="shrink-0" onClick={() => navigate("/agenda")}>
           Ver Agenda
         </Button>
-      </CardHeader>
-      <CardContent className="px-3 md:px-6">
-        {appointments.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">
-            Nenhum atendimento pendente para hoje
-          </p>
-        ) : (
-          <div className="space-y-2 md:space-y-3">
-            {appointments.map((appointment) => (
-              <div
-                key={appointment.id}
-                className="rounded-lg border p-3 md:p-4 transition-colors hover:bg-muted/50"
-              >
-                {/* Mobile: stack layout / Desktop: horizontal */}
-                <div className="flex items-start gap-3 md:items-center md:gap-4">
-                  <Avatar className="h-9 w-9 md:h-10 md:w-10 shrink-0 mt-0.5 md:mt-0">
-                    <AvatarFallback className="bg-primary/10 text-primary text-xs md:text-sm">
-                      {appointment.clientInitials}
-                    </AvatarFallback>
-                  </Avatar>
+      }
+    >
+      {appointments.length === 0 ? (
+        <EmptyState icon="calendar" title="Nenhum atendimento pendente para hoje" />
+      ) : (
+        <div className="space-y-2 md:space-y-3">
+          {appointments.map((appointment) => (
+            <div
+              key={appointment.id}
+              className="rounded-xl p-3 md:p-4"
+              style={{ background: "var(--np-surface-inset)", border: "1px solid var(--np-divider)" }}
+            >
+              {/* Mobile: stack layout / Desktop: horizontal */}
+              <div className="flex items-start gap-3 md:items-center md:gap-4">
+                <span
+                  className="np-avatar mt-0.5 md:mt-0"
+                  style={{ width: 40, height: 40, fontSize: 14 }}
+                  aria-hidden="true"
+                >
+                  {appointment.clientInitials}
+                </span>
 
-                  {/* Content area */}
-                  <div className="flex-1 min-w-0">
-                    {/* Row 1: Client name + service */}
-                    <p className="font-medium text-sm md:text-base leading-tight">
-                      {appointment.clientName}
-                    </p>
-                    <p className="text-xs md:text-sm text-muted-foreground truncate mt-0.5">
-                      {appointment.service}
-                    </p>
+                {/* Content area */}
+                <div className="flex-1 min-w-0">
+                  {/* Row 1: Client name + service */}
+                  <p className="font-medium text-sm md:text-base leading-tight" style={{ color: "var(--np-text-primary)" }}>
+                    {appointment.clientName}
+                  </p>
+                  <p className="text-xs md:text-sm truncate mt-0.5" style={{ color: "var(--np-text-secondary)" }}>
+                    {appointment.service}
+                  </p>
 
-                    {/* Row 2 (mobile only): time + status */}
-                    <div className="flex items-center gap-2 mt-1.5 md:hidden">
-                      <div className="flex items-center gap-1 text-xs">
-                        <Clock className="h-3 w-3 text-muted-foreground" />
-                        <span className="font-medium">{appointment.time}</span>
-                        <span className="text-muted-foreground">({appointment.duration})</span>
-                      </div>
-                      {statusConfig[appointment.status] && (
-                        <Badge variant="secondary" className={`${statusConfig[appointment.status].className} text-[10px] px-1.5 py-0`}>
-                          {statusConfig[appointment.status].label}
-                        </Badge>
-                      )}
+                  {/* Row 2 (mobile only): time + status */}
+                  <div className="flex flex-wrap items-center gap-2 mt-1.5 md:hidden">
+                    <div className="flex items-center gap-1 text-xs">
+                      <Clock className="h-3 w-3" style={{ color: "var(--np-text-tertiary)" }} />
+                      <span className="np-num font-medium" style={{ color: "var(--np-text-primary)" }}>{appointment.time}</span>
+                      <span style={{ color: "var(--np-text-secondary)" }}>({appointment.duration})</span>
                     </div>
-                  </div>
-
-                  {/* Desktop only: professional + time + status + chevron */}
-                  <div className="hidden md:flex items-center gap-4">
-                    {!professionalId && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <User className="h-4 w-4" />
-                        <span>{appointment.professional}</span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-1.5 text-sm">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{appointment.time}</span>
-                      <span className="text-muted-foreground text-xs">{appointment.duration}</span>
-                    </div>
-
                     {statusConfig[appointment.status] && (
-                      <Badge variant="secondary" className={statusConfig[appointment.status].className}>
+                      <Badge tone={statusConfig[appointment.status].tone} dot live={statusConfig[appointment.status].live}>
                         {statusConfig[appointment.status].label}
                       </Badge>
                     )}
-
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </div>
+
+                {/* Desktop only: professional + time + status + chevron */}
+                <div className="hidden md:flex items-center gap-4">
+                  {!professionalId && (
+                    <div className="flex items-center gap-2 text-sm" style={{ color: "var(--np-text-secondary)" }}>
+                      <User className="h-4 w-4" />
+                      <span>{appointment.professional}</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-1.5 text-sm">
+                    <Clock className="h-4 w-4" style={{ color: "var(--np-text-tertiary)" }} />
+                    <span className="np-num font-medium" style={{ color: "var(--np-text-primary)" }}>{appointment.time}</span>
+                    <span className="text-xs" style={{ color: "var(--np-text-secondary)" }}>{appointment.duration}</span>
+                  </div>
+
+                  {statusConfig[appointment.status] && (
+                    <Badge tone={statusConfig[appointment.status].tone} dot live={statusConfig[appointment.status].live}>
+                      {statusConfig[appointment.status].label}
+                    </Badge>
+                  )}
+
+                  <ChevronRight className="h-4 w-4" style={{ color: "var(--np-text-tertiary)" }} />
+                </div>
               </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+            </div>
+          ))}
+        </div>
+      )}
+    </GlassCard>
   );
 }

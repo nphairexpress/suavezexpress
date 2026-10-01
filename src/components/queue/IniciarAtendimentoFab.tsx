@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Play, Loader2, UserPlus, CalendarDays, Plus } from "lucide-react";
+import { GlassCard, Button as NpButton } from "@design-system";
 
 // Botão leve: fica no layout de todas as páginas e NÃO carrega dado nenhum.
 // Os hooks de dados (clientes, serviços, profissionais, comandas, fila, caixas)
@@ -29,17 +30,13 @@ export function IniciarAtendimentoFab() {
 
   return (
     <>
-      {/* FAB */}
-      <div className="w-full bg-green-600 text-white px-4 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-        <Button
-          onClick={() => setOpen(true)}
-          className="h-11 rounded-full gap-2 px-5 font-semibold bg-white text-green-700 hover:bg-white/90"
-        >
-          <Plus className="h-5 w-5" />
+      {/* Faixa "Abrir Comanda" (Fase A do redesign: vidro + botão do design system; mesmo clique) */}
+      <GlassCard padding={12} className="np-abrir-comanda">
+        <NpButton icon={Plus} onClick={() => setOpen(true)}>
           Abrir Comanda
-        </Button>
-        <span className="text-sm font-medium">Quando a cliente chegar, comece aqui</span>
-      </div>
+        </NpButton>
+        <span className="np-abrir-comanda__hint">Quando a cliente chegar, comece aqui</span>
+      </GlassCard>
 
       {open && <AbrirComandaDialog onOpenChange={setOpen} />}
     </>

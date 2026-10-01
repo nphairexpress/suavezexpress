@@ -8,8 +8,8 @@ import { MotionConfig } from "framer-motion";
  *   com o shadcn atual (Tailwind darkMode: ["class"]) e atributo data-theme="dark|light" no <html>,
  *   que é o que os tokens --np-* leem.
  * - Escuro é o padrão; a escolha persiste em localStorage "np-theme".
- * - Nesta fase o provider envolve SÓ a rota /design-system. Ao sair dela, o <html> volta
- *   exatamente como estava (classes, data-theme e color-scheme), então o app atual não muda.
+ * - Fase A (30/09): o provider envolve o app inteiro (App.tsx, restoreOnUnmount=false).
+ *   `forcedTheme` fixa um tema sem tocar na escolha salva (páginas públicas e terminal).
  */
 
 export type NpTheme = "dark" | "light";
@@ -21,12 +21,15 @@ export interface NpThemeProviderProps {
   storageKey?: string;
   /** Força um tema (ex.: ?theme=light na vitrine). Também grava no storage. */
   forcedInitialTheme?: NpTheme;
-  /** Restaura o <html> ao desmontar (padrão true enquanto o app não migrou) */
+  /** Restaura o <html> ao desmontar (true na vitrine isolada; false no app inteiro) */
   restoreOnUnmount?: boolean;
+  /** Fixa o tema sem alterar o que está salvo em storage (ex.: páginas públicas da fila) */
+  forcedTheme?: NpTheme;
 }
 
-function ThemeAttributeSync({ restoreOnUnmount, forcedInitialTheme }: { restoreOnUnmount: boolean; forcedInitialTheme?: NpTheme }) {
-  const { resolvedTheme, setTheme } = useNextTheme();
+function ThemeAttributeSync({ restoreOnUnmount, forcedInitialTheme, forcedTheme }: { restoreOnUnmount: boolean; forcedInitialTheme?: NpTheme; forcedTheme?: NpTheme }) {
+  const { resolvedTheme: storedTheme, setTheme } = useNextTheme();
+  const resolvedTheme = forcedTheme ?? storedTheme;
   const snapshot = React.useRef<{ dark: boolean; light: boolean; dataTheme: string | null; colorScheme: string } | null>(null);
 
   // Foto do <html> antes de qualquer mudança (efeitos do filho rodam antes dos do next-themes).
@@ -66,10 +69,11 @@ export function NpThemeProvider({
   storageKey = NP_THEME_STORAGE_KEY,
   forcedInitialTheme,
   restoreOnUnmount = true,
+  forcedTheme,
 }: NpThemeProviderProps) {
   return (
-    <NextThemesProvider attribute="class" themes={["dark", "light"]} defaultTheme={defaultTheme} enableSystem={false} storageKey={storageKey}>
-      <ThemeAttributeSync restoreOnUnmount={restoreOnUnmount} forcedInitialTheme={forcedInitialTheme} />
+    <NextThemesProvider attribute="class" themes={["dark", "light"]} defaultTheme={defaultTheme} enableSystem={false} storageKey={storageKey} forcedTheme={forcedTheme}>
+      <ThemeAttributeSync restoreOnUnmount={restoreOnUnmount} forcedInitialTheme={forcedInitialTheme} forcedTheme={forcedTheme} />
       {/* prefers-reduced-motion desliga as animações do framer-motion também */}
       <MotionConfig reducedMotion="user">{children}</MotionConfig>
     </NextThemesProvider>

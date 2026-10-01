@@ -1,59 +1,9 @@
-import { DollarSign, Users, Calendar, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { DollarSign, Users, Calendar, TrendingUp } from "lucide-react";
+import { StatCard } from "@design-system";
 import { useAuth } from "@/contexts/AuthContext";
 import { Sensitive } from "@/components/common/SensitiveData";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
-
-interface StatCardProps {
-  title: string;
-  value: string;
-  change: number;
-  changeLabel: string;
-  icon: React.ReactNode;
-  loading?: boolean;
-  sensitive?: boolean;
-}
-
-function StatCard({ title, value, change, changeLabel, icon, loading, sensitive }: StatCardProps) {
-  const isPositive = change > 0;
-  const isNeutral = change === 0;
-
-  return (
-    <Card className="relative overflow-hidden">
-      <CardContent className="p-4 md:p-6">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1 md:space-y-2 min-w-0 flex-1">
-            <p className="text-xs md:text-sm font-medium text-muted-foreground truncate">{title}</p>
-            {loading ? (
-              <div className="h-7 md:h-8 w-20 md:w-24 animate-pulse rounded bg-muted" />
-            ) : (
-              <p className="text-xl md:text-2xl font-bold tracking-tight truncate">
-                {sensitive ? <Sensitive>{value}</Sensitive> : value}
-              </p>
-            )}
-            <div className="flex items-center gap-1 text-xs md:text-sm">
-              {isNeutral ? (
-                <Minus className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
-              ) : isPositive ? (
-                <TrendingUp className="h-3 w-3 md:h-4 md:w-4 text-success" />
-              ) : (
-                <TrendingDown className="h-3 w-3 md:h-4 md:w-4 text-destructive" />
-              )}
-              <span className={isNeutral ? "text-muted-foreground" : isPositive ? "text-success" : "text-destructive"}>
-                {isPositive && "+"}{change}%
-              </span>
-              <span className="text-muted-foreground hidden sm:inline">{changeLabel}</span>
-            </div>
-          </div>
-          <div className="flex h-9 w-9 md:h-12 md:w-12 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0 ml-2">
-            {icon}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 function formatCurrency(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -242,7 +192,7 @@ export function DashboardStats({ professionalId }: DashboardStatsProps) {
       value: formatCurrency(data?.monthRevenue ?? 0),
       change: data?.revenueChange ?? 0,
       changeLabel: "vs mês anterior",
-      icon: <DollarSign className="h-5 w-5 md:h-6 md:w-6" />,
+      icon: DollarSign,
       sensitive: true,
     },
     {
@@ -250,14 +200,14 @@ export function DashboardStats({ professionalId }: DashboardStatsProps) {
       value: String(data?.monthAppts ?? 0),
       change: data?.apptsChange ?? 0,
       changeLabel: "vs mês anterior",
-      icon: <Calendar className="h-5 w-5 md:h-6 md:w-6" />,
+      icon: Calendar,
     },
     {
       title: "Ticket Médio",
       value: formatCurrency(data?.monthTicket ?? 0),
       change: data?.ticketChange ?? 0,
       changeLabel: "vs mês anterior",
-      icon: <TrendingUp className="h-5 w-5 md:h-6 md:w-6" />,
+      icon: TrendingUp,
       sensitive: true,
     },
     {
@@ -265,14 +215,25 @@ export function DashboardStats({ professionalId }: DashboardStatsProps) {
       value: String(data?.newClients ?? 0),
       change: data?.clientsChange ?? 0,
       changeLabel: "vs mês anterior",
-      icon: <Users className="h-5 w-5 md:h-6 md:w-6" />,
+      icon: Users,
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 xl:grid-cols-4">
       {stats.map((stat) => (
-        <StatCard key={stat.title} {...stat} loading={isLoading} />
+        <StatCard
+          key={stat.title}
+          title={stat.title}
+          value={stat.sensitive ? <Sensitive>{stat.value}</Sensitive> : stat.value}
+          // Mesmo texto de antes: "+12" quando sobe, "-5" quando cai, "0" quando igual.
+          change={stat.change > 0 ? `+${stat.change}` : String(stat.change)}
+          trend={stat.change < 0 ? "down" : "up"}
+          hint={stat.changeLabel}
+          icon={stat.icon}
+          loading={isLoading}
+          className="min-w-0"
+        />
       ))}
     </div>
   );

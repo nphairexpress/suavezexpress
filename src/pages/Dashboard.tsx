@@ -1,17 +1,13 @@
-import { lazy, Suspense } from "react";
+import { PageHeader } from "@design-system";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { UpcomingAppointments } from "@/components/dashboard/UpcomingAppointments";
 import { TopServices } from "@/components/dashboard/TopServices";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { ProfessionalCommissionSummary } from "@/components/dashboard/ProfessionalCommissionSummary";
+import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { Sensitive } from "@/components/common/SensitiveData";
 import { useCurrentProfessional } from "@/hooks/useCurrentProfessional";
-
-// recharts (~400 kB) só entra quando o gráfico de faturamento renderiza.
-const RevenueChart = lazy(() =>
-  import("@/components/dashboard/RevenueChart").then((m) => ({ default: m.RevenueChart }))
-);
 
 export default function Dashboard() {
   const { professional, professionalId, isProfessionalUser } = useCurrentProfessional();
@@ -19,11 +15,13 @@ export default function Dashboard() {
   return (
     <AppLayoutNew>
       <div className="space-y-4 md:space-y-6">
+        <PageHeader eyebrow="Painel" title="Visão geral">
+          {/* Quick Actions */}
+          <QuickActions />
+        </PageHeader>
+
         {/* Stats Cards */}
         <DashboardStats professionalId={professionalId} />
-
-        {/* Quick Actions */}
-        <QuickActions />
 
         {/* Upcoming Appointments - shown early for professionals on mobile */}
         {isProfessionalUser && (
@@ -33,11 +31,9 @@ export default function Dashboard() {
         {/* Main Content Grid */}
         <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
           {/* Revenue Chart - Takes 2 columns */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 min-w-0">
             <Sensitive block>
-              <Suspense fallback={<div className="h-[380px] rounded-lg border bg-card animate-pulse" />}>
-                <RevenueChart />
-              </Suspense>
+              <RevenueChart />
             </Sensitive>
           </div>
 

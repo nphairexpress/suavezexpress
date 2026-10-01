@@ -65,7 +65,7 @@ A implementação vive em `design-system/` e os valores acima existem como vari�
 - `NpThemeProvider` (next-themes) põe no `<html>` a classe `dark`/`light` (convive com o shadcn) **e** `data-theme`. Escuro é o padrão; a escolha fica em `localStorage["np-theme"]`.
 - `ThemeToggle`: "Acender a luz" (escuro → claro, sol) / "Apagar a luz" (claro → escuro, lua). Lugares: TopBar, sidebar recolhida, linha com chave no rodapé da sidebar, cartões em Configurações.
 - Ilhas: qualquer elemento pode forçar `data-theme="dark"` (ex.: painel da foto do login).
-- **Fase atual:** o provider envolve só a rota `/design-system` e devolve o `<html>` intacto ao sair. O app ainda não muda de tema.
+- **Fase A (30/09/2026):** o provider envolve o app inteiro (`App.tsx` > `ThemeScope`). As variáveis do shadcn em `src/index.css` apontam para os tokens (HSL exato de cada `--np-*`, nos dois temas), e o cartão shadcn (`bg-card`) dentro do `AppShell` vira vidro, então telas ainda não migradas herdam o tema. Páginas públicas (`/fila`, `/fila/*`, `/clube-escova`), terminal (`/atendimento`) e `/setup` ficam isoladas: tema claro fixo (`forcedTheme`) + classe `np-legacy` no `<html>` com os valores antigos.
 
 ## Superfícies
 

@@ -48,6 +48,8 @@ export interface GlassSidebarProps {
   logoSrc?: string;
   user?: { name: string; subtitle?: string; avatar?: string };
   onUserClick?: () => void;
+  /** Clique no logo/título (ex.: voltar para a tela inicial) */
+  onLogoClick?: () => void;
   sections: SidebarSection[];
   /** Itens colados no rodapé (ex.: Sair) */
   footer?: SidebarItem[];
@@ -145,6 +147,7 @@ export function GlassSidebar({
   logoSrc,
   user,
   onUserClick,
+  onLogoClick,
   sections,
   footer = [],
   activeId,
@@ -190,13 +193,22 @@ export function GlassSidebar({
     <aside className={cx("np-sidebar", collapsed && "np-sidebar--collapsed", className)} style={style} aria-label="Menu principal">
       <div className={cx("np-sidebar__top", collapsed && "is-collapsed")}>
         <div className="np-hide-collapsed np-sidebar__brand">
-          {logoSrc ? (
-            <span className="np-logo-chip">
-              <img src={logoSrc} alt={title} className="np-sidebar__logo" />
-            </span>
-          ) : (
-            <span className="np-display np-sidebar__title">{title}</span>
-          )}
+          {(() => {
+            const brand = logoSrc ? (
+              <span className="np-logo-chip">
+                <img src={logoSrc} alt={title} className="np-sidebar__logo" />
+              </span>
+            ) : (
+              <span className="np-display np-sidebar__title">{title}</span>
+            );
+            return onLogoClick ? (
+              <button type="button" className="np-sidebar__brand-btn" onClick={onLogoClick} aria-label={title + ": tela inicial"}>
+                {brand}
+              </button>
+            ) : (
+              brand
+            );
+          })()}
         </div>
         {notifications != null && (
           <button type="button" className="np-icon-btn np-icon-btn--ghost np-icon-btn--round np-sidebar__bell" aria-label="Notificações">

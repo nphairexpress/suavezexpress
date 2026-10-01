@@ -13,7 +13,7 @@ import {
   ClipboardCheck,
 } from "lucide-react";
 
-interface NavItem {
+export interface NavItem {
   title: string;
   url: string;
   icon: React.ElementType;
@@ -22,7 +22,7 @@ interface NavItem {
 
 // 29/09/2026 (auditoria D11): Agenda, Estoque, Clientes→Avisos, Marketing→Promoções/SMS saíram do menu.
 // Rotas e código continuam; só não aparecem pra equipe.
-const navItems: NavItem[] = [
+export const navItems: NavItem[] = [
   {
     title: "Fila",
     url: "/fila-admin",
@@ -87,7 +87,9 @@ const navItems: NavItem[] = [
   },
 ];
 
-export function TopNavigation() {
+// Lógica do menu (permissão + item ativo), compartilhada pela sidebar do AppShell (Fase A do redesign)
+// e por esta barra antiga. Não mudar uma sem a outra.
+export function useNavMenu() {
   const location = useLocation();
   const navigate = useNavigate();
   const { pode, isLoading: loadingPermissions } = useSalonPermissions();
@@ -108,6 +110,19 @@ export function TopNavigation() {
     }
     return location.pathname.startsWith(item.url);
   });
+
+  return { location, navigate, visibleNavItems, activeNavItem };
+}
+
+/** Sub-aba ativa: mesma regra que a barra antiga usava. */
+export function isSubItemActive(location: { pathname: string; search: string }, subItem: { url: string }) {
+  return location.pathname + location.search === subItem.url ||
+    (subItem.url.includes("?") && location.pathname + location.search === subItem.url) ||
+    (!subItem.url.includes("?") && location.pathname === subItem.url);
+}
+
+export function TopNavigation() {
+  const { location, navigate, visibleNavItems, activeNavItem } = useNavMenu();
 
   return (
     <div className="border-b border-border bg-card">
@@ -148,9 +163,7 @@ export function TopNavigation() {
       {activeNavItem?.subItems && (
         <div className="flex items-center gap-1 px-4 md:px-6 border-t border-border overflow-x-auto scrollbar-hide">
           {activeNavItem.subItems.map((subItem) => {
-            const isSubActive = location.pathname + location.search === subItem.url ||
-              (subItem.url.includes("?") && location.pathname + location.search === subItem.url) ||
-              (!subItem.url.includes("?") && location.pathname === subItem.url);
+            const isSubActive = isSubItemActive(location, subItem);
 
             return (
               <button

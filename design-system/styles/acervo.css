@@ -263,12 +263,27 @@
 .np-login__form h2{margin:0 0 6px;font-size:26px;text-align:center}
 .np-login__row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:-6px;font-size:13px}
 .np-login__row a{font-weight:var(--np-fw-medium)}
+.np-login__row a{display:inline-flex;align-items:center;min-height:44px}
+.np-login__row--end{justify-content:flex-end}
+.np-login__text{margin:-4px 0 4px;font-size:var(--np-fs-sm);line-height:1.5;text-align:center;color:var(--np-text-secondary)}
+.np-login__ok{color:var(--np-positive-text)}
+.np-login .np-input-eye{width:44px;height:44px}
+.np-auth{box-sizing:border-box;min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:var(--np-space-4);overflow-x:hidden}
+.np-auth__card{width:440px;max-width:100%;display:flex;flex-direction:column;gap:var(--np-space-4)}
+.np-auth__form{display:flex;flex-direction:column;gap:var(--np-space-4)}
+.np-auth__logo{align-self:center;margin-bottom:var(--np-space-2)}
+.np-auth__logo img{display:block;width:240px;max-width:100%}
+.np-auth__card h2{margin:0;font-size:26px;text-align:center}
+.np-auth__card p{margin:0;text-align:center;color:var(--np-text-secondary)}
+.np-auth__spin{display:grid;place-items:center;padding:var(--np-space-12) 0;color:var(--np-accent-text)}
 @media (max-width:700px){
   .np-login{height:auto;min-height:560px}
   .np-login__bg{width:100%;height:150px;bottom:auto;translate:0 0}
   .np-login.is-register .np-login__bg{translate:0 0}
   .np-login__hero{height:150px;width:100%;left:0;padding:0 20px}
-  .np-login__hero p,.np-login__logo{display:none}
+  .np-login__hero{gap:8px}
+  .np-login__hero p{display:none}
+  .np-login__logo{width:auto;max-width:70%;height:44px;object-fit:contain;margin:0}
   .np-login__hero--login,.np-login.is-register .np-login__hero--login,.np-login__hero--register,.np-login.is-register .np-login__hero--register{left:0;translate:0}
   .np-login__form{top:150px;height:auto;bottom:0;width:100%;padding:16px 20px}
   .np-login__form--login,.np-login__form--register,.np-login.is-register .np-login__form--login,.np-login.is-register .np-login__form--register{left:0;translate:0}
@@ -414,3 +429,13 @@
 .np-tag--accent .np-tag__dot{background:var(--np-accent)}
 .np-tag--positive .np-tag__dot{background:var(--np-positive)}
 .np-tag--danger .np-tag__dot{background:var(--np-danger)}
+
+/* Fase A: logo da sidebar clicável (onLogoClick) */
+.np-sidebar__brand-btn{display:inline-flex;max-width:100%;padding:0;border:0;background:none;cursor:pointer;border-radius:var(--np-radius-sm)}
+.np-sidebar__brand-btn:focus-visible{outline:2px solid var(--np-focus-ring);outline-offset:2px}
+.np-abrir-comanda{margin-bottom:20px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;border-left:4px solid var(--np-positive)}
+.np-abrir-comanda__hint{font-size:var(--np-fs-sm);font-weight:var(--np-fw-medium);color:var(--np-text-secondary)}
+.np-stat__text{flex:1 1 auto}
+.np-stat__value{font-size:clamp(18px,1.5vw,var(--np-fs-2xl))}
+.np-sidebar__user-text{min-width:0}
+.np-sidebar__user-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

@@ -10,7 +10,7 @@ import { NpThemeProvider, AppShell, PageHeader, Button, GlassCard } from "@desig
 
 - Tokens `--np-*` entram globalmente por `src/index.css` (só variáveis, não mudam o app antigo).
 - O CSS dos componentes entra por `design-system/index.ts` (fica no chunk de quem importa a biblioteca).
-- Tela nova: envolva com `NpThemeProvider` (até o app inteiro migrar) e use `AppShell` + `PageHeader`.
+- O `NpThemeProvider` já envolve o app inteiro (Fase A). Tela nova dentro do `AppLayoutNew` (que renderiza o `AppShell`) usa `PageHeader` e os componentes daqui.
 
 ## Mapa
 

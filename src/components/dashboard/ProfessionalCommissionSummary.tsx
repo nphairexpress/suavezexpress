@@ -1,6 +1,5 @@
 import { DollarSign } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { GlassCard, Button, Skeleton } from "@design-system";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
@@ -130,45 +129,38 @@ export function ProfessionalCommissionSummary({ professionalId, commissionPercen
   });
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base md:text-lg font-semibold">Minha Comissão do Mês</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {isLoading ? (
-          <div className="space-y-2">
-            <div className="h-5 w-32 animate-pulse rounded bg-muted" />
-            <div className="h-8 w-40 animate-pulse rounded bg-muted" />
+    <GlassCard title="Minha Comissão do Mês">
+      {isLoading ? (
+        <Skeleton lines={2} />
+      ) : (
+        <div className="space-y-3">
+          <div className="flex justify-between gap-2 text-sm">
+            <span style={{ color: "var(--np-text-secondary)" }}>Total em serviços:</span>
+            <span className="np-num font-medium" style={{ color: "var(--np-text-primary)" }}>{formatCurrency(data?.totalServices ?? 0)}</span>
           </div>
-        ) : (
-          <>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Total em serviços:</span>
-              <span className="font-medium">{formatCurrency(data?.totalServices ?? 0)}</span>
+          <div className="flex justify-between gap-2 text-sm">
+            <span style={{ color: "var(--np-text-secondary)" }}>Serviços realizados:</span>
+            <span className="np-num font-medium" style={{ color: "var(--np-text-primary)" }}>{data?.itemCount ?? 0}</span>
+          </div>
+          <div className="pt-3" style={{ borderTop: "1px solid var(--np-divider)" }}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm font-medium" style={{ color: "var(--np-text-primary)" }}>Comissão estimada:</span>
+              <span className="np-num text-xl md:text-2xl" style={{ color: "var(--np-accent-text)" }}>
+                {formatCurrency(data?.totalCommission ?? 0)}
+              </span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Serviços realizados:</span>
-              <span className="font-medium">{data?.itemCount ?? 0}</span>
-            </div>
-            <div className="border-t pt-3">
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-sm">Comissão estimada:</span>
-                <span className="text-xl md:text-2xl font-bold text-primary">
-                  {formatCurrency(data?.totalCommission ?? 0)}
-                </span>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              className="w-full gap-2 mt-2"
-              onClick={() => navigate("/comissoes")}
-            >
-              <DollarSign className="h-4 w-4" />
-              Ver Relatório Completo
-            </Button>
-          </>
-        )}
-      </CardContent>
-    </Card>
+          </div>
+          <Button
+            variant="secondary"
+            icon={DollarSign}
+            block
+            className="mt-2"
+            onClick={() => navigate("/comissoes")}
+          >
+            Ver Relatório Completo
+          </Button>
+        </div>
+      )}
+    </GlassCard>
   );
 }

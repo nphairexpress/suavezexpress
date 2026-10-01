@@ -1,16 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/lib/dynamicSupabaseClient";
+import { Button, GlassCard, Icon, PasswordInput, npAssets } from "@design-system";
 
 export default function AuthNovaSenha() {
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -48,125 +44,55 @@ export default function AuthNovaSenha() {
   const hasRecoverySession = recoveryMode && !!session;
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-primary/90 to-primary/70 relative overflow-hidden">
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 320" className="w-full">
-            <path
-              fill="rgba(255,255,255,0.1)"
-              d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-            />
-          </svg>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 320" className="w-full translate-y-10">
-            <path
-              fill="rgba(255,255,255,0.05)"
-              d="M0,64L48,80C96,96,192,128,288,128C384,128,480,96,576,90.7C672,85,768,107,864,128C960,149,1056,171,1152,165.3C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-            />
-          </svg>
-        </div>
+    <div className="np-app np-bg np-auth">
+      <GlassCard tone="strong" radius="xl" padding={32} className="np-auth__card">
+        <span className="np-logo-chip np-auth__logo">
+          <img src={npAssets.logo} alt="NP Hair Express" />
+        </span>
 
-        <div className="flex flex-col items-center justify-center w-full p-12 text-white z-10">
-          <div className="mb-8">
-            <div className="flex items-center gap-1 text-white/90">
-              <span className="text-4xl">⌐</span>
-              <h1 className="text-5xl font-bold">Bem-vindo.</h1>
-              <span className="text-4xl">⌐</span>
-            </div>
+        {authLoading ? (
+          <div className="np-auth__spin" aria-busy="true" aria-label="Carregando">
+            <Icon name="loader-circle" size={32} className="np-spin" />
           </div>
-          <p className="text-center text-lg text-white/80 max-w-md">
-            Feito para impulsionar negócios de beleza e bem-estar,
-            conectamos tecnologia e conhecimento especializado
-            para cuidar do seu negócio de forma completa.
-          </p>
-        </div>
-      </div>
+        ) : !hasRecoverySession ? (
+          <>
+            <h2 className="np-display">Link inválido ou expirado</h2>
+            <p>Peça um novo link em "Esqueci minha senha" na tela de entrada.</p>
+            <Button block size="lg" onClick={() => navigate("/auth", { replace: true })}>
+              Ir para a tela de entrada
+            </Button>
+          </>
+        ) : (
+          <>
+            <h2 className="np-display">Nova senha</h2>
+            <p>Digite a nova senha para acessar o sistema</p>
 
-      {/* Right side - Form */}
-      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 bg-background">
-        <div className="w-full max-w-md">
-          <div className="flex justify-center mb-8">
-            <div className="flex items-center gap-2">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-2xl">
-                S
-              </div>
-              <span className="text-2xl font-bold text-primary">Salão CRM</span>
-            </div>
-          </div>
-
-          {authLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-            </div>
-          ) : !hasRecoverySession ? (
-            <>
-              <h2 className="text-2xl font-bold mb-2">Link inválido ou expirado</h2>
-              <p className="text-muted-foreground mb-8">
-                Peça um novo link em "Esqueci minha senha" na tela de entrada.
-              </p>
-              <Button className="w-full h-12 text-base" onClick={() => navigate("/auth", { replace: true })}>
-                Ir para a tela de entrada
+            <form onSubmit={handleSubmit} noValidate className="np-auth__form">
+              <PasswordInput
+                id="password"
+                label="Nova senha"
+                placeholder="Mínimo 8 caracteres"
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                error={errors.password}
+              />
+              <PasswordInput
+                id="confirm"
+                label="Confirmar nova senha"
+                placeholder="Repita a nova senha"
+                autoComplete="new-password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                error={errors.confirm}
+              />
+              <Button type="submit" block size="lg" loading={loading}>
+                {loading ? "Salvando..." : "Salvar nova senha"}
               </Button>
-            </>
-          ) : (
-            <>
-              <h2 className="text-2xl font-bold mb-2">Nova senha</h2>
-              <p className="text-muted-foreground mb-8">
-                Digite a nova senha para acessar o sistema
-              </p>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="password">Nova senha</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Mínimo 8 caracteres"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="h-12 pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                    </button>
-                  </div>
-                  {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirm">Confirmar nova senha</Label>
-                  <Input
-                    id="confirm"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Repita a nova senha"
-                    value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
-                    className="h-12"
-                  />
-                  {errors.confirm && <p className="text-sm text-destructive">{errors.confirm}</p>}
-                </div>
-
-                <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
-                  {loading ? "Salvando..." : "Salvar nova senha"}
-                </Button>
-              </form>
-            </>
-          )}
-
-          <div className="mt-8 text-center">
-            <p className="text-xs text-muted-foreground">
-              © 2026 Salão CRM • Todos os direitos reservados
-            </p>
-          </div>
-        </div>
-      </div>
+            </form>
+          </>
+        )}
+      </GlassCard>
     </div>
   );
 }

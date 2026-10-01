@@ -1,6 +1,5 @@
 // @ts-nocheck
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { GlassCard, EmptyState } from "@design-system";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { useQuery } from "@tanstack/react-query";
@@ -66,39 +65,39 @@ export function TopServices() {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">Serviços Mais Vendidos</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {services.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">
-            Nenhum serviço vendido nos últimos 30 dias
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {services.map((service, index) => (
-              <div key={service.name} className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
-                      {index + 1}
-                    </span>
-                    <span className="font-medium">{service.name}</span>
-                  </div>
-                  <span className="text-muted-foreground">{service.count} vendas</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Progress value={service.percentage} className="h-2" />
-                  <span className="text-sm font-medium min-w-[80px] text-right">
-                    R$ {service.revenue.toLocaleString("pt-BR")}
+    <GlassCard title="Serviços Mais Vendidos">
+      {services.length === 0 ? (
+        <EmptyState icon="scissors" title="Nenhum serviço vendido nos últimos 30 dias" />
+      ) : (
+        <div className="space-y-4">
+          {services.map((service, index) => (
+            <div key={service.name} className="space-y-2">
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span
+                    className="np-num flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs"
+                    style={{ background: "var(--np-accent-soft)", color: "var(--np-accent-text)" }}
+                  >
+                    {index + 1}
                   </span>
+                  <span className="truncate font-medium" style={{ color: "var(--np-text-primary)" }}>{service.name}</span>
                 </div>
+                <span className="shrink-0" style={{ color: "var(--np-text-secondary)" }}>
+                  <span className="np-num">{service.count}</span> vendas
+                </span>
               </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              <div className="flex items-center gap-3">
+                <div className="np-progress flex-1" role="progressbar" aria-valuenow={service.percentage} aria-valuemin={0} aria-valuemax={100}>
+                  <span style={{ width: `${service.percentage}%` }} />
+                </div>
+                <span className="np-num min-w-[80px] text-right text-sm font-medium" style={{ color: "var(--np-text-primary)" }}>
+                  R$ {service.revenue.toLocaleString("pt-BR")}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </GlassCard>
   );
 }
