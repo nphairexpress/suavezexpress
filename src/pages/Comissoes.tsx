@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
 import { calculateItemCardFee as calcItemCardFee } from "@/lib/commissionFees";
+import { resolveCommissionPercent, effectiveProfessionalId, type CommissionPercentSource } from "@/lib/commissionPercent";
+import { useProfClientCommissionMap } from "@/hooks/useProfessionalClientCommissions";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
 import { Sensitive } from "@/components/common/SensitiveData";
 import { PageHeader, StatCard, Badge as DsBadge, EmptyState } from "@design-system";
@@ -51,6 +53,7 @@ interface CommissionItem {
   cardFee: number;
   netValue: number;
   commissionPercent: number;
+  commissionSource: CommissionPercentSource;
   commissionValue: number;
   serviceId: string | null;
   quantity: number;
@@ -128,6 +131,10 @@ export default function Comissoes() {
     return map;
   }, [profServiceCommissions]);
 
+  // Regra por par (profissional, cliente), acima do par profissional/serviço (05/10/2026).
+  // Tabela ausente = mapa vazio: a tela segue com a regra de antes.
+  const { map: profClientCommMap } = useProfClientCommissionMap();
+
   // Create client map for quick lookup
   const clientMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -174,30 +181,25 @@ export default function Comissoes() {
       const comandaItems = comanda.items || [];
 
       comandaItems.forEach(item => {
-        const profId = item.professional_id || comanda.professional_id;
+        const profId = effectiveProfessionalId(item.professional_id, comanda.professional_id);
         if (profId !== selectedProfessional) return;
 
-        // Get service info and commission percent
-        // Priority: package_commission > professional_service_commissions > services.commission_percent > professionals.commission_percent
+        // Percentual: cascata única em src/lib/commissionPercent.ts
+        // (pacote > cliente > profissional/serviço > serviço > profissional)
         let serviceName = item.description || "Serviço";
-        let commissionPercent = selectedProf.commission_percent || 0;
-
-        // Package items use package_commission_percent from the professional
-        if (item.item_type === "package") {
-          commissionPercent = selectedProf.package_commission_percent || commissionPercent;
-        } else if (item.service_id && serviceMap.has(item.service_id)) {
-          const serviceInfo = serviceMap.get(item.service_id)!;
-          serviceName = serviceInfo.name;
-          commissionPercent = serviceInfo.commission_percent || commissionPercent;
+        if (item.item_type !== "package" && item.service_id && serviceMap.has(item.service_id)) {
+          serviceName = serviceMap.get(item.service_id)!.name;
         }
-
-        // Override with per-professional per-service commission if configured (not for packages)
-        if (item.item_type !== "package" && item.service_id && profId) {
-          const profCommKey = `${profId}:${item.service_id}`;
-          if (profServiceCommMap.has(profCommKey)) {
-            commissionPercent = profServiceCommMap.get(profCommKey)!;
-          }
-        }
+        const { percent: commissionPercent, source: commissionSource } = resolveCommissionPercent({
+          itemType: item.item_type,
+          serviceId: item.service_id,
+          professionalId: profId,
+          clientId: comanda.client_id,
+          professional: selectedProf,
+          servicePercent: item.service_id ? serviceMap.get(item.service_id)?.commission_percent : undefined,
+          profServicePercents: profServiceCommMap,
+          profClientPercents: profClientCommMap,
+        });
 
         const serviceValue = item.total_price || 0;
         const productCost = commissionSettings.service_cost_enabled ? (item.product_cost || 0) : 0;
@@ -246,6 +248,7 @@ export default function Comissoes() {
           cardFee,
           netValue,
           commissionPercent,
+          commissionSource,
           commissionValue,
           serviceId: item.service_id,
           quantity: item.quantity || 1,
@@ -255,7 +258,7 @@ export default function Comissoes() {
     });
 
     return items;
-  }, [selectedProfessional, filteredComandas, professionals, serviceMap, clientMap, profServiceCommMap, commissionSettings]);
+  }, [selectedProfessional, filteredComandas, professionals, serviceMap, clientMap, profServiceCommMap, profClientCommMap, commissionSettings]);
 
   // Busca na lista do profissional selecionado (comanda, cliente/serviço, valor)
   const [detailSearch, setDetailSearch] = useState("");
@@ -423,26 +426,23 @@ export default function Comissoes() {
       const items = comanda.items || [];
 
       items.forEach(item => {
-        const profId = item.professional_id || comanda.professional_id;
+        const profId = effectiveProfessionalId(item.professional_id, comanda.professional_id);
         if (!profId) return;
 
         const profData = commissionMap.get(profId);
         if (!profData) return;
 
-        // Priority: package_commission > professional_service_commissions > services.commission_percent > professionals.commission_percent
-        let commissionPercent = profData.professional.commission_percent || 0;
-
-        if (item.item_type === "package") {
-          commissionPercent = profData.professional.package_commission_percent || commissionPercent;
-        } else if (item.service_id && serviceMap.has(item.service_id)) {
-          commissionPercent = serviceMap.get(item.service_id)?.commission_percent || commissionPercent;
-        }
-        if (item.item_type !== "package" && item.service_id && profId) {
-          const profCommKey = `${profId}:${item.service_id}`;
-          if (profServiceCommMap.has(profCommKey)) {
-            commissionPercent = profServiceCommMap.get(profCommKey)!;
-          }
-        }
+        // Mesma cascata do detalhe (src/lib/commissionPercent.ts)
+        const { percent: commissionPercent } = resolveCommissionPercent({
+          itemType: item.item_type,
+          serviceId: item.service_id,
+          professionalId: profId,
+          clientId: comanda.client_id,
+          professional: profData.professional,
+          servicePercent: item.service_id ? serviceMap.get(item.service_id)?.commission_percent : undefined,
+          profServicePercents: profServiceCommMap,
+          profClientPercents: profClientCommMap,
+        });
 
         const itemTotal = item.total_price || 0;
         const productCost = commissionSettings.service_cost_enabled ? (item.product_cost || 0) : 0;
@@ -482,7 +482,7 @@ export default function Comissoes() {
     return Array.from(commissionMap.values()).filter(
       c => c.itemCount > 0 || adjustmentsByProf.has(c.professional.id)
     );
-  }, [professionals, filteredComandas, serviceMap, profServiceCommMap, commissionSettings, adjustmentsByProf]);
+  }, [professionals, filteredComandas, serviceMap, profServiceCommMap, profClientCommMap, commissionSettings, adjustmentsByProf]);
 
   // Seleção de profissionais (ticar) na lista geral
   const [selectedProfs, setSelectedProfs] = useState<Set<string>>(new Set());
@@ -565,7 +565,7 @@ export default function Comissoes() {
         item.productCost > 0 ? `-${formatCurrency(item.productCost)}` : "-",
         item.cardFee > 0 ? `-${formatCurrency(item.cardFee)}` : "-",
         formatCurrency(item.netValue),
-        `${item.commissionPercent}%`,
+        item.commissionSource === "cliente" ? `${item.commissionPercent}% (cliente)` : `${item.commissionPercent}%`,
         formatCurrency(item.commissionValue),
       ]),
       styles: { fontSize: 8, cellPadding: 2 },
@@ -871,7 +871,11 @@ export default function Comissoes() {
                             <TableCell className="text-right tabular-nums whitespace-nowrap">{formatCurrency(item.netValue)}</TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-2">
-                                <Badge variant="secondary" className="tabular-nums">{item.commissionPercent}%</Badge>
+                                {item.commissionSource === "cliente" ? (
+                                  <DsBadge tone="accent" className="tabular-nums whitespace-nowrap">cliente {item.commissionPercent}%</DsBadge>
+                                ) : (
+                                  <Badge variant="secondary" className="tabular-nums">{item.commissionPercent}%</Badge>
+                                )}
                                 <span className="font-semibold tabular-nums whitespace-nowrap text-[color:var(--np-accent-text)]">{formatCurrency(item.commissionValue)}</span>
                               </div>
                             </TableCell>
@@ -940,6 +944,9 @@ export default function Comissoes() {
                                 <p className="text-[color:var(--np-accent-text)] font-semibold">
                                   Comissão: {formatCurrency(item.commissionValue)} ({item.commissionPercent}%)
                                 </p>
+                                {item.commissionSource === "cliente" && (
+                                  <DsBadge tone="accent" className="tabular-nums">cliente {item.commissionPercent}%</DsBadge>
+                                )}
                               </div>
                             ))}
                           </div>

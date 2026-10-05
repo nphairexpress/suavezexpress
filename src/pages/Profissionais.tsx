@@ -29,6 +29,7 @@ import { useProfessionalBankDetails, BankDetailsInput } from "@/hooks/useProfess
 import { useProfessionalCommissionRules, CommissionRulesInput } from "@/hooks/useProfessionalCommissionRules";
 import { useAccessLevels } from "@/hooks/useAccessLevels";
 import { ProfessionalCommissionsTab } from "@/components/professionals/ProfessionalCommissionsTab";
+import { ProfessionalClientCommissionsSection } from "@/components/professionals/ProfessionalClientCommissionsSection";
 import { AvatarUpload } from "@/components/shared/AvatarUpload";
 import { useCepLookup } from "@/hooks/useCepLookup";
 import { useAuth } from "@/contexts/AuthContext";
@@ -763,6 +764,7 @@ function ProfessionalForm({ professional, onRequestDelete }: { professional: Pro
                 updateProfessional({ id: professional.id, package_commission_percent: value } as any);
               }}
             />
+            <ProfessionalClientCommissionsSection professionalId={professional.id} />
           </AccordionContent>
         </AccordionItem>
 

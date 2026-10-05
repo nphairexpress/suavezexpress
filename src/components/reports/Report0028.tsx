@@ -12,6 +12,8 @@ import { ptBR } from "date-fns/locale";
 import { EmptyState } from "@design-system";
 import { exportToExcel } from "./utils/exportExcel";
 import { NUM, ReportLoading, ReportTitle, TOTAL_ROW } from "./ReportKit";
+import { resolveCommissionPercent, effectiveProfessionalId, profServiceKey } from "@/lib/commissionPercent";
+import { useProfClientCommissionMap } from "@/hooks/useProfessionalClientCommissions";
 
 interface Props {
   dateRange: { from: Date; to: Date };
@@ -24,12 +26,30 @@ export function Report0028({ dateRange }: Props) {
     queryKey: ["report-0028-profs", salonId],
     queryFn: async () => {
       if (!salonId) return [];
-      const { data, error } = await supabase.from("professionals").select("id, name").eq("salon_id", salonId).order("name");
+      const { data, error } = await supabase.from("professionals").select("id, name, commission_percent, package_commission_percent").eq("salon_id", salonId).order("name");
       if (error) throw error;
       return data || [];
     },
     enabled: !!salonId,
   });
+
+  // Mesma cascata da tela de Comissões (src/lib/commissionPercent.ts)
+  const { data: profServiceRows = [] } = useQuery({
+    queryKey: ["report-0028-psc", salonId],
+    queryFn: async () => {
+      if (!salonId) return [];
+      const { data, error } = await supabase.from("professional_service_commissions").select("professional_id, service_id, commission_percent");
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!salonId,
+  });
+  const profServiceMap = useMemo(() => {
+    const m = new Map<string, number>();
+    profServiceRows.forEach((c: any) => m.set(profServiceKey(c.professional_id, c.service_id), c.commission_percent));
+    return m;
+  }, [profServiceRows]);
+  const { map: profClientMap } = useProfClientCommissionMap();
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["report-0028-items", salonId, dateRange.from, dateRange.to],
@@ -37,7 +57,7 @@ export function Report0028({ dateRange }: Props) {
       if (!salonId) return [];
       const { data, error } = await supabase
         .from("comanda_items")
-        .select("id, description, professional_id, quantity, unit_price, total_price, item_type, service_id, services(commission_percent), comandas!inner(id, salon_id, created_at, closed_at)")
+        .select("id, description, professional_id, quantity, unit_price, total_price, item_type, service_id, services(commission_percent), comandas!inner(id, salon_id, created_at, closed_at, client_id, professional_id)")
         .eq("comandas.salon_id", salonId)
         .gte("comandas.created_at", format(dateRange.from, "yyyy-MM-dd"))
         .lte("comandas.created_at", format(dateRange.to, "yyyy-MM-dd") + "T23:59:59")
@@ -56,7 +76,17 @@ export function Report0028({ dateRange }: Props) {
       const prof = professionals.find(p => p.id === pid);
       if (!profMap[pid]) profMap[pid] = { profName: prof?.name || "Não atribuído", items: [] };
 
-      const commissionPercent = item.services?.commission_percent || 0;
+      const effProfId = effectiveProfessionalId(item.professional_id, item.comandas?.professional_id);
+      const { percent: commissionPercent } = resolveCommissionPercent({
+        itemType: item.item_type,
+        serviceId: item.service_id,
+        professionalId: effProfId,
+        clientId: item.comandas?.client_id,
+        professional: professionals.find(p => p.id === effProfId),
+        servicePercent: item.services?.commission_percent,
+        profServicePercents: profServiceMap,
+        profClientPercents: profClientMap,
+      });
       const commission = (Number(item.total_price || 0) * commissionPercent) / 100;
 
       profMap[pid].items.push({
@@ -79,7 +109,7 @@ export function Report0028({ dateRange }: Props) {
       }))
       .filter(p => p.totalCommission > 0)
       .sort((a, b) => b.totalCommission - a.totalCommission);
-  }, [items, professionals]);
+  }, [items, professionals, profServiceMap, profClientMap]);
 
   const handleExport = () => {
     const exportRows: any[] = [];

@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { useServices } from "@/hooks/useServices";
 import { useCommissionSettings } from "@/hooks/useCommissionSettings";
 import { useMemo } from "react";
+import { resolveCommissionPercent, profServiceKey } from "@/lib/commissionPercent";
+import { useProfClientCommissionMap } from "@/hooks/useProfessionalClientCommissions";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -46,12 +48,15 @@ export function ProfessionalCommissionSummary({ professionalId, commissionPercen
 
   const profCommMap = useMemo(() => {
     const map = new Map<string, number>();
-    (profServiceCommissions ?? []).forEach(c => map.set(c.service_id, c.commission_percent));
+    (profServiceCommissions ?? []).forEach(c => map.set(profServiceKey(professionalId, c.service_id), c.commission_percent));
     return map;
-  }, [profServiceCommissions]);
+  }, [profServiceCommissions, professionalId]);
+
+  // Regra por par (profissional, cliente), acima do par profissional/serviço (05/10/2026)
+  const { map: profClientMap } = useProfClientCommissionMap(professionalId, !!professionalId);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["dashboard-commission-summary", salonId, professionalId, profCommMap.size, commissionSettings.service_cost_enabled, commissionSettings.product_cost_deduction],
+    queryKey: ["dashboard-commission-summary", salonId, professionalId, profCommMap.size, profClientMap.size, commissionSettings.service_cost_enabled, commissionSettings.product_cost_deduction],
     queryFn: async () => {
       if (!salonId || !professionalId) return null;
 
@@ -62,7 +67,7 @@ export function ProfessionalCommissionSummary({ professionalId, commissionPercen
       // Get comanda items for this professional this month
       const { data: items } = await supabase
         .from("comanda_items")
-        .select("total_price, product_cost, service_id, comanda_id")
+        .select("total_price, product_cost, service_id, comanda_id, item_type")
         .eq("professional_id", professionalId)
         .gte("created_at", monthStart)
         .lt("created_at", monthEnd);
@@ -75,7 +80,7 @@ export function ProfessionalCommissionSummary({ professionalId, commissionPercen
       const comandaIds = [...new Set(items.map(i => i.comanda_id))];
       const { data: comandas } = await supabase
         .from("comandas")
-        .select("id, total, payments")
+        .select("id, total, payments, client_id")
         .in("id", comandaIds);
 
       const comandaMap = new Map(comandas?.map(c => [c.id, c]) ?? []);
@@ -99,14 +104,17 @@ export function ProfessionalCommissionSummary({ professionalId, commissionPercen
           }
         }
 
-        // Priority: professional_service_commissions > services.commission_percent > professionals.commission_percent
-        let itemCommissionPercent = commissionPercent;
-        if (item.service_id && serviceMap.has(item.service_id)) {
-          itemCommissionPercent = serviceMap.get(item.service_id)! || itemCommissionPercent;
-        }
-        if (item.service_id && profCommMap.has(item.service_id)) {
-          itemCommissionPercent = profCommMap.get(item.service_id)!;
-        }
+        // Cascata única (src/lib/commissionPercent.ts): cliente > profissional/serviço > serviço > profissional
+        const { percent: itemCommissionPercent } = resolveCommissionPercent({
+          itemType: item.item_type,
+          serviceId: item.service_id,
+          professionalId,
+          clientId: comanda?.client_id,
+          professional: { commission_percent: commissionPercent },
+          servicePercent: item.service_id ? serviceMap.get(item.service_id) : undefined,
+          profServicePercents: profCommMap,
+          profClientPercents: profClientMap,
+        });
 
         let commission: number;
         if (commissionSettings.product_cost_deduction === "after_commission") {
