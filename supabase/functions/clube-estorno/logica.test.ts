@@ -14,9 +14,12 @@ const HASH = await gerarHashSenha(SENHA, 100_000);
 
 type Chamada = { metodo: string; caminho: string };
 
-function cenario(opts: { permitido?: boolean; papel?: string; erradas?: string[]; asaasFalha?: boolean; salao?: string | null } = {}) {
+function cenario(opts: { permitido?: boolean; papel?: string; asaasFalha?: boolean; salao?: string | null } = {}) {
   const chamadas: Chamada[] = [];
-  const registros: (Registro & { id: string })[] = [];
+  const registros: (Registro & { id: string; criado_em: string })[] = [];
+  const contagem = { hash: 0 };
+  // cede a vez como um banco de verdade, para chamadas paralelas se intercalarem
+  const pausa = () => new Promise((r) => setTimeout(r, Math.random() * 5));
   const rpcs: { nome: string; args: Record<string, unknown> }[] = [];
   const assinantes: Record<string, Assinante> = {
     [ASS_A]: { id: ASS_A, nome: "Francine Frare", celular: "11900008495", asaas_customer_id: "cus_A", asaas_subscription_id: "sub_aaaaaaaa", status: "ativo", cancelada_em: null },
@@ -36,7 +39,6 @@ function cenario(opts: { permitido?: boolean; papel?: string; erradas?: string[]
   };
   let hash: string | null = HASH;
   let n = 0;
-  const erradasIniciais = [...(opts.erradas ?? [])];
 
   const deps: Deps = {
     autenticar: async (req) => {
@@ -47,9 +49,12 @@ function cenario(opts: { permitido?: boolean; papel?: string; erradas?: string[]
     },
     salaoUnico: () => (opts.salao === undefined ? SALAO : opts.salao),
     pode: async (uid) => opts.permitido ?? uid === ADMIN,
-    senhasErradas: async (uid, limite) =>
-      [...registros.filter((r) => r.user_id === uid && r.resultado === "senha_incorreta").map(() => new Date().toISOString()).reverse(), ...erradasIniciais].slice(0, limite),
-    hashSenha: async () => hash,
+    tentativasSenha: async (uid, limite) => {
+      await pausa();
+      return registros.filter((r) => r.user_id === uid && ["senha_incorreta", "tentativa_senha"].includes(r.resultado))
+        .map((r) => ({ id: r.id, criado_em: r.criado_em })).reverse().slice(0, limite);
+    },
+    hashSenha: async () => { contagem.hash++; return hash; },
     gravarHash: async (_s, h) => { hash = h; },
     chaveAsaas: async () => "chave-falsa",
     assinante: async (id) => assinantes[id] ?? null,
@@ -58,9 +63,10 @@ function cenario(opts: { permitido?: boolean; papel?: string; erradas?: string[]
     existeRegistro: async (tipo, alvo, resultado) => registros.some((r) => r.tipo === tipo && r.alvo === alvo && r.resultado === resultado),
     expirarEmAndamento: async () => {},
     registrar: async (r) => {
+      await pausa();
       if (r.resultado === "em_andamento" && registros.some((x) => x.tipo === r.tipo && x.alvo === r.alvo && ["em_andamento", "sucesso"].includes(x.resultado))) return null;
       const id = `r${++n}`;
-      registros.push({ ...r, id });
+      registros.push({ ...r, id, criado_em: new Date().toISOString() });
       return id;
     },
     atualizarRegistro: async (id, patch) => { Object.assign(registros.find((r) => r.id === id)!, patch); },
@@ -104,7 +110,7 @@ function cenario(opts: { permitido?: boolean; papel?: string; erradas?: string[]
   };
   const req = (body: unknown, token = "admin") =>
     new Request("http://x/clube-estorno", { method: "POST", headers: { authorization: `Bearer ${token}` }, body: JSON.stringify(body) });
-  return { handler: criarHandler(deps), req, chamadas, registros, rpcs, ciclos, pagamentos, assinaturas };
+  return { handler: criarHandler(deps), req, chamadas, registros, rpcs, ciclos, pagamentos, assinaturas, contagem, deps };
 }
 
 const estorno = (over: Record<string, unknown> = {}) => ({
@@ -301,4 +307,48 @@ Deno.test("salão: sem NPHAIR_EXPRESS_SALON_ID ou usuário de outro salão = rec
   assertEquals((await t2.handler(t2.req({ acao: "listar", assinante_id: ASS_B }))).status, 403);
   assertEquals(t.chamadas.length + t2.chamadas.length, 0);
   assertEquals(t.registros.length + t2.registros.length, 0);
+});
+
+Deno.test("corrida: 10 chamadas paralelas com senha errada, no máximo 5 chegam à conferência e nenhuma ao Asaas", async () => {
+  const t = cenario();
+  const rs = await Promise.all(Array.from({ length: 10 }, () => t.handler(t.req(estorno({ senha: "errada" })))));
+  const st = rs.map((r) => r.status);
+  assert(t.contagem.hash <= 5, `conferências: ${t.contagem.hash}`);
+  assertEquals(st.filter((x) => x === 422).length, t.contagem.hash);
+  assertEquals(st.filter((x) => x === 429).length, 10 - t.contagem.hash);
+  assertEquals(t.chamadas.length, 0);
+  assertEquals(t.rpcs.length, 0);
+  // e depois disso nem a senha certa passa
+  const certa = await t.handler(t.req(estorno()));
+  assertEquals(certa.status, 429);
+  assertEquals(t.chamadas.length, 0);
+  console.log(`  conferências de hash: ${t.contagem.hash} de 10; status: ${st.join(",")}`);
+});
+
+Deno.test("tentativa largada em aberto (queda da função) conta como errada", async () => {
+  const t = cenario();
+  for (let i = 0; i < 5; i++) {
+    await t.handler(t.req(estorno({ senha: "errada" })));
+  }
+  // vira 4 erradas + 1 reserva em aberto
+  t.registros.filter((r) => r.resultado === "senha_incorreta").at(-1)!.resultado = "tentativa_senha";
+  const r = await t.handler(t.req(estorno()));
+  assertEquals(r.status, 429);
+  assertEquals(t.contagem.hash, 5);
+});
+
+Deno.test("sem permissão com assinante inexistente: falha de FK no registro não derruba a função", async () => {
+  const t = cenario({ permitido: false });
+  const gravados: Registro[] = [];
+  const h = criarHandler({
+    ...t.deps,
+    registrar: async (r) => {
+      if (r.assinante_id) throw new Error("registro falhou (23503)");
+      gravados.push(r);
+      return "r1";
+    },
+  });
+  const r = await h(t.req(estorno({ assinante_id: "99999999-9999-4999-8999-999999999999" }), "recep"));
+  assertEquals(r.status, 403);
+  assertEquals(gravados.map((g) => [g.resultado, g.assinante_id ?? null]), [["sem_permissao", null]]);
 });

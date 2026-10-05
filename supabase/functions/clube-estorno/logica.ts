@@ -67,8 +67,9 @@ export interface Deps {
   /** NPHAIR_EXPRESS_SALON_ID: o único salão deste projeto (null = não configurado → falha fechada) */
   salaoUnico(): string | null;
   pode(userId: string, chave: string): Promise<boolean>;
-  /** horários (ISO) das últimas senhas erradas do usuário, da mais nova para a mais velha */
-  senhasErradas(userId: string, limite: number): Promise<string[]>;
+  /** tentativas de senha do usuário que contam no limite (senha_incorreta + tentativa_senha ainda em aberto),
+   *  da mais nova para a mais velha */
+  tentativasSenha(userId: string, limite: number): Promise<{ id: string; criado_em: string }[]>;
   hashSenha(salonId: string): Promise<string | null>;
   gravarHash(salonId: string, hash: string): Promise<void>;
   chaveAsaas(salonId: string): Promise<string | null>;
@@ -213,7 +214,7 @@ export function criarHandler(deps: Deps) {
         await deps.registrar({
           salon_id: salonId, user_id: userId, origem: "botao", tipo: acao === "estornar" ? "estorno" : "cancelamento",
           resultado: "sem_permissao", assinante_id: ID_UUID.test(assinanteId) ? assinanteId : null,
-        });
+        }).catch(() => deps.registrar({ salon_id: salonId, user_id: userId, origem: "botao", tipo: acao === "estornar" ? "estorno" : "cancelamento", resultado: "sem_permissao" }));
       }
       return erro("Você não tem permissão para estornar ou cancelar assinaturas do Clube.", 403);
     }
@@ -232,22 +233,29 @@ async function portaDaSenha(
   senha: string,
   base: { tipo: Registro["tipo"]; assinante_id?: string | null; alvo?: string | null },
 ): Promise<Response | null> {
-  const reg = (resultado: string, detalhe: Record<string, unknown> = {}) =>
-    deps.registrar({ salon_id: staff.salonId, user_id: staff.userId, origem: "botao", ...base, resultado, detalhe });
+  // Reserva a tentativa ANTES de conferir: chamadas em paralelo enxergam as reservas umas das outras, então
+  // no máximo MAX_ERRADAS chegam à conferência do hash. Reserva largada por queda da função conta como errada
+  // enquanto estiver na janela.
+  const tentativaId = await deps.registrar({
+    salon_id: staff.salonId, user_id: staff.userId, origem: "botao", ...base, resultado: "tentativa_senha",
+  });
+  if (!tentativaId) throw new Error("reserva de tentativa não gravada");
+  const fechar = (resultado: string) => deps.atualizarRegistro(tentativaId, { resultado });
 
-  const erradas = await deps.senhasErradas(staff.userId, MAX_ERRADAS);
-  const bloq = avaliarBloqueio(erradas, deps.agora());
+  const anteriores = (await deps.tentativasSenha(staff.userId, MAX_ERRADAS + 1))
+    .filter((t) => t.id !== tentativaId).slice(0, MAX_ERRADAS).map((t) => t.criado_em);
+  const bloq = avaliarBloqueio(anteriores, deps.agora());
   if (bloq.bloqueado) {
-    await reg("bloqueado_tentativas");
+    await fechar("bloqueado_tentativas");
     return erro(`Muitas tentativas com senha errada. Tente de novo às ${horaSP(bloq.ate!)}.`, 429);
   }
   const hash = await deps.hashSenha(staff.salonId);
   if (!hash) {
-    await reg("sem_senha_cadastrada");
+    await fechar("sem_senha_cadastrada");
     return erro("A senha de autorização ainda não foi cadastrada. Fale com o administrador.", 409);
   }
   if (!(await conferirSenha(senha, hash))) {
-    await reg("senha_incorreta");
+    await fechar("senha_incorreta");
     const restam = bloq.restam - 1;
     return erro(
       restam > 0
@@ -256,6 +264,7 @@ async function portaDaSenha(
       422,
     );
   }
+  await fechar("senha_ok");
   return null;
 }
 

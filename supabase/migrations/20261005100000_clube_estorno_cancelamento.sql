@@ -14,6 +14,7 @@
 --   c. clube_creditos.estornado_em e clube_assinantes.cancelada_em (colunas novas, nulas).
 --   d. Tabela clube_estornos: registro de cada operação e de cada tentativa (inclusive senha errada, base do
 --      limite de tentativas). Leitura só para quem tem a permissão; escrita só service_role.
+--      Cada conferência de senha reserva antes uma linha 'tentativa_senha' (vira senha_ok/senha_incorreta).
 --      Índice único parcial = trava contra clique duplo/reenvio (um estorno "em andamento" ou "sucesso" por
 --      cobrança; idem cancelamento por assinatura).
 --   e. RPCs clube_aplicar_estorno / clube_aplicar_cancelamento (SECURITY DEFINER, só service_role,
@@ -66,7 +67,7 @@ create table if not exists public.clube_estornos (
   tipo           text not null check (tipo in ('estorno', 'cancelamento', 'troca_senha')),
   resultado      text not null check (resultado in (
                    'em_andamento', 'sucesso', 'ja_aplicado', 'aplicado_webhook',
-                   'senha_incorreta', 'bloqueado_tentativas', 'sem_senha_cadastrada', 'sem_permissao',
+                   'tentativa_senha', 'senha_ok', 'senha_incorreta', 'bloqueado_tentativas', 'sem_senha_cadastrada', 'sem_permissao',
                    'recusado', 'erro_asaas', 'erro_motor', 'interrompido')),
   assinante_id   uuid references public.clube_assinantes(id) on delete set null,
   alvo           text,                       -- pay_… (estorno) ou sub_… (cancelamento)
@@ -77,8 +78,10 @@ create table if not exists public.clube_estornos (
 comment on table public.clube_estornos is
   '05/10/2026: cada estorno/cancelamento do Clube e cada tentativa (senha errada inclusive). Escrita só service_role (edge clube-estorno e RPCs).';
 
+-- limite de tentativas: a edge grava 'tentativa_senha' ANTES de conferir o hash e conta erradas + em aberto
+-- (reserva largada por queda conta como errada enquanto estiver na janela de 15 min)
 create index if not exists clube_estornos_senha_errada_idx
-  on public.clube_estornos (user_id, criado_em desc) where resultado = 'senha_incorreta';
+  on public.clube_estornos (user_id, criado_em desc) where resultado in ('senha_incorreta', 'tentativa_senha');
 create index if not exists clube_estornos_salon_idx on public.clube_estornos (salon_id, criado_em desc);
 -- trava de clique duplo/reenvio: no máximo um em andamento ou concluído por cobrança/assinatura
 create unique index if not exists clube_estornos_alvo_uidx

@@ -26,11 +26,12 @@ const deps: Deps = {
     const { data, error } = await supa.rpc("fn_pode", { _uid: userId, _key: chave });
     return !error && data === true;
   },
-  async senhasErradas(userId, limite) {
-    const { data } = await supa.from("clube_estornos").select("criado_em")
-      .eq("user_id", userId).eq("resultado", "senha_incorreta")
+  async tentativasSenha(userId, limite) {
+    const { data, error } = await supa.from("clube_estornos").select("id, criado_em")
+      .eq("user_id", userId).in("resultado", ["senha_incorreta", "tentativa_senha"])
       .order("criado_em", { ascending: false }).limit(limite);
-    return (data ?? []).map((r: { criado_em: string }) => r.criado_em);
+    if (error) throw new Error("contagem de tentativas falhou");
+    return data ?? [];
   },
   async hashSenha(salonId) {
     const { data } = await supa.from("salon_secrets").select("senha_estorno_hash").eq("salon_id", salonId).maybeSingle();

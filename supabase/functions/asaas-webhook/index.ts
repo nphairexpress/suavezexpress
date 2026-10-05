@@ -383,10 +383,11 @@ Deno.serve(async (req) => {
   const payment = body.payment;
   if (!payment?.id) {
     // 05/10/2026: evento sem cobrança (SUBSCRIPTION_*) responde 200; 400 repetido pausa a fila de webhooks
-    // do Asaas. Assinatura removida/inativada no Asaas = cancelamento no motor (idempotente).
+    // do Asaas. Assinatura removida no Asaas = cancelamento no motor (idempotente). INACTIVATED é suspensão
+    // temporária (pode voltar): só registra, não cancela.
     let acaoSemPagamento = "ignored (sem payment)";
     const sub = body.subscription;
-    if (sub?.id && ["SUBSCRIPTION_DELETED", "SUBSCRIPTION_INACTIVATED"].includes(event)) {
+    if (sub?.id && event === "SUBSCRIPTION_DELETED") {
       const { data: canc, error: cancErr } = await supa.rpc("clube_aplicar_cancelamento", {
         p_asaas_subscription_id: sub.id, p_asaas_customer_id: sub.customer ?? null, p_restam_ativas: null,
         p_origem: "webhook", p_user_id: null,
