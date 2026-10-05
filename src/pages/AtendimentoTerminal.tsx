@@ -5,6 +5,7 @@
 // Regra de ouro: TUDO grande e fácil. Fonte graúda, botões altos, alto contraste.
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/dynamicSupabaseClient";
+import { recalcComandaTotals } from "@/lib/comandaTotals";
 import { useAuth } from "@/contexts/AuthContext";
 import { useServices } from "@/hooks/useServices";
 import { useProfessionals } from "@/hooks/useProfessionals";
@@ -100,13 +101,8 @@ export default function AtendimentoTerminal() {
   const openComanda = async (c: any) => { setSel(c); setEditId(null); await loadItems(c.id); };
   const backToList = async () => { setSel(null); setItems([]); setEditId(null); await loadComandas(); };
 
-  const recalcTotals = async (comandaId: string) => {
-    const { data, error } = await supabase.from("comanda_items").select("total_price").eq("comanda_id", comandaId);
-    if (error) throw error;
-    const subtotal = (data || []).reduce((a: number, i: any) => a + Number(i.total_price || 0), 0);
-    const { error: upErr } = await supabase.from("comandas").update({ subtotal, total: subtotal }).eq("id", comandaId);
-    if (upErr) throw upErr;
-  };
+  // total = subtotal − discount atual do banco (trigger do Clube/pacote mexe no discount)
+  const recalcTotals = (comandaId: string) => recalcComandaTotals(comandaId);
 
   const startEdit = (it: any) => {
     setEditId(it.id);

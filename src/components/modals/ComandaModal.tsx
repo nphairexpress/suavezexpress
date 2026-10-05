@@ -18,6 +18,7 @@ import { format, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useComandaItems, useComandas, ComandaItem, Comanda } from "@/hooks/useComandas";
 import { supabase } from "@/lib/dynamicSupabaseClient";
+import { recalcComandaTotals } from "@/lib/comandaTotals";
 import { sendEmail } from "@/lib/sendEmail";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -314,6 +315,24 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
   useEffect(() => {
     setLocalDiscount(Number(comanda?.discount || 0));
   }, [comanda?.id, comanda?.discount]);
+
+  // A prop `comanda` é uma cópia que não se atualiza com o modal aberto. Quando os itens mudam
+  // (lançar/remover/editar), os triggers do Clube/pacote podem ter mexido no discount do banco:
+  // relê o discount para "Total a Cobrar", "Diferença" e "Fechar sem cobrança" refletirem o real.
+  useEffect(() => {
+    if (!open || !comanda?.id) return;
+    let cancelled = false;
+    supabase
+      .from("comandas")
+      .select("discount")
+      .eq("id", comanda.id)
+      .single()
+      .then(({ data, error }) => {
+        if (cancelled || error || !data) return;
+        setLocalDiscount(Number((data as any).discount || 0));
+      });
+    return () => { cancelled = true; };
+  }, [open, comanda?.id, items]);
 
   // Load available credits (cashback ainda nao usado e nao expirado) do cliente
   useEffect(() => {
@@ -772,14 +791,8 @@ export function ComandaModal({ comanda, open, onClose, professionals, services, 
 
   const updateComandaTotals = async () => {
     if (!comanda) return;
-    const newSubtotal = editableItems.reduce((acc, item) => acc + Number(item.total_price), 0);
-    await supabase
-      .from("comandas")
-      .update({
-        subtotal: newSubtotal,
-        total: newSubtotal - (comanda.discount || 0),
-      })
-      .eq("id", comanda.id);
+    // total = subtotal − discount ATUAL do banco (a prop comanda.discount pode estar velha)
+    await recalcComandaTotals(comanda.id);
     queryClient.invalidateQueries({ queryKey: ["comandas", salonId] });
     queryClient.invalidateQueries({ queryKey: ["comanda_items", comanda.id] });
   };

@@ -21,6 +21,7 @@ import { useCaixas } from "@/hooks/useCaixas";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSalonPermissions } from "@/hooks/useSalonPermissions";
 import { supabase } from "@/lib/dynamicSupabaseClient";
+import { recalcComandaTotals } from "@/lib/comandaTotals";
 import { format, isSameDay, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -232,14 +233,8 @@ export default function Comandas() {
             total_price: servicePrice,
           });
 
-          // Update comanda totals
-          await supabase
-            .from("comandas")
-            .update({
-              subtotal: (comanda.subtotal || 0) + Number(servicePrice),
-              total: (comanda.total || 0) + Number(servicePrice),
-            })
-            .eq("id", comanda.id);
+          // Update comanda totals (total = subtotal − discount atual; trigger do Clube/pacote mexe no discount)
+          await recalcComandaTotals(comanda.id);
         } else if (existingByService && existingByService.length > 0 && 
                    (!existingByAppointment || existingByAppointment.length === 0)) {
           // Legacy item exists without source_appointment_id - update it to prevent future duplicates

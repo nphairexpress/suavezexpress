@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/dynamicSupabaseClient";
+import { recalcComandaTotals } from "@/lib/comandaTotals";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -415,22 +416,8 @@ export function useComandaItems(comandaId: string | null) {
         .single();
       if (error) throw error;
 
-      // Update comanda totals
-      const { data: allItems } = await supabase
-        .from("comanda_items")
-        .select("total_price")
-        .eq("comanda_id", input.comanda_id);
-      
-      if (allItems) {
-        const newSubtotal = allItems.reduce((acc, item) => acc + Number(item.total_price), 0);
-        await supabase
-          .from("comandas")
-          .update({
-            subtotal: newSubtotal,
-            total: newSubtotal, // Will subtract discount if exists
-          })
-          .eq("id", input.comanda_id);
-      }
+      // Update comanda totals (total = subtotal − discount atual; o trigger do Clube/pacote já mexeu no discount)
+      await recalcComandaTotals(input.comanda_id);
 
       return data;
     },
@@ -457,20 +444,8 @@ export function useComandaItems(comandaId: string | null) {
       const { error } = await supabase.from("comanda_items").delete().eq("id", itemId);
       if (error) throw error;
 
-      // Update comanda totals
-      const { data: remainingItems } = await supabase
-        .from("comanda_items")
-        .select("total_price")
-        .eq("comanda_id", cId);
-      
-      const newSubtotal = remainingItems?.reduce((acc, item) => acc + Number(item.total_price), 0) || 0;
-      await supabase
-        .from("comandas")
-        .update({
-          subtotal: newSubtotal,
-          total: newSubtotal,
-        })
-        .eq("id", cId);
+      // Update comanda totals (total = subtotal − discount atual; a devolução por trigger já mexeu no discount)
+      await recalcComandaTotals(cId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["comanda_items", comandaId] });
