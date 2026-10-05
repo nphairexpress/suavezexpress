@@ -13,6 +13,7 @@
 // Deploy: npx supabase functions deploy asaas-webhook --no-verify-jwt \
 //           --project-ref ewxiaxsmohxuabcmxuyc
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { novoStatusClube, temCicloAtivo } from "./status_clube.ts";
 
 const CLEITON_WA = "5511976847114"; // alvo dos alertas urgentes
 // Evolution precisa ser alcançável do Supabase cloud (IP interno da VPS não é).
@@ -179,11 +180,48 @@ async function handleClube(supa: any, event: string, payment: any): Promise<stri
   const def = CLUBE_PLANOS[String(Math.round(payment.value || 0))];
   if (!def) return "clube_valor_fora_dos_planos";
 
-  if (event === "PAYMENT_OVERDUE") {
-    await supa.from("clube_assinantes")
-      .update({ status: "inadimplente", updated_at: new Date().toISOString() })
-      .eq("asaas_customer_id", payment.customer);
-    return "clube_inadimplente";
+  // 05/10/2026: vencida de UMA assinatura não derruba a cliente que tem outro produto pago valendo; apagar a
+  // cobrança vencida devolve o status. Regra e testes em ./status_clube.ts.
+  if (event === "PAYMENT_OVERDUE" || event === "PAYMENT_DELETED") {
+    const { data: ass, error: assErr } = await supa.from("clube_assinantes")
+      .select("id, status, cancelada_em").eq("asaas_customer_id", payment.customer).maybeSingle();
+    if (assErr) return `clube_status_erro: ${assErr.message}`;
+    if (!ass) return "clube_sem_assinante";
+
+    const agora = new Date();
+    const { data: ciclos, error: cicErr } = await supa.from("clube_creditos")
+      .select("inicio, fim, bloqueado").eq("assinante_id", ass.id).gt("fim", agora.toISOString());
+    if (cicErr) console.error("clube: leitura de ciclos falhou:", cicErr.message);
+    const cicloAtivo = cicErr ? null : temCicloAtivo(ciclos ?? [], agora);
+
+    // Só pergunta ao Asaas quando é a única coisa que decide (inadimplente, sem ciclo ativo, cobrança apagada).
+    let restaVencida: boolean | null = null;
+    const asaasKey = Deno.env.get("ASAAS_KEY") ?? "";
+    if (event === "PAYMENT_DELETED" && ass.status === "inadimplente" && cicloAtivo === false && asaasKey) {
+      try {
+        const r = await fetch(
+          `https://api.asaas.com/v3/payments?customer=${payment.customer}&status=OVERDUE&limit=10`,
+          { headers: { access_token: asaasKey } },
+        );
+        if (r.ok) {
+          const j = await r.json();
+          // deno-lint-ignore no-explicit-any
+          restaVencida = (j?.data ?? []).some((p: any) => p?.id !== payment.id && !p?.deleted);
+        }
+      } catch (err) {
+        console.error("clube: consulta de vencidas no Asaas falhou:", err);
+      }
+    }
+
+    const novo = novoStatusClube(event, {
+      status: ass.status, canceladaEm: ass.cancelada_em, temCicloAtivo: cicloAtivo, restaVencidaNoAsaas: restaVencida,
+    });
+    if (!novo) return `clube_status_mantido (${ass.status}; ciclo_ativo=${cicloAtivo})`;
+    const { error: updErr } = await supa.from("clube_assinantes")
+      .update({ status: novo, updated_at: agora.toISOString() })
+      .eq("id", ass.id).eq("status", ass.status).is("cancelada_em", null);
+    if (updErr) return `clube_status_erro: ${updErr.message}`;
+    return `clube_${novo}`;
   }
 
   if (!["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED"].includes(event)) return "clube_skip";
