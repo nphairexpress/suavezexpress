@@ -36,6 +36,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   "dados_bancarios.editar_qualquer": "Editar dados bancários de qualquer profissional",
   "cliente.excluir": "Excluir cliente",
   "cliente.ver_cpf": "Ver CPF, RG e nascimento de clientes",
+  "clube.estornar_cancelar": "Estornar cobrança e cancelar assinatura do Clube (com senha)",
 };
 
 export const PERMISSION_KEYS = Object.keys(PERMISSION_LABELS);
@@ -51,6 +52,7 @@ const KEYS_ADMIN_OU_MASTER = new Set([
   "financeiro.ver",
   "despesas.lancar",
   "cliente.excluir",
+  "clube.estornar_cancelar",
 ]);
 const KEYS_OPERACAO_CAIXA = new Set([
   "caixa.abrir",

@@ -63,6 +63,7 @@ import { ResendSettingsSection } from "@/components/settings/ResendSettingsSecti
 import { AuditLogSection } from "@/components/settings/AuditLogSection";
 import { QueueSettingsSection } from "@/components/settings/QueueSettingsSection";
 import { PermissionsSection } from "@/components/settings/PermissionsSection";
+import { SenhaEstornoSection } from "@/components/settings/SenhaEstornoSection";
 
 const SPECIALTIES = [
   { value: "cabeleireiro", label: "Cabeleireiro(a)" },
@@ -1287,6 +1288,7 @@ export default function Configuracoes() {
           <>
             <SettingsBreadcrumb label="Permissões" />
             <PermissionsSection />
+            <SenhaEstornoSection />
           </>
         )}
 

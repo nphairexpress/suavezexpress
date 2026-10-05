@@ -163,6 +163,19 @@ function clubeEmailBoasVindas(nome: string, def: { rotulo: string; valor: string
 // e envia o e-mail de boas-vindas no primeiro pagamento. Best-effort.
 // deno-lint-ignore no-explicit-any
 async function handleClube(supa: any, event: string, payment: any): Promise<string> {
+  // 05/10/2026: estorno (botão do sistema ou painel do Asaas) bloqueia o ciclo deste pagamento e lança a
+  // despesa de estorno. Idempotente: se o botão já aplicou, a RPC devolve ja_aplicado e não duplica.
+  if (event === "PAYMENT_REFUNDED") {
+    const { data: est, error: estErr } = await supa.rpc("clube_aplicar_estorno", {
+      p_asaas_payment_id: payment.id, p_motivo: null, p_origem: "webhook", p_user_id: null,
+    });
+    if (estErr) {
+      console.error("clube: estorno no motor falhou:", estErr.message);
+      return `clube_estorno_erro: ${estErr.message}`;
+    }
+    return `clube_estorno (${est?.ja_aplicado ? "ja_aplicado" : est?.ok ? "aplicado" : est?.erro ?? "?"})`;
+  }
+
   const def = CLUBE_PLANOS[String(Math.round(payment.value || 0))];
   if (!def) return "clube_valor_fora_dos_planos";
 
@@ -369,7 +382,24 @@ Deno.serve(async (req) => {
   const event: string = body.event ?? "";
   const payment = body.payment;
   if (!payment?.id) {
-    return new Response("No payment", { status: 400 });
+    // 05/10/2026: evento sem cobrança (SUBSCRIPTION_*) responde 200; 400 repetido pausa a fila de webhooks
+    // do Asaas. Assinatura removida/inativada no Asaas = cancelamento no motor (idempotente).
+    let acaoSemPagamento = "ignored (sem payment)";
+    const sub = body.subscription;
+    if (sub?.id && ["SUBSCRIPTION_DELETED", "SUBSCRIPTION_INACTIVATED"].includes(event)) {
+      const { data: canc, error: cancErr } = await supa.rpc("clube_aplicar_cancelamento", {
+        p_asaas_subscription_id: sub.id, p_asaas_customer_id: sub.customer ?? null, p_restam_ativas: null,
+        p_origem: "webhook", p_user_id: null,
+      });
+      acaoSemPagamento = cancErr
+        ? `clube_cancelamento_erro: ${cancErr.message}`
+        : `clube_cancelamento (${canc?.efeito ?? canc?.erro ?? "?"})`;
+    }
+    console.log(`Asaas webhook: event=${event} subscription=${sub?.id ?? "-"} → ${acaoSemPagamento}`);
+    return new Response(
+      JSON.stringify({ ok: true, event, action: acaoSemPagamento }),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    );
   }
 
   const confirmed = ["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED"].includes(event);
@@ -498,7 +528,7 @@ Deno.serve(async (req) => {
       console.error("webhook_pagamento_revertido error:", recErr);
       action = `revert_error: ${recErr.message}`;
     } else {
-      action = `reverted (${event})`;
+      action = payment.subscription ? `${action}; reverted (${event})` : `reverted (${event})`;
       if (rec?.caixa_pendente_manual) {
         await alertCleiton(
           `⚠️ Estorno Asaas em CAIXA JÁ FECHADO\n\n` +

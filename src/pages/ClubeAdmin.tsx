@@ -1,12 +1,14 @@
 // Gestão do Clube da Escova: assinaturas ativas/inadimplentes, uso dos
 // ciclo de 30 dias (a partir do pagamento confirmado) e faturamento. Leitura pura — quem escreve nas tabelas do
-// Clube é só o servidor (webhook Asaas / venda presencial).
+// Clube é só o servidor (webhook Asaas / venda presencial / edge clube-estorno, aberta pelo botão Cobranças).
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AppLayoutNew } from "@/components/layout/AppLayoutNew";
 import { supabase } from "@/lib/dynamicSupabaseClient";
 import { VenderClubeModal } from "@/components/clube/VenderClubeModal";
-import { Crown, Users, AlertTriangle, Banknote, Sparkles } from "lucide-react";
+import { CobrancasClubeModal } from "@/components/clube/CobrancasClubeModal";
+import { useSalonPermissions } from "@/hooks/useSalonPermissions";
+import { Crown, Users, AlertTriangle, Banknote, Sparkles, Receipt } from "lucide-react";
 import { PageHeader, StatCard, GlassCard, Badge, Button, EmptyState, Skeleton } from "@design-system";
 
 type Assinante = {
@@ -17,6 +19,7 @@ type Assinante = {
   teto_mensal: number;
   status: string;
   created_at: string | null;
+  cancelada_em: string | null;
 };
 
 type Credito = {
@@ -63,18 +66,20 @@ export default function ClubeAdmin() {
     queryKey: ["clube-admin", comp],
     queryFn: async () => {
       const [assinantesRes, creditosRes, receitaRes] = await Promise.all([
-        supabase.from("clube_assinantes").select("id, nome, celular, plano, teto_mensal, status, created_at").order("created_at", { ascending: false }),
+        supabase.from("clube_assinantes").select("id, nome, celular, plano, teto_mensal, status, created_at, cancelada_em").order("created_at", { ascending: false }),
         // ciclos ATIVOS agora (inicio <= agora < fim); um assinante pode ter mais de um se renovou antes do fim
         supabase.from("clube_creditos").select("assinante_id, creditos_total, creditos_usados, inicio, fim, origem, maos_usadas, pes_usados")
           .eq("bloqueado", false).lte("inicio", agora).gt("fim", agora).order("fim", { ascending: true }),
-        supabase.from("financial_transactions").select("amount, transaction_date")
-          .eq("category", "Clube da Escova").eq("transaction_type", "income")
+        // receitas menos estornos (despesa "Estorno Clube da Escova", mesma categoria) do mês
+        supabase.from("financial_transactions").select("amount, transaction_date, transaction_type")
+          .eq("category", "Clube da Escova").in("transaction_type", ["income", "expense"])
           .gte("transaction_date", `${comp}-01`),
       ]);
       return {
         assinantes: (assinantesRes.data ?? []) as Assinante[],
         creditos: (creditosRes.data ?? []) as Credito[],
-        receitaMes: (receitaRes.data ?? []).reduce((s, t) => s + Number(t.amount || 0), 0),
+        receitaMes: (receitaRes.data ?? []).reduce(
+          (s, t) => s + (t.transaction_type === "expense" ? -1 : 1) * Number(t.amount || 0), 0),
       };
     },
   });
@@ -88,13 +93,17 @@ export default function ClubeAdmin() {
     if (!lista.some((x) => (ehEscova(x) ? "escova" : x.origem) === tipo)) lista.push(c);
     creditosPorAssinante.set(c.assinante_id, lista);
   }
-  const ativos = assinantes.filter((a) => a.status === "ativo");
+  // cancelada com ciclo pago ainda valendo: segue "ativo" no motor, mas não conta como assinatura ativa
+  const ativos = assinantes.filter((a) => a.status === "ativo" && !a.cancelada_em);
   const inadimplentes = assinantes.filter((a) => a.status === "inadimplente");
   const mrr = ativos.reduce((s, a) => s + (PLANO_ROTULO[a.plano]?.valor ?? 0)
     + ((creditosPorAssinante.get(a.id) ?? []).some((c) => c.origem === "pacote_esmaltacao") ? PACOTE_ESMALTACAO_VALOR : 0), 0);
   const usadasCiclos = (data?.creditos ?? []).filter(ehEscova).reduce((s, c) => s + c.creditos_usados, 0);
 
   const [venderOpen, setVenderOpen] = useState(false);
+  const [cobrancasDe, setCobrancasDe] = useState<{ id: string; nome: string | null } | null>(null);
+  const { pode } = useSalonPermissions();
+  const podeEstornar = pode("clube.estornar_cancelar");
 
   return (
     <AppLayoutNew>
@@ -132,6 +141,7 @@ export default function ClubeAdmin() {
                       <th className="px-3 py-3 font-medium">Usadas no ciclo</th>
                       <th className="px-3 py-3 font-medium">Ciclo válido até</th>
                       <th className="px-6 py-3 font-medium text-right">Faltam</th>
+                      {podeEstornar && <th className="px-6 py-3 font-medium text-right"><span className="sr-only">Ações</span></th>}
                     </tr>
                   </thead>
                   <tbody className="tabular-nums">
@@ -150,10 +160,17 @@ export default function ClubeAdmin() {
                               <div>Esmaltação · 4/mês<span className="text-muted-foreground whitespace-nowrap"> · {brl(PACOTE_ESMALTACAO_VALOR)}</span></div>
                             )}
                           </td>
-                          <td className="px-3 py-3"><StatusAssinante status={a.status} /></td>
+                          <td className="px-3 py-3"><StatusAssinante status={a.status} cancelada={a.cancelada_em} ciclos={ciclos} /></td>
                           <td className="px-3 py-3">{ciclos.length ? ciclos.map((c) => <div key={c.origem + c.fim}>{usoDoCiclo(c).texto}</div>) : "—"}</td>
                           <td className="px-3 py-3">{ciclos.length ? ciclos.map((c) => <div key={c.origem + c.fim}>{fmtDia(c.fim)}</div>) : <span className="np-text-danger">sem ciclo ativo</span>}</td>
                           <td className="px-6 py-3 text-right font-semibold">{ciclos.length ? ciclos.map((c) => <div key={c.origem + c.fim}>{usoDoCiclo(c).faltam}</div>) : 0}</td>
+                          {podeEstornar && (
+                            <td className="px-6 py-3 text-right">
+                              <Button variant="ghost" size="sm" icon={Receipt} onClick={() => setCobrancasDe({ id: a.id, nome: a.nome })}>
+                                Cobranças
+                              </Button>
+                            </td>
+                          )}
                         </tr>
                       );
                     })}
@@ -173,7 +190,7 @@ export default function ClubeAdmin() {
                           <div className="font-semibold text-foreground truncate">{a.nome ?? "—"}</div>
                           <div className="text-xs text-muted-foreground">{a.celular ?? "—"}</div>
                         </div>
-                        <StatusAssinante status={a.status} />
+                        <StatusAssinante status={a.status} cancelada={a.cancelada_em} ciclos={ciclos} />
                       </div>
                       <div className="text-sm">
                         {PLANO_ROTULO[a.plano]?.rotulo ?? a.plano}
@@ -192,6 +209,11 @@ export default function ClubeAdmin() {
                       ) : (
                         <div className="text-sm np-text-danger">sem ciclo ativo</div>
                       )}
+                      {podeEstornar && (
+                        <Button variant="secondary" block icon={Receipt} onClick={() => setCobrancasDe({ id: a.id, nome: a.nome })}>
+                          Cobranças
+                        </Button>
+                      )}
                     </li>
                   );
                 })}
@@ -201,11 +223,16 @@ export default function ClubeAdmin() {
         </GlassCard>
       </div>
       <VenderClubeModal open={venderOpen} onClose={() => setVenderOpen(false)} />
+      {podeEstornar && <CobrancasClubeModal assinante={cobrancasDe} onClose={() => setCobrancasDe(null)} />}
     </AppLayoutNew>
   );
 }
 
-function StatusAssinante({ status }: { status: string }) {
+function StatusAssinante({ status, cancelada, ciclos }: { status: string; cancelada?: string | null; ciclos?: Credito[] }) {
+  if (status === "ativo" && cancelada) {
+    const ate = (ciclos ?? []).map((c) => c.fim).sort().at(-1);
+    return <Badge dot>{ate ? `Cancelada · vale até ${fmtDia(ate)}` : "Cancelada"}</Badge>;
+  }
   if (status === "ativo") return <Badge tone="positive" dot>Ativa</Badge>;
   if (status === "inadimplente") return <Badge tone="danger" dot>Inadimplente</Badge>;
   return <Badge>Cancelada</Badge>;
