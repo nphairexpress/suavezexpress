@@ -10,6 +10,7 @@ import { Clock, Bell, Crown } from "lucide-react";
 import { usePublicQueue } from "@/hooks/usePublicQueue";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/dynamicSupabaseClient";
+import { FilaAviso } from "@/components/queue/FilaAviso";
 
 // Clube da Escova: agora exige OTP (prova de posse do telefone — falha 13).
 // 1) manda o código pro WhatsApp (Edge Function clube-otp);
@@ -42,7 +43,7 @@ function fmtValidoAte(iso?: string | null): string {
 
 export default function FilaPublica() {
   const navigate = useNavigate();
-  const { stats, settings, addLead } = usePublicQueue();
+  const { stats, settings, addLead, fila } = usePublicQueue();
   const { toast } = useToast();
 
   const [leadModalOpen, setLeadModalOpen] = useState(false);
@@ -212,6 +213,8 @@ export default function FilaPublica() {
             <p className="mt-4 font-medium text-[color:var(--np-positive)]">Fila vazia! Atendimento imediato.</p>
           )}
         </GlassCard>
+
+        <FilaAviso fila={fila} />
 
         <div className="space-y-3">
           <NpButton size="xl" block onClick={() => navigate("/fila/comprar")}>

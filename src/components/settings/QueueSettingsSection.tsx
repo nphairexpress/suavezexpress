@@ -23,7 +23,7 @@ export function QueueSettingsSection() {
   const [cashbackMinPurchase, setCashbackMinPurchase] = useState("100");
   const [openWeekdays, setOpenWeekdays] = useState<number[]>([2, 3, 4, 5, 6]);
   const [openTime, setOpenTime] = useState("08:00");
-  const [closeTime, setCloseTime] = useState("18:00");
+  const [closeTime, setCloseTime] = useState("20:00");
   const [closedDates, setClosedDates] = useState("");
   const [queuePaused, setQueuePaused] = useState(false);
 
@@ -35,7 +35,7 @@ export function QueueSettingsSection() {
       setReceptionEmail(settings.reception_email || "");
       setOpenWeekdays(settings.open_weekdays ?? [2, 3, 4, 5, 6]);
       setOpenTime((settings.open_time || "08:00").slice(0, 5));
-      setCloseTime((settings.close_time || "18:00").slice(0, 5));
+      setCloseTime((settings.close_time || "20:00").slice(0, 5));
       setClosedDates((settings.closed_dates ?? []).join(", "));
       setQueuePaused(!!settings.queue_paused);
     }
@@ -116,10 +116,10 @@ export function QueueSettingsSection() {
         </CardContent>
       </Card>
       <Card>
-        <CardHeader><CardTitle>Horario da fila online</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Horário de atendimento</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            Fora desse horario a cliente nao consegue pagar a fila. Isso evita venda em dia de porta fechada.
+            Fora desse horário a fila continua vendendo: a cliente é avisada de que será atendida na próxima abertura.
           </p>
           <div className="space-y-2">
             <Label>Dias em que a fila abre</Label>
@@ -148,7 +148,7 @@ export function QueueSettingsSection() {
           <div className="flex items-center justify-between gap-4 pt-4 border-t border-border">
             <div className="space-y-0.5">
               <Label>Fechar a fila agora</Label>
-              <p className="text-xs text-muted-foreground">Trava imediata, independente do horario. Lembre de desligar depois.</p>
+              <p className="text-xs text-muted-foreground">A cliente ainda pode entrar na fila; ela vê que a fila está pausada.</p>
             </div>
             <Switch checked={queuePaused} onCheckedChange={setQueuePaused} />
           </div>

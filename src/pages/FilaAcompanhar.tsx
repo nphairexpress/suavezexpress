@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { GlassCard, Badge, Button as NpButton, npAssets, type BadgeTone } from "@design-system";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { RefreshCw, AlertTriangle } from "lucide-react";
+import { diaSemanaData } from "@/lib/filaAviso";
 
 // Acompanhamento da fila via TOKEN OPACO (falhas 2/13 corrigidas):
 // - A página só enxerga a PRÓPRIA entrada (RPC fila_minha_situacao).
@@ -35,6 +36,11 @@ interface MinhaSituacao {
   estimated_minutes?: number;
   service_names?: string;
   customer_first_name?: string;
+  // Horário de atendimento (podem faltar até o banco ser atualizado)
+  atendimento_em?: string | null;
+  hoje?: string | null;
+  salao_aberto?: boolean | null;
+  abre?: string | null;
 }
 
 export default function FilaAcompanhar() {
@@ -89,6 +95,10 @@ export default function FilaAcompanhar() {
   const isActive = ["waiting", "checked_in"].includes(entry.status || "");
   const aheadCount = entry.people_ahead ?? 0;
   const isNext = aheadCount === 0 && isActive;
+  // Compra feita fora do horário: atendimento marcado para dia futuro, ou salão ainda fechado hoje.
+  const atendimentoFuturo = isActive && !!entry.atendimento_em && !!entry.hoje && entry.atendimento_em > entry.hoje;
+  const salaoAindaFechadoHoje = isActive && !atendimentoFuturo && entry.salao_aberto === false
+    && !!entry.atendimento_em && entry.atendimento_em === entry.hoje && !!entry.abre;
   const gotCredit = entry.payment_status === "credit";
 
   return (
@@ -116,6 +126,19 @@ export default function FilaAcompanhar() {
                   </p>
                 </div>
               )
+            )}
+
+            {atendimentoFuturo && (
+              <p className="np-display text-xl text-[color:var(--np-accent-display)]">
+                Seu atendimento será {diaSemanaData(entry.atendimento_em)}
+                {entry.abre ? ` a partir das ${entry.abre}` : ""}
+              </p>
+            )}
+
+            {salaoAindaFechadoHoje && (
+              <p className="np-display text-xl text-[color:var(--np-accent-display)]">
+                O salão abre às {entry.abre}
+              </p>
             )}
 
             {entry.status === "in_service" && (

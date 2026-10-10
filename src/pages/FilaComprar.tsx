@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AsaasCheckout } from "@/components/queue/AsaasCheckout";
 import { getIntentStatus, loadPendingIntent, clearPendingIntent } from "@/lib/asaas";
 import { supabase } from "@/lib/dynamicSupabaseClient";
+import { FilaAviso } from "@/components/queue/FilaAviso";
 
 // Página PÚBLICA (celular, sem login): tema escuro fixo do design system aplicado aqui mesmo.
 // A rota ainda recebe html.np-legacy do App.tsx; o wrapper redefine os tokens (data-theme="dark"
@@ -68,11 +69,6 @@ export default function FilaComprar() {
   }, []);
 
   const handleDataSubmit = async () => {
-    if (!fila.aberta) {
-      toast({ title: "Fila fechada", description: filaFechadaTexto(), variant: "destructive" });
-      setStep("service");
-      return;
-    }
     if (!customerName.trim() || !customerPhone.trim() || !customerCpf.trim()) {
       toast({ title: "Preencha nome, CPF e WhatsApp", variant: "destructive" });
       return;
@@ -210,27 +206,6 @@ export default function FilaComprar() {
     if (step === "payment") stopRecoveryRef.current?.();
   }, [step]);
 
-  // Fila fechada: o servidor decide (fuso do salão), o cliente só exibe.
-  const filaFechadaTexto = () => {
-    const dia = (iso: string | null) => {
-      if (!iso) return null;
-      const [a, m, d] = iso.split("-").map(Number);
-      const data = new Date(a, m - 1, d);
-      const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-      const dif = Math.round((data.getTime() - hoje.getTime()) / 86400000);
-      if (dif === 0) return "hoje";
-      if (dif === 1) return "amanhã";
-      return ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"][data.getDay()] +
-             ", dia " + String(d).padStart(2, "0") + "/" + String(m).padStart(2, "0");
-    };
-    const quando = dia(fila.proxima_abertura);
-    const abre = fila.abre ? ` às ${fila.abre}` : "";
-    if (fila.motivo === "ainda_nao_abriu") return `A fila de hoje abre${abre}.`;
-    if (fila.motivo === "ja_fechou") return quando ? `A fila de hoje já fechou. Reabre ${quando}${abre}.` : "A fila de hoje já fechou.";
-    if (fila.motivo === "pausada") return quando ? `A fila está fechada agora. Reabre ${quando}${abre}.` : "A fila está fechada agora.";
-    return quando ? `Hoje o salão não abre. A fila reabre ${quando}${abre}.` : "Hoje o salão não abre.";
-  };
-
   const fmt = (value: number) =>
     new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
@@ -252,23 +227,9 @@ export default function FilaComprar() {
           </h1>
         </div>
 
-        {step === "service" && !fila.aberta && (
-          <Card className={GLASS}>
-            <CardContent className="py-8 text-center space-y-3">
-              <p className="np-display text-xl">Fila fechada</p>
-              <p className="text-sm text-muted-foreground">{filaFechadaTexto()}</p>
-              <p className="text-sm text-muted-foreground">
-                Volte no horário de funcionamento para garantir a sua vez. Nada é cobrado com a fila fechada.
-              </p>
-              <Button variant="outline" className="w-full mt-2 h-12 border-border bg-transparent" onClick={() => navigate("/fila")}>
-                Voltar
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {step === "service" && fila.aberta && (
+        {step === "service" && (
           <div className="space-y-3 pb-24">
+            <FilaAviso fila={fila} />
             <p className="text-sm text-muted-foreground">
               Toque para escolher um ou mais serviços. O preço é final — cabelo longo (passa da linha do busto) já tem o próprio preço.
             </p>
@@ -369,6 +330,7 @@ export default function FilaComprar() {
               {queuePosition !== null && (
                 <p className="np-num text-5xl tabular-nums text-[color:var(--np-accent-display)]">{queuePosition}ª posição</p>
               )}
+              <FilaAviso fila={fila} className="w-full" />
               {!recoveredConfirmation && (
                 <p className="text-sm text-muted-foreground text-center">
                   Você receberá um aviso no WhatsApp {notifyMinutes} minutos antes do seu atendimento.
