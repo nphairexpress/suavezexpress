@@ -1,0 +1,121 @@
+-- Reversão de 20261010130000_fila_24h_data_atendimento.sql: devolve as definições vivas de 10/10/2026
+-- (fila_minha_situacao = 20260710100100; fila_creditos_fim_do_dia = 20260829120000) e remove fila_data_atendimento.
+-- ORDEM: publique antes o front que não depende de atendimento_em/hoje/salao_aberto/abre.
+
+CREATE OR REPLACE FUNCTION public.fila_minha_situacao(p_token uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ STABLE SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_entry queue_entries%ROWTYPE;
+  v_ahead int;
+  v_profs int;
+  v_ahead_min numeric;
+  v_names text;
+BEGIN
+  SELECT * INTO v_entry FROM queue_entries WHERE tracking_token = p_token;
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('found', false);
+  END IF;
+
+  SELECT count(*)::int INTO v_profs
+    FROM professionals WHERE salon_id = v_entry.salon_id AND is_active = true;
+  IF v_profs = 0 THEN v_profs := 1; END IF;
+
+  SELECT count(*)::int,
+         COALESCE(SUM(m.total), 0)
+    INTO v_ahead, v_ahead_min
+    FROM queue_entries qe
+    CROSS JOIN LATERAL (
+      SELECT COALESCE(
+               (SELECT SUM(COALESCE(s.duration_minutes, 45))
+                  FROM jsonb_array_elements_text(COALESCE(qe.service_ids, to_jsonb(ARRAY[qe.service_id::text]))) AS sid
+                  JOIN services s ON s.id = sid::uuid),
+               45) AS total
+    ) m
+   WHERE qe.salon_id = v_entry.salon_id
+     AND qe.status IN ('waiting', 'checked_in')
+     AND qe.position < v_entry.position;
+
+  SELECT string_agg(s.name, ' + ' ORDER BY s.name) INTO v_names
+    FROM jsonb_array_elements_text(COALESCE(v_entry.service_ids, to_jsonb(ARRAY[v_entry.service_id::text]))) AS sid
+    JOIN services s ON s.id = sid::uuid;
+
+  RETURN jsonb_build_object(
+    'found', true,
+    'status', v_entry.status,
+    'payment_status', v_entry.payment_status,
+    'people_ahead', v_ahead,
+    'estimated_minutes', CEIL(v_ahead_min / v_profs),
+    'service_names', COALESCE(v_names, ''),
+    'customer_first_name', split_part(v_entry.customer_name, ' ', 1)
+  );
+END;
+$function$
+
+;
+REVOKE ALL ON FUNCTION public.fila_minha_situacao(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.fila_minha_situacao(uuid) TO anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.fila_creditos_fim_do_dia()
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_hoje date := (now() AT TIME ZONE 'America/Sao_Paulo')::date;
+  v_qtd int := 0;
+  r record;
+BEGIN
+  FOR r IN
+    SELECT qe.id, qe.salon_id, qe.customer_id, qe.customer_phone,
+           COALESCE(
+             qe.paid_amount,
+             (SELECT SUM(COALESCE(s.price, 0))
+                FROM jsonb_array_elements_text(COALESCE(qe.service_ids, to_jsonb(ARRAY[qe.service_id::text]))) AS sid
+                JOIN services s ON s.id = sid::uuid),
+             0) AS valor,
+           COALESCE(qs.credit_validity_days, 30) AS validade
+      FROM queue_entries qe
+      LEFT JOIN queue_settings qs ON qs.salon_id = qe.salon_id
+     WHERE (qe.created_at AT TIME ZONE 'America/Sao_Paulo')::date = v_hoje
+       AND qe.payment_status = 'confirmed'
+       AND (
+             qe.status IN ('waiting', 'checked_in')   -- regra única: no_show/cancelled NÃO
+             OR (
+               -- 29/08: 'in_service' sem o pagamento online lançado em comanda = não foi atendida
+               qe.status = 'in_service'
+               AND qe.source = 'online'
+               AND qe.payment_id IS NOT NULL
+               AND NOT EXISTS (SELECT 1 FROM payments p
+                                WHERE p.provider_payment_id = qe.payment_id AND NOT p.voided)
+             )
+           )
+       AND NOT EXISTS (SELECT 1 FROM customer_credits cc WHERE cc.origin_queue_entry_id = qe.id)
+  LOOP
+    INSERT INTO customer_credits (salon_id, customer_id, customer_phone, amount,
+                                  origin_queue_entry_id, expires_at, used)
+    VALUES (r.salon_id, r.customer_id, r.customer_phone, r.valor,
+            r.id, now() + make_interval(days => r.validade), false)
+    ON CONFLICT DO NOTHING;
+
+    UPDATE queue_entries
+       SET status = 'no_show', payment_status = 'credit', updated_at = now()
+     WHERE id = r.id;
+
+    v_qtd := v_qtd + 1;
+  END LOOP;
+
+  RETURN jsonb_build_object('dia', v_hoje, 'creditos_gerados', v_qtd);
+END;
+$function$
+
+;
+REVOKE EXECUTE ON FUNCTION public.fila_creditos_fim_do_dia() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.fila_creditos_fim_do_dia() FROM anon;
+REVOKE EXECUTE ON FUNCTION public.fila_creditos_fim_do_dia() FROM authenticated;
+
+DROP FUNCTION IF EXISTS public.fila_data_atendimento(uuid, timestamptz);

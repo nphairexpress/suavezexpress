@@ -6,6 +6,8 @@
 // - PAYMENT_CONFIRMED/RECEIVED ⇒ RPC webhook_pagamento_confirmado (transacional,
 //   idempotente): cria a queue_entry a partir da purchase_intent MESMO que a
 //   cliente tenha fechado o navegador. Retry/duplicata do Asaas ⇒ 1 entry só.
+//   Entrada criada com o salão fechado ⇒ WhatsApp com o dia/hora do atendimento
+//   (_shared/whatsapp_fila.ts, via Evolution da fila).
 // - REFUND/DELETE/CHARGEBACK ⇒ RPC webhook_pagamento_revertido: cancela fila,
 //   expira crédito não usado, voida pagamento interno e estorna caixa aberto.
 // - Resend key: APENAS env (Supabase Secrets) — system_config não é cofre.
@@ -14,6 +16,7 @@
 //           --project-ref ewxiaxsmohxuabcmxuyc
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { novoStatusClube, temCicloAtivo } from "./status_clube.ts";
+import { avisarSeForaDoHorario } from "../_shared/whatsapp_fila.ts";
 
 const CLEITON_WA = "5511976847114"; // alvo dos alertas urgentes
 // Evolution precisa ser alcançável do Supabase cloud (IP interno da VPS não é).
@@ -471,6 +474,12 @@ Deno.serve(async (req) => {
       action = `confirm_error: ${rpcErr.message}`;
     } else {
       action = `confirmed (${result?.mode ?? "?"})`;
+      // 10/10/2026: a fila vende 24 h. Entrada que ACABOU de nascer com o salão fechado
+      // recebe no WhatsApp quando será atendida. Best-effort: nunca derruba o 200.
+      if (result?.mode === "created") {
+        const aviso = await avisarSeForaDoHorario(supa, result.queue_entry_id, "asaas-webhook");
+        action += ` ${aviso}`;
+      }
       // Pagamento confirmado SEM lastro: a RPC não achou purchase_intent nem
       // queue_entry (branch legado com 0 linhas). SÓ é anomalia real quando a
       // cobrança NASCEU do asaas-checkout (externalReference = UUID da intent)
